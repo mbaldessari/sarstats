@@ -1,0 +1,398 @@
+#! /usr/bin/python
+"""
+Graph sar(1) reports.
+
+sar(1) provides system activity reports that are useful in the analysis of
+system performance issues. This script produces a PDF file with graphs of the
+data contained in one or more sar reports.
+"""
+# sarstats.py - sar(1) report graphing utility
+# Copyright (C) 2012  Ray Dassen
+#               2013  Ray Dassen, Michele Baldessari
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+from __future__ import print_function
+from itertools import repeat
+import sys
+import argparse
+import csv
+import hashlib
+import os
+import os.path
+import shutil
+import tempfile
+from reportlab.lib.styles import ParagraphStyle as PS
+from reportlab.platypus import PageBreak, Image, Spacer
+from reportlab.platypus.paragraph import Paragraph
+from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
+from reportlab.platypus.tableofcontents import TableOfContents
+from reportlab.platypus.frames import Frame
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import A4, landscape
+from hashlib import sha1
+
+import multiprocessing
+
+import SAR
+import sar_metadata
+
+# If we should try and create the graphs in parallel
+# brings a nice speedup on multi-core/smp machines
+THREADED = True
+# None means nr of available CPUs
+NR_CPUS = None
+
+DEFAULT_IMG_EXT = ".png"
+
+# Inch graph size
+GRAPH_WIDTH = 10.5
+GRAPH_HEIGHT = 6.5
+
+class MyDocTemplate(BaseDocTemplate):
+    """Custom Doc Template in order to have bookmarks
+    for certain type of text"""
+    def __init__(self, filename, **kw):
+        self.allowSplitting = 0
+        apply(BaseDocTemplate.__init__, (self, filename), kw)
+        template = PageTemplate('normal', [Frame(0.1*inch, 0.1*inch,
+            11*inch, 8*inch, id='F1')])
+        self.addPageTemplates(template)
+
+    # Entries to the table of contents can be done either manually by calling
+    # the addEntry method on the TableOfContents object or automatically by
+    # sending a 'TOCEntry' notification in the afterFlowable method of the
+    # DocTemplate you are using. The data to be passed to notify is a list of
+    # three or four items countaining a level number, the entry text, the page
+    # number and an optional destination key which the entry should point to.
+    # This list will usually be created in a document template's method like
+    # afterFlowable(), making notification calls using the notify() method with
+    # appropriate data.
+
+    def afterFlowable(self, flowable):
+        "Registers TOC entries."
+        if flowable.__class__.__name__ == 'Paragraph':
+            text = flowable.getPlainText()
+            style = flowable.style.name
+            if style == 'Heading1' or style == 'centered_index':
+                level = 0
+            elif style == 'Heading2' or style == 'Heading2Center' or \
+                style == 'Heading2Invisible':
+                level = 1
+            else:
+                return
+            entry = [level, text, self.page]
+            #if we have a bookmark name append that to our notify data
+            bookmark_name = getattr(flowable, '_bookmarkName', None)
+            if bookmark_name is not None:
+                entry.append(bookmark_name)
+            self.notify('TOCEntry', tuple(entry))
+            self.canv.addOutlineEntry(text, bookmark_name, level, True)
+
+def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
+    """This is a wrapper due to pool.map() single argument limit"""
+    fname = sar_stats_obj._graph_filename(dataname)
+    (title, labels) = sar_metadata.get_labels_title(dataname)
+    sar_obj.plottimeseries(dataname, title, labels, fname)
+    sys.stdout.write(".")
+    sys.stdout.flush()
+
+class SarStats(object):
+    """Creates a pdf file given a parsed SAR object"""
+    def __init__(self):
+        """Initialize class"""
+        # Temporary dir where images are stored (one per graph)
+        # NB: This is done to keep the memory usage constant
+        # in spite of being a bit slower (before this change
+        # we could use > 12GB RAM for a simple sar file)
+        self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
+        self.story = []
+
+    def close(self):
+        """Removes temporary directory and files"""
+        if os.path.isdir(self._tempdir):
+            shutil.rmtree(self._tempdir)
+
+    def _graph_filename(self, graph):
+        """Creates a unique constant file name given a graph or graph list"""
+        if isinstance(graph, list):
+            temp = "_".join(graph)
+        else:
+            temp = graph
+        temp = temp.replace('%', '_')
+        temp = temp.replace('/', '_')
+        digest = hashlib.sha1()
+        digest.update(temp)
+        fname = os.path.join(self._tempdir, digest.hexdigest() + DEFAULT_IMG_EXT)
+        return fname
+
+
+    def graphs_order(self, sar, cat, skiplist=[]):
+        """ Order in which to present all graphs.
+        Data is grouped loosely by type. """
+        l = []
+        # First we add all the simple graphs sorted by chosen category list
+        for i in cat:
+            for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
+                # We cannot graph a column with device names
+                if j.endswith('DEVICE'):
+                    continue
+                if sar_metadata.get_category(j) == i:
+                    l.append([j])
+
+        # Here we add the combined graphs always per category
+        c = {}
+        for i in sar_metadata._indexcolumn:
+            s = sar.datanames_per_arg(i, False)
+            try:
+                key = sar_metadata.get_category(s[0][0])
+            except:
+                continue
+            if not c.has_key(key):
+                c[key] = s
+            else:
+                c[key] += s
+
+        # We merge the two in a single list: for each category
+        # simple graphs and then combined graphs
+        l = []
+        for i in cat:
+            for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
+                # First we add the simple data types from the category
+                # Small hack to have an additional graph with ldavg-{1,5,15}
+                if j == 'ldavg-1' and i == 'Load':
+                    l.append(['ldavg-1', 'ldavg-5', 'ldavg-15'])
+                if sar_metadata.base_graphs.has_key(j) and \
+                    sar_metadata.base_graphs[j]['cat'] == i and \
+                    j not in skiplist:
+                    l.append([j])
+            if c.has_key(i):
+                for j in range(len(c[i])):
+                    # Only add the graph if none of it's components is in the skip_list
+                    b = [x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0]
+                    l.append(b)
+
+        return l
+
+    def do_heading(self, text, sty):
+        # create bookmarkname
+        bn = sha1(text + sty.name).hexdigest()
+        # modify paragraph text to include an anchor point with name bn
+        h = Paragraph(text + '<a name="%s"/>' % bn, sty)
+        # store the bookmark name on the flowable so afterFlowable can see this
+        h._bookmarkName = bn
+        self.story.append(h)
+
+    def graph(self, sar, sar_files, skip_list, output_file='out.pdf', only_categories=[]):
+        """ Parse sar data and produce graphs of the parsed data. """
+
+        centered = PS(name = 'centered',
+            fontSize = 30,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        centered_index = PS(name = 'centered_index',
+            fontSize = 24,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        small_centered = PS(name = 'small_centered',
+            fontSize = 14,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        h1 = PS(name = 'Heading1',
+            fontSize = 16,
+            leading = 16)
+
+        h2 = PS(name = 'Heading2',
+            fontSize = 14,
+            leading = 14)
+
+        h2_center = PS(name = 'Heading2Center',
+            alignment = 1,
+            fontSize = 14,
+            leading = 14)
+
+        h2_invisible = PS(name = 'Heading2Invisible',
+            alignment = 1,
+            textColor = '#FFFFFF',
+            fontSize = 14,
+            leading = 14)
+
+        normal = PS(name = 'Normal',
+            fontSize = 16,
+            leading = 16)
+
+        self.story.append(Paragraph('%s' % sar.hostname, centered))
+        self.story.append(Paragraph('%s %s' % (sar.kernel, sar.version), small_centered))
+        self.story.append(Spacer(1, 0.05*inch))
+        self.story.append(Paragraph('%s' % (" ".join(sar_files)), small_centered))
+        mins = int(sar.sample_frequency / 60)
+        secs = int(sar.sample_frequency % 60)
+        s = "Sampling Frequency: %s minutes" % mins
+        if secs > 0:
+            s = s + " %s seconds" % secs
+
+        self.story.append(Paragraph(s, small_centered))
+
+        toc = TableOfContents()
+        toc.levelStyles = [
+            PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
+                leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
+            PS(fontSize=10, name='TOCHeading2', leftIndent=40, firstLineIndent=-20,
+                spaceBefore=0, leading=8),
+        ]
+        self.do_heading('Table of contents', centered_index)
+        self.story.append(toc)
+        self.story.append(PageBreak())
+
+        if len(only_categories) == 0:
+            category_order = sar_metadata.list_all_categories()
+        else:
+            category_order = only_categories
+
+        count = 0
+        used_cat = {}
+        # Let's create all the images either via multiple threads or in sequence
+        if THREADED:
+            pool = multiprocessing.Pool(NR_CPUS)
+            l = self.graphs_order(sar, category_order, skip_list)
+            f = zip(repeat(self), repeat(sar), l)
+            pool.map(graph_wrapper, f)
+        else:
+            for dataname in self.graphs_order(sar, category_order, skip_list):
+                fname = self._graph_filename(dataname)
+                cat = sar._categories[dataname[0]]
+                (title, labels) = sar_metadata.get_labels_title(dataname)
+                sar.plottimeseries(dataname, title, labels, fname)
+                sys.stdout.write(".")
+                sys.stdout.flush()
+
+        # All the image files are created let's go through the files and create the pdf
+        for dataname in self.graphs_order(sar, category_order, skip_list):
+            fname = self._graph_filename(dataname)
+            cat = sar._categories[dataname[0]]
+            (title, labels) = sar_metadata.get_labels_title(dataname)
+            if not used_cat.has_key(cat): # We've not seen the category before
+                self.do_heading(cat, h1)
+                used_cat[cat] = True
+            else:
+                self.story.append(Paragraph(cat, normal))
+            self.do_heading(title, h2_invisible)
+            self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
+            self.story.append(Spacer(1, 0.2*inch))
+            desc = sar_metadata.get_desc(dataname)
+            for (name, desc) in desc:
+                self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), normal))
+
+            self.story.append(PageBreak())
+            count += 1
+
+        doc = MyDocTemplate(output_file, pagesize=landscape(A4))
+        doc.multiBuild(self.story)
+
+    def export_csv(self, sar, output_file):
+        f = open(output_file, 'wb')
+        writer = csv.writer(f, delimiter=',')
+        all_keys = list(sar.available_data_types())
+        print(all_keys)
+        writer.writerow(all_keys)
+        for timestamps in sar._data.keys():
+            s = []
+            for i in all_keys:
+                s.append(sar._data[timestamps][i])
+            writer.writerow(s)
+
+if __name__ == '__main__':
+    sar_stats = SarStats()
+
+    parser = argparse.ArgumentParser(description=
+        "%s - analizes sar output files and produces a pdf report" % sys.argv[0],
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('sar_files', metavar='sar_files', nargs='+',
+        help="""Sar files to examine. It is possible to specify a single folder, in which
+        case it will look for all the sar* files and order them by file date""")
+
+    parser.add_argument('--skip', default='lo', dest='skip_entities',
+        help="""Graphs or entries to skip. For example adding '%%user' will
+        remove that graph. Adding 'lo' will remove that interface from any 
+        network graph. Use comma to separate multiple graphs to be skipped.
+        For example '--skip lo,eth0' will not plot any graphs for those 
+        interfaces and '--skip lo,miss/s' will skip the 'lo' interface and the
+        'miss/s' graph""")
+
+    parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
+        Only lists all the graphs and elements contained in the specified
+        sar files""")
+
+    parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
+        Output file name""")
+
+    parser.add_argument('--category', dest='only_categories', default='', help="""
+        Only outputs the selected categories. Available categories: {0}""" \
+        .format(",".join(sar_metadata.list_all_categories())))
+
+    parser.add_argument('--csv', dest='csv_file', default='', help="""
+        Outputs the data to the specified csv file.""")
+
+    args = parser.parse_args()
+    # If the only argument is a directory fetch all the sar files and order
+    # them automatically
+    if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
+        s = {}
+        for root, dirs, files in os.walk(args.sar_files[0]):
+            for i in files:
+                if i.strip().startswith('sar'):
+                    f = os.path.join(root, i)
+                    s[os.path.getmtime(f)] = f
+
+        args.sar_files = []
+        for i in sorted(s.keys()):
+            args.sar_files.append(s[i])
+
+    for f in args.sar_files:
+        print("Parsing file: {0}".format(f))
+        sar = SAR.SAR(f)
+        sar.parse()
+
+    if args.list_graphs:
+        print("{0}\n".format(sorted(sar.available_data_types())))
+        sys.exit(0)
+
+    if args.csv_file != '':
+        print("Export to csv: {0}".format(args.csv_file))
+        sar_stats.export_csv(sar, args.csv_file)
+        sys.exit(0)
+
+    print("Building graphs: ", end='')
+
+    skip_list = args.skip_entities.strip().split(",")
+    if args.only_categories != '':
+        selected_categories = args.only_categories.strip().split(",")
+    else:
+        selected_categories = []
+
+    sar_stats.graph(sar, args.sar_files, skip_list, args.output_file, selected_categories)
+    sar.close()
+    print("\nWrote: {0}".format(args.output_file))
+    sar_stats.close()
+
+# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

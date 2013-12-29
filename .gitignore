@@ -1,3 +1,4 @@
+*.pdf
 *.py[cod]
 
 # C extensions
@@ -5,6 +6,9 @@
 
 # Packages
 *.egg
+*.pyc
+*.swp
+*.pyo
 *.egg-info
 dist
 build
