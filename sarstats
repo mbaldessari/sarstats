@@ -183,6 +183,7 @@ class SarStats(object):
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the skip_list
                     b = [x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0]
+                    # FIXME is a graph has more than 64 columns we should do something here
                     l.append(b)
 
         return l

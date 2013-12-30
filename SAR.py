@@ -31,7 +31,7 @@ Hat Enterprise Linux versions 3 through 6.
 __all__ = ['SARError', 'SAR']
 
 import logging
-from datetime import datetime
+import datetime
 import re
 import os
 import os.path
@@ -104,7 +104,7 @@ def canonicalise_timestamp(date, ts):
                 hours += 12
         if hours == 24:
             hours = 0
-        dt = datetime(date[0], date[1], date[2], hours, minutes, seconds)
+        dt = datetime.datetime(date[0], date[1], date[2], hours, minutes, seconds)
     else:
         raise SARError("canonicalise_timestamp error %s" % ts)
     return dt
@@ -133,6 +133,8 @@ class SAR:
         self._linecount = 0
         # Date of the report
         self._date = None
+        # If this one was set it means that we crossed the day during one SAR file
+        self._olddate = None
 
         # Is this file part of an sosreport?
         # Check ../../../sos_commands exists and see if uptime is a
@@ -305,6 +307,17 @@ class SAR:
     def _record_data(self, headers, matches):
         """ Record a parsed line of data """
         timestamp = canonicalise_timestamp(self._date, matches.group(1))
+        if self._prev_timestamp and timestamp:
+            # FIXME: This breaks if sar interval is bigger > 119 mins
+            if self._prev_timestamp.hour == 23 and timestamp.hour == 0:
+                nextday = timestamp + datetime.timedelta(days=1)
+                self._olddate = self._date
+                self._date = (nextday.year, nextday.month, nextday.day)
+                timestamp = canonicalise_timestamp(self._date, matches.group(1))
+            elif timestamp < self._prev_timestamp:
+                raise SARError("Time going backwards: %s - Prev timestamp: %s -> %s" % \
+                    (timestamps, self._prev_timestamp, line))
+        self._prev_timestamp = timestamp
 
         # We never had this timestamp let's start with a new dictionary
         # associated to it
@@ -340,7 +353,7 @@ class SAR:
                 self._categories[i] = sar_metadata.get_category(i)
                 previous = i
                 counter += 1
-            return
+            return timestamp
 
         # Complex case: data is "3D": data is indexed by an index column
         # (CPU number, device name etc.) and there is one datum per index
@@ -350,7 +363,7 @@ class SAR:
         if indexval == 'all' or indexval == 'Summary':
             # This is derived information that is only included for some types
             # of data. Let's save ourselves the complication.
-            return
+            return timestamp
 
         counter = 0
         # column represents the number of the column which is used as index
@@ -381,7 +394,7 @@ class SAR:
     def parse(self, skip_tables=['BUS']):
         """ Parse a SAR report. """
 
-        prev_timestamp = None
+        self._prev_timestamp = None
         # Parsing is performed line by line using a state machine
         state = 'start'
         headers = None
@@ -420,6 +433,8 @@ class SAR:
 
             if state == 'table_start':
                 (timestamp, headers) = self._column_headers(line)
+                if self._olddate: # If in previous tables we crossed the day, we start again from the previous date
+                    self._date = self._olddate
                 if timestamp is None:
                     raise SARError('Line {0}: expected column header line but got "{1}" instead'.format(self._linecount, line))
                 if headers == ['LINUX', 'RESTART']:
@@ -437,7 +452,7 @@ class SAR:
                 except AssertionError:
                     raise SARError('Line {0}: exceeding python interpreter limit with regexp for this line "{1}"'.format(self._linecount, line))
 
-                prev_timestamp = False
+                self._prev_timestamp = False
                 state = 'table_row'
                 continue
 
@@ -459,11 +474,6 @@ line: "{2}",
 regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pattern.pattern))
 
                 ts = self._record_data(headers, matches)
-                if prev_timestamp and ts:
-                    if ts < prev_timestamp:
-                        raise SARError("Time going backwards: %s - Prev timestamp: %s -> %s" % \
-                            (ts, prev_timestamp, line))
-                prev_timestamp = ts
                 continue
 
             if state == 'table_end':
@@ -485,7 +495,6 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
         k = sorted(self._data.keys())
         diff = [(x - k[i - 1]).total_seconds() for i, x in enumerate(k) if i > 0]
         self.sample_frequency = numpy.mean(diff)
-
 
     def del_date(self, d):
         self._data.pop(d, None)
