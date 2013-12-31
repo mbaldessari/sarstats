@@ -154,7 +154,7 @@ base_graphs = {
     'cswch/s':  {'cat': 'Load',
                  'unit': 'number_per_second',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """Total number of tasks created per second"""},
+                 'desc': """Total number of context switches per second"""},
     'kbmemfree':{'cat': 'Memory',
                  'unit': 'kilobytes',
                  'regexp': _integer_regexp,
