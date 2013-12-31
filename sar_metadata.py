@@ -133,7 +133,18 @@ base_graphs = {
                  average is calculated as the average number of runnable or
                  running tasks (R state), and the number of tasks in
                  uninterruptible sleep (D state) over the specified
-                 interval"""},
+                 interval. The exact formula is:
+                 <i>load(t) = n+((load(t-1)-n)/e^(interval/(min*60)))</i><br/>
+                 &bull;<i>load(t)</i>: load average at a time of t<br/>
+                 &bull;<i>n</i>: number of threads in running or uninterruptible state<br/>
+                 &bull;<i>interval</i>: calculate interval (seconds). 5 seconds in RHEL<br/>
+                 &bull;<i>min</i>: average time (minute)<br/>
+                 It is a moving average function. See 
+                 <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
+                 <i>kernel/sched.c:calc_load()</i></link> for more details on the implementation on RHEL 5 and 6. 
+                 More recent kernels moved it to 
+                 <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
+                 <i>kernel/sched/proc.c:calc_load()</i></link>"""},
     'ldavg-5':  {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _number_with_decimals_regexp,
