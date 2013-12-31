@@ -22,3 +22,6 @@ A: Drop me an email: michele@acksyn.org
 
 Q: Shouldn't you move to PCP or something more capable anyway?
 A: Yes, as soon as PCP is more widespread
+
+Q: In network graphs with bonding the bond interface is never shown?
+A: Because the underlying ethX interface has (obviously) the exact same traffic patterns and is drawn afterwards

@@ -1,0 +1,23 @@
+Enhancement requests
+--------------------
+* Fix displaying when many datapoints are present in a single graph. There are multiple cases:
+  1) CPU counters wih many CPUs. I.e. 128 CPUs and %idle -> graph is extremely small and the legend
+  is very tall. Trying to make the legend less tall, seems to not solve the issue or is triggering
+  other weird behaviour in matplotlib because the graph becomes very small.
+  Solution: Split the graphs in multiples (CPUs 1-64 and CPUs 65-127)
+
+  2) IO graphs with many devices are also completely crammed. With an sosreport with thousands of IO paths
+  graphs are useless. So when we have:
+  dev104 dev128 dev129 dev130 dev131 dev132 dev133 dev134 dev135 dev253 dev65 dev66 dev67 dev68 dev69 dev70 dev71 dev8
+  and for each of these we have 50 or more minor nodes (I have a sar with ~250 minor nodes), the amount becomes huge.
+  Solution: Group the graphs by dev?
+  
+* Make "LINUX RESTART" states visible in the graphs or add a note about it
+
+* What to do with N/A values
+
+* For every description add the exact kernel counter involved w/ proc path and also
+  add a proper comprehensible explanation. For example in 'loadavg-1' add explanation
+  when a load is high and how it relates to the number of CPUs
+
+* Add graph unit in metadata and labels
