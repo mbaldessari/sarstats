@@ -285,7 +285,6 @@ class SarStats(object):
             pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
-                print("dataname: {0}".format(dataname))
                 fname = self._graph_filename(dataname)
                 cat = sar._categories[dataname[0]]
                 (title, labels) = sar_metadata.get_labels_title(dataname)
