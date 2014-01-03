@@ -10,7 +10,8 @@ Enhancement requests
   graphs are useless. So when we have:
   dev104 dev128 dev129 dev130 dev131 dev132 dev133 dev134 dev135 dev253 dev65 dev66 dev67 dev68 dev69 dev70 dev71 dev8
   and for each of these we have 50 or more minor nodes (I have a sar with ~250 minor nodes), the amount becomes huge.
-  Solution: Group the graphs by dev?
+  Solution: Group the graphs by dev? Parse sosreport if available and extrapolate the higher layers and graph an avg
+  of the relevant devices comprising the upper layer (LV,VG,mpath,..)
   
 * Make "LINUX RESTART" states visible in the graphs or add a note about it
 
@@ -21,3 +22,7 @@ Enhancement requests
   when a load is high and how it relates to the number of CPUs
 
 * Add graph unit in metadata and labels
+
+* Add the possibility to mark a set of timestamps in the graphs for easier correlation (passed via a csv file)
+
+* Test sar files where the collection interval is 1 or 2 minutes
