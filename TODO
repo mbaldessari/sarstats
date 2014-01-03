@@ -23,6 +23,4 @@ Enhancement requests
 
 * Add graph unit in metadata and labels
 
-* Add the possibility to mark a set of timestamps in the graphs for easier correlation (passed via a csv file)
-
 * Test sar files where the collection interval is 1 or 2 minutes

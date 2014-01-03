@@ -30,6 +30,7 @@ from itertools import repeat
 import sys
 import argparse
 import csv
+import dateutil
 import hashlib
 import os
 import os.path
@@ -112,7 +113,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
     fname = sar_stats_obj._graph_filename(dataname)
     (title, labels) = sar_metadata.get_labels_title(dataname)
-    sar_obj.plottimeseries(dataname, title, labels, fname)
+    sar_obj.plottimeseries(dataname, title, labels, fname, sar_stats.extra_labels)
     sys.stdout.write(".")
     sys.stdout.flush()
 
@@ -203,8 +204,22 @@ class SarStats(object):
         h._bookmarkName = bn
         self.story.append(h)
 
-    def graph(self, sar, sar_files, skip_list, output_file='out.pdf', only_categories=[]):
+    def parse_labels_csv(self, csv_file):
+        f = open(csv_file, "rb")
+        reader = csv.reader(f, delimiter=',')
+        extra_labels = []
+        for line in reader:
+            extra_labels.append((dateutil.parser.parse(line[0]), line[1]))
+
+        return extra_labels
+
+    def graph(self, sar, sar_files, skip_list, output_file='out.pdf', only_categories=[],
+        labels_csv=''):
         """ Parse sar data and produce graphs of the parsed data. """
+
+        self.extra_labels = None
+        if len(labels_csv) > 0:
+            self.extra_labels = self.parse_labels_csv(labels_csv)
 
         centered = PS(name = 'centered',
             fontSize = 30,
@@ -289,7 +304,7 @@ class SarStats(object):
                 cat = sar._categories[dataname[0]]
                 (title, labels) = sar_metadata.get_labels_title(dataname)
                 sar.plottimeseries(sorted(dataname, key=natural_sort_key), title,
-                    sorted(labels, key=natural_sort_key), fname)
+                    sorted(labels, key=natural_sort_key), fname, self.extra_labels)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -361,6 +376,14 @@ if __name__ == '__main__':
     parser.add_argument('--csv', dest='csv_file', default='', help="""
         Outputs the data to the specified csv file.""")
 
+    parser.add_argument('--labelsfile', dest='labels_file', default='', help="""
+        Reads a csv file in the format: Date (ISO format),Label and will plot
+        the additional dots on the graphs. This helps to look for correlation of
+        events. For example a file like:
+        2014-01-01 13:45:03,foo
+        2014-01-02 13:15:15,bar
+        Will add two extra labels on each graph at those times""")
+
     args = parser.parse_args()
     # If the only argument is a directory fetch all the sar files and order
     # them automatically
@@ -398,7 +421,8 @@ if __name__ == '__main__':
     else:
         selected_categories = []
 
-    sar_stats.graph(sar, args.sar_files, skip_list, args.output_file, selected_categories)
+    sar_stats.graph(sar, args.sar_files, skip_list, args.output_file, selected_categories,
+        args.labels_file)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()

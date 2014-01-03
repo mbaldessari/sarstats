@@ -573,7 +573,18 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
         """ What types of data are available. """
         return set([item for date in self._data.keys() for item in self._data[date].keys()])
 
-    def plottimeseries(self, datanames, title, axis_labels, fname):
+    def find_max(self, timestamp, datanames):
+        """Finds the max Y value given an approx timestamp and a list of datanames"""
+        timestamps = self._data.keys()
+        time_key = min(timestamps, key=lambda date : abs(timestamp - date))
+        ymax = -1
+        for i in datanames:
+            if self._data[time_key][i] > ymax:
+                ymax = self._data[time_key][i]
+
+        return ymax
+
+    def plottimeseries(self, datanames, title, axis_labels, fname, extra_labels):
         """ Plot timeseries data (of type dataname).
             The data can be either simple (one or no datapoint at any point in time,
             or indexed (by indextype).
@@ -604,6 +615,16 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
             dataset = [self._data[d][i] for d in timestamps]
             axes.plot(timestamps, dataset, 'o:', label=axis_labels[counter], color=scalar_map.to_rgba(counter))
             counter += 1
+
+        # Draw extra_labels
+        if extra_labels:
+            for extra in extra_labels:
+                axes.annotate(extra[1], xy=(mdates.date2num(extra[0]),
+                    self.find_max(extra[0], datanames)), xycoords='data',
+                    xytext=(30, 30), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->",
+                        connectionstyle="arc3,rad=.2")
+                    )
 
         lgd = None
         # Draw the legend only when needed
