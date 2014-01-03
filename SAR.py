@@ -615,7 +615,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
                 cols = int((len(datanames)**0.5))
                 lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=fontproperties)
             else:
-                cols = int(len(datanames)**0.8)
+                cols = int(len(datanames)**0.6)
                 lgd = axes.legend(loc=9, ncol=cols, bbox_to_anchor=(0.5, -0.29), shadow=True, prop=fontproperties)
 
         if len(datanames) == 0:
