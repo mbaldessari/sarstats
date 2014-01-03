@@ -93,8 +93,8 @@ base_graphs = {
     '%nice':    {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
-                 'desc': """Percentage of time spent by the CPU or CPUs to
-                 service software interrupts"""},
+                 'desc': """Percentage of CPU utilization that occurred while 
+                 executing at the user level with nice priority"""},
     '%gnice':   {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
