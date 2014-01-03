@@ -33,6 +33,7 @@ import csv
 import hashlib
 import os
 import os.path
+import re
 import shutil
 import tempfile
 from reportlab.lib.styles import ParagraphStyle as PS
@@ -61,6 +62,11 @@ DEFAULT_IMG_EXT = ".png"
 # Inch graph size
 GRAPH_WIDTH = 10.5
 GRAPH_HEIGHT = 6.5
+
+def natural_sort_key(s):
+    _nsre = re.compile('([0-9]+)')
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
+
 
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
@@ -279,10 +285,12 @@ class SarStats(object):
             pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
+                print("dataname: {0}".format(dataname))
                 fname = self._graph_filename(dataname)
                 cat = sar._categories[dataname[0]]
                 (title, labels) = sar_metadata.get_labels_title(dataname)
-                sar.plottimeseries(dataname, title, labels, fname)
+                sar.plottimeseries(sorted(dataname, key=natural_sort_key), title,
+                    sorted(labels, key=natural_sort_key), fname)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
