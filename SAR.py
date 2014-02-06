@@ -34,7 +34,6 @@ import logging
 import datetime
 import re
 import os
-import os.path
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -257,10 +256,10 @@ class SAR:
             LOGGER.debug('Recognised column headers line: "{0}"'.format(line))
             hdrs = [h for h in matches.group(2).split(' ') if h != '']
             LOGGER.debug("Column headers: %s" % hdrs)
-            return (matches.group(1), hdrs)
+            return matches.group(1), hdrs
         else:
             LOGGER.debug('Not recognised as a column headers line: "{0}" using pattern "{1}"'.format(line, restr))
-            return (None, None)
+            return None, None
 
     def _do_start(self, line):
         """ Actions for the "start" state of the parser. """
@@ -288,7 +287,7 @@ class SAR:
             if hre is None:
                 raise SARError('Line {0}: column header "{1}" unknown {2}'.format(self._linecount, hdr))
             regexp = regexp + r'\s+(' + str(hre) + r')'
-        regexp = regexp + r'\s*$'
+        regexp += r'\s*$'
         LOGGER.debug('Regular expression to match data lines: "{0}"'.format(regexp))
         return regexp
 
@@ -649,7 +648,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
                 plt.savefig(fname, bbox_inches='tight')
         except:
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
             import sys
             sys.exit(-1)
 

@@ -21,8 +21,7 @@ import re
 
 # Column titles that represent another layer of indexing
 # i.e. timestamp -> index -> another column -> datum
-_indexcolumn = set(['CPU', 'IFACE', 'DEV', 'INTR', 'FAN', 'TEMP', 'BUS',
-    'FILESYSTEM', 'TTY'])
+_indexcolumn = {'CPU', 'IFACE', 'DEV', 'INTR', 'FAN', 'TEMP', 'BUS', 'FILESYSTEM', 'TTY'}
 
 # Regular expressions to recognise various types of data found in sar
 # files, to be used as building blocks.
@@ -284,13 +283,6 @@ base_graphs = {
                  'desc': """Number of pages from the process address space the
                  system has swapped out per second. This value is always zero
                  with post 2.5 kernels"""},
-    'tps':      {'cat': 'I/O',
-                 'regexp': _number_with_decimals_regexp,
-                 'desc': """Total number of transfers per second that were
-                 issued to physical devices. A transfer is an I/O request to a
-                 physical device. Multiple logical requests can be combined
-                 into a single I/O request to the device. A transfer is of
-                 indeterminate size"""},
     'rtps':     {'cat': 'I/O',
                  'regexp': _number_with_decimals_regexp,
                  'desc': """Total number of read requests per second issued to
@@ -1221,23 +1213,11 @@ base_graphs = {
 }
 
 def get_regexp(name):
-    k = {}
-    k['IFACE'] = _interface_name_regexp
-    k['DEV'] = _device_name_regexp
-    k['CPU'] = _cpu_regexp
-    k['INTR'] = _intr_regexp
-    k['iNNN/s'] = _interrupts_regexp
-    k['BUS'] = _integer_regexp
-    k['FAN'] = _integer_regexp
-    k['DEVICE'] = _interface_name_regexp
-    k['TEMP'] = _integer_regexp
-    k['TTY'] = _integer_regexp
-    k['idvendor'] = _hex_regexp
-    k['idprod'] = _hex_regexp
-    k['manufact'] = _usb_name_regexp
-    k['product'] = _usb_name_regexp
-    k['MHz'] = _number_with_decimals_regexp
-    k['FILESYSTEM'] = _fs_name_regexp
+    k = {'IFACE': _interface_name_regexp, 'DEV': _device_name_regexp, 'CPU': _cpu_regexp, 'INTR': _intr_regexp,
+         'iNNN/s': _interrupts_regexp, 'BUS': _integer_regexp, 'FAN': _integer_regexp, 'DEVICE': _interface_name_regexp,
+         'TEMP': _integer_regexp, 'TTY': _integer_regexp, 'idvendor': _hex_regexp, 'idprod': _hex_regexp,
+         'manufact': _usb_name_regexp, 'product': _usb_name_regexp, 'MHz': _number_with_decimals_regexp,
+         'FILESYSTEM': _fs_name_regexp}
     if k.has_key(name):
         return k[name]
 
@@ -1262,15 +1242,15 @@ def get_labels_title(names):
         except: # It is not in the "CPU#0#%idle" form
             # Contemplate a combined simple graph like ldavg-{1,5,15}
             if len(names) != 1:
-                return (" ".join(names), names)
+                return " ".join(names), names
 
             if not base_graphs.has_key(names[0]):
-                return (names[0], names[0])
+                return names[0], names[0]
             if base_graphs[names[0]].has_key('label'):
                 s = base_graphs[names[0]]['label']
-                return (s, s)
+                return s, s
             else:
-                return (names[0], names[0])
+                return names[0], names[0]
         cat[c] = True
         key[k] = True
         perf[p] = True
@@ -1285,12 +1265,12 @@ def get_labels_title(names):
         c = cat.keys()[0]
         title = "%s" % (perf.keys()[0])
         labels = ["".join(i.split('#')[1:2]) for i in names]
-        return (title, labels)
+        return title, labels
 
     raise Exception("get_labels_title() error on %s" % names)
 
 def list_all_categories():
-    l = set(['Load', 'Files', 'I/O', 'TTY', 'Network', 'Power', 'Intr'])
+    l = {'Load', 'Files', 'I/O', 'TTY', 'Network', 'Power', 'Intr'}
     for i in base_graphs.keys():
         cat = base_graphs[i]['cat']
         l.update([cat])
