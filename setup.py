@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import sys
 
 try:
     from setuptools import setup

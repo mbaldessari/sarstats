@@ -30,13 +30,15 @@ from itertools import repeat
 import sys
 import argparse
 import csv
-import dateutil
 import hashlib
 import os
-import os.path
 import re
 import shutil
 import tempfile
+from hashlib import sha1
+import multiprocessing
+
+import dateutil
 from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus import PageBreak, Image, Spacer
 from reportlab.platypus.paragraph import Paragraph
@@ -45,12 +47,9 @@ from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.platypus.frames import Frame
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4, landscape
-from hashlib import sha1
-
-import multiprocessing
-
 import SAR
 import sar_metadata
+
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
@@ -90,7 +89,7 @@ class MyDocTemplate(BaseDocTemplate):
     # appropriate data.
 
     def afterFlowable(self, flowable):
-        "Registers TOC entries."
+        """Registers TOC entries."""
         if flowable.__class__.__name__ == 'Paragraph':
             text = flowable.getPlainText()
             style = flowable.style.name
@@ -270,7 +269,7 @@ class SarStats(object):
         secs = int(sar.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
         if secs > 0:
-            s = s + " %s seconds" % secs
+            s += " %s seconds" % secs
 
         self.story.append(Paragraph(s, small_centered))
 
