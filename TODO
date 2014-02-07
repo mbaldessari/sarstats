@@ -1,7 +1,7 @@
 Enhancement requests
 --------------------
 * Fix displaying when many datapoints are present in a single graph. There are multiple cases:
-  1) CPU counters wih many CPUs. I.e. 128 CPUs and %idle -> graph is extremely small and the legend
+  1) CPU counters with many CPUs. I.e. 128 CPUs and %idle -> graph is extremely small and the legend
   is very tall. Trying to make the legend less tall, seems to not solve the issue or is triggering
   other weird behaviour in matplotlib because the graph becomes very small.
   Solution: Split the graphs in multiples (CPUs 1-64 and CPUs 65-127)
@@ -13,7 +13,8 @@ Enhancement requests
   Solution: Group the graphs by dev? Parse sosreport if available and extrapolate the higher layers and graph an avg
   of the relevant devices comprising the upper layer (LV,VG,mpath,..)
   
-* Make "LINUX RESTART" states visible in the graphs or add a note about it
+* Make "LINUX RESTART" states visible in the graphs or add a note about it and if there is a sosreport tree available
+  verify the reboots as they are not always captured by sar with a "LINUX RESTART"
 
 * What to do with N/A values
 
@@ -24,3 +25,5 @@ Enhancement requests
 * Add graph unit in metadata and labels
 
 * Test sar files where the collection interval is 1 or 2 minutes
+
+* Resolve interrupt names if /var/log/sa/sarXY is part of an sosreport tree
