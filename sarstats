@@ -57,6 +57,10 @@ THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
+# No more than the following nr of graphs in a single page 
+# per default
+MAXGRAPHS_IN_PAGE = 64
+
 DEFAULT_IMG_EXT = ".png"
 
 # Inch graph size
@@ -110,15 +114,14 @@ class MyDocTemplate(BaseDocTemplate):
 
 def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
-    fname = sar_stats_obj._graph_filename(dataname)
-    (title, labels) = sar_metadata.get_labels_title(dataname)
-    sar_obj.plottimeseries(dataname, title, labels, fname, sar_stats.extra_labels)
+    fname = sar_stats_obj._graph_filename(dataname[1][0])
+    sar_obj.plottimeseries(dataname, fname, sar_stats_obj.extra_labels)
     sys.stdout.write(".")
     sys.stdout.flush()
 
 class SarStats(object):
     """Creates a pdf file given a parsed SAR object"""
-    def __init__(self):
+    def __init__(self, maxgraphs = MAXGRAPHS_IN_PAGE):
         """Initialize class"""
         # Temporary dir where images are stored (one per graph)
         # NB: This is done to keep the memory usage constant
@@ -126,6 +129,7 @@ class SarStats(object):
         # we could use > 12GB RAM for a simple sar file)
         self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
         self.story = []
+        self.maxgraphs = maxgraphs
 
     def close(self):
         """Removes temporary directory and files"""
@@ -145,6 +149,9 @@ class SarStats(object):
         fname = os.path.join(self._tempdir, digest.hexdigest() + DEFAULT_IMG_EXT)
         return fname
 
+    def chunks(self, l, n):
+        """Split the list l in chunks of at most n in size"""
+        return [l[i:i+n] for i in range(0, len(l), n)]
 
     def graphs_order(self, sar, cat, skiplist=[]):
         """ Order in which to present all graphs.
@@ -177,20 +184,29 @@ class SarStats(object):
         l = []
         for i in cat:
             for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
-                # First we add the simple data types from the category
-                # Small hack to have an additional graph with ldavg-{1,5,15}
-                if j == 'ldavg-1' and i == 'Load':
-                    l.append(['ldavg-1', 'ldavg-5', 'ldavg-15'])
                 if sar_metadata.base_graphs.has_key(j) and \
                     sar_metadata.base_graphs[j]['cat'] == i and \
                     j not in skiplist:
-                    l.append([j])
+                        entry = sar_metadata.get_labels_title([j])
+                        l.append([entry, [j]])
             if c.has_key(i):
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the skip_list
-                    b = [x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0]
-                    # FIXME is a graph has more than 64 columns we should do something here
-                    l.append(b)
+                    b = sorted([x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0],
+                            key=SAR.natural_sort_key)
+                    # If the graph has more than X columns we split it
+                    if len(b) > self.maxgraphs:
+                        chunks = self.chunks(b, self.maxgraphs)
+                        counter = 1
+                        for chunk in chunks:
+                            entry = sar_metadata.get_labels_title(chunk)
+                            s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
+                            newentry = (s, entry[1])
+                            l.append(([newentry, chunk]))
+                            counter += 1
+                    else:
+                        entry = sar_metadata.get_labels_title(b)
+                        l.append([entry, b])
 
         return l
 
@@ -299,19 +315,17 @@ class SarStats(object):
             pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
-                fname = self._graph_filename(dataname)
-                cat = sar._categories[dataname[0]]
-                (title, labels) = sar_metadata.get_labels_title(dataname)
-                sar.plottimeseries(sorted(dataname, key=natural_sort_key), title,
-                    sorted(labels, key=natural_sort_key), fname, self.extra_labels)
+                fname = self._graph_filename(dataname[1][0])
+                sar.plottimeseries(dataname, fname, self.extra_labels)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
         # All the image files are created let's go through the files and create the pdf
         for dataname in self.graphs_order(sar, category_order, skip_list):
-            fname = self._graph_filename(dataname)
-            cat = sar._categories[dataname[0]]
-            (title, labels) = sar_metadata.get_labels_title(dataname)
+            fname = self._graph_filename(dataname[1][0])
+            cat = sar._categories[dataname[1][0]]
+            title = dataname[0][0]
+            #labels = dataname[0][1]
             if not used_cat.has_key(cat): # We've not seen the category before
                 self.do_heading(cat, h1)
                 used_cat[cat] = True
@@ -320,7 +334,7 @@ class SarStats(object):
             self.do_heading(title, h2_invisible)
             self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
             self.story.append(Spacer(1, 0.2*inch))
-            desc = sar_metadata.get_desc(dataname)
+            desc = sar_metadata.get_desc(dataname[1])
             for (name, desc) in desc:
                 self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), normal))
 
@@ -343,8 +357,6 @@ class SarStats(object):
             writer.writerow(s)
 
 if __name__ == '__main__':
-    sar_stats = SarStats()
-
     parser = argparse.ArgumentParser(description=
         "%s - analizes sar output files and produces a pdf report" % sys.argv[0],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -383,7 +395,12 @@ if __name__ == '__main__':
         2014-01-02 13:15:15,bar
         Will add two extra labels on each graph at those times""")
 
+    parser.add_argument('--maxgraphs', dest='maxgraphs', default=MAXGRAPHS_IN_PAGE, help="""
+        Sets the maximum number of graphs in a single page""")
     args = parser.parse_args()
+
+    sar_stats = SarStats(int(args.maxgraphs))
+
     # If the only argument is a directory fetch all the sar files and order
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):

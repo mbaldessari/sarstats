@@ -583,13 +583,18 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
 
         return ymax
 
-    def plottimeseries(self, datanames, title, axis_labels, fname, extra_labels):
+    def plottimeseries(self, data, fname, extra_labels):
         """ Plot timeseries data (of type dataname).
             The data can be either simple (one or no datapoint at any point in time,
-            or indexed (by indextype).
+            or indexed (by indextype). dataname is assumed to be in the form of
+            [title, [label1, label2, ...], [data1, data2, ...]]
         """
+        title = data[0][0]
+        axis_labels = data[0][1]
+        datanames = data[1]
+
         if not isinstance(datanames, list):
-            raise Exception("plottimeseries expects a list of datanames: %s" % datanames)
+            raise Exception("plottimeseries expects a list of datanames: %s" % data)
 
         fig = plt.figure(figsize=(10.5, 6.5))
         axes = fig.add_subplot(111)
@@ -619,7 +624,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
         if extra_labels:
             for extra in extra_labels:
                 axes.annotate(extra[1], xy=(mdates.date2num(extra[0]),
-                    self.find_max(extra[0], datanames)), xycoords='data',
+                    self.find_max(extra[0], datanames[1])), xycoords='data',
                     xytext=(30, 30), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->",
                         connectionstyle="arc3,rad=.2")
