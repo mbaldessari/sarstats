@@ -22,7 +22,9 @@ USE_PROFILER = True
 TOP_PROFILED_FUNCTIONS = 15
 
 import SAR
-import sarstats
+import imp
+
+sarstats = imp.load_source('sarstats', 'sarstats')
 
 SAR_FILES = 'sar-files'
 
