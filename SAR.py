@@ -47,6 +47,10 @@ import sosreport
 # If the there are more than 50 plots in a graph we move the legend to
 # the bottom
 LEGEND_THRESHOLD = 50
+
+# Mark reboots calculated from sosreport in each graph
+SHOW_REBOOTS = False
+
 logging.basicConfig()
 LOGGER = logging.getLogger("SAR reports parser")
 LOGGER.setLevel(logging.WARN)
@@ -591,6 +595,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
             The data can be either simple (one or no datapoint at any point in time,
             or indexed (by indextype). dataname is assumed to be in the form of
             [title, [label1, label2, ...], [data1, data2, ...]]
+            extra_labels is a list of tuples [(datetime, 'label'), ...]
         """
         title = data[0][0]
         axis_labels = data[0][1]
@@ -632,6 +637,20 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
                     arrowprops=dict(arrowstyle="->",
                         connectionstyle="arc3,rad=.2")
                     )
+
+        # If we have a sosreport draw the reboots
+        if SHOW_REBOOTS and self.sosreport != None and self.sosreport.reboots != None:
+            reboots = self.sosreport.reboots
+            for reboot in reboots.keys():
+                rboot_x = mdates.date2num(reboots[reboot]['date'])
+                (xmin, xmax) = plt.xlim()
+                (ymin, ymax) = plt.ylim()
+                if rboot_x < xmin or rboot_x > xmax:
+                    continue
+
+                axes.annotate('r', xy=(mdates.date2num(reboots[reboot]['date']), ymin),
+                    xycoords='data', xytext=(-30, -30), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->", color='blue', connectionstyle="arc3,rad=-0.1"))
 
         lgd = None
         # Draw the legend only when needed

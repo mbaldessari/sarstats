@@ -1,10 +1,17 @@
 from dateutil import parser
+from dateutil.relativedelta import relativedelta
+import datetime
 import os
 import os.path
 import re
 import sys
 
-# Interrupt parsine routines taken from python-linux-procfs (GPLv2)
+# Interrupt parsing routines taken from python-linux-procfs (GPLv2)
+#
+def natural_sort_key(s):
+    _nsre = re.compile('([0-9]+)')
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split(_nsre, s)]
 
 class SOSReport:
     def __init__(self, path):
@@ -93,13 +100,14 @@ class SOSReport:
         'Dec  4 11:02:05 illins04 kernel: Linux version 2.6.32-279.5.2.el6.x86_64'.
         We parse messages* files because 'LINUX RESTART' in sar files is not precise"""
         # FIXME: uncompress any compressed messages files
-        # FIXME: need to solve the fact that no year is present in /var/log/messages
+        # FIXME: This is still potentially *very* fragile
         messages_dir = os.path.join(self.path, 'var/log')
         reboots = {}
         reboot_re = r'.*kernel: Linux version.*$'
-        for i in os.listdir(messages_dir):
-            if not i.startswith('messages'):
-                continue
+        files = [f for f in os.listdir(messages_dir) if f.startswith('messages')]
+        for i in sorted(files, key=natural_sort_key, reverse=True):
+            prev_month = None
+            counter = 0
             f = open(os.path.join(messages_dir, i))
             for line in f.readlines():
                 line = line.strip()
@@ -108,9 +116,22 @@ class SOSReport:
 
                 tokens = line.split()[0:3]
                 d = parser.parse(" ".join(tokens)) 
-                self.reboots[d] = True
-
-        return
+                if d.month == 1 and prev_month == 12:
+                    # We crossed a year. This means that all the dates read until now
+                    # should belong to the previous year and not the current one
+                    # FIXME: this breaks if we investigate sosreports older than one 
+                    # year :/
+                    for i in self.reboots.keys():
+                        t = self.reboots[i]['date']
+                        # Remember which dates were decremented and only do it once
+                        if i <= counter and not self.reboots[i].has_key('decremented'):
+                            self.reboots[i]['date'] = t - relativedelta(years=1)
+                            self.reboots[i]['decremented'] = True
+                prev_month = d.month
+                self.reboots[counter] = {}
+                self.reboots[counter]['date'] = d
+                self.reboots[counter]['file'] = f
+                counter += 1
 
     def parse(self):
         self.redhatrelease = open(os.path.join(self.path,
@@ -120,7 +141,9 @@ class SOSReport:
         self._parse_reboots()
 
 if __name__ == '__main__':
-    sosreport = SOSReport('./demosos2')
+    sosreport = SOSReport('./demosos')
     sosreport.parse()
-    for i in sosreport.interrupts.keys():
-        print("{0}: {1}".format(i, sosreport.interrupts[i]))
+    for i in sosreport.reboots.keys():
+        print("{0} - {1}".format(i, sosreport.reboots[i]))
+    #for i in sosreport.interrupts.keys():
+    #    print("{0}: {1}".format(i, sosreport.interrupts[i]))
