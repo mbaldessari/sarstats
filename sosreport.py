@@ -19,11 +19,28 @@ class SOSReport:
         self.interrupts = {}
         self.networking = {}
 
+    def _parse_network_ethtool(self):
+        sos_networking = os.path.join(self.path, 'sos_commands/networking')
+        print(self.path)
+        print(sos_networking)
+        for i in os.listdir(sos_networking):
+            if not i.startswith('ethtool_-i_'):
+                continue
+
+            dev = i.split('_')[2]
+            self.networking[dev] = {}
+            f = open(os.path.join(sos_networking, i))
+            for line in f.readlines():
+                line = line.strip()
+                (label, value) = line.split(': ')
+                self.networking[dev][label] = value
+
     def _parse_network(self):
         """Parse network configuration and create a hash like the following:
         self.network['eth0'] = {'module': 'igb', ipv4: ['10.0.0.1/24'],
         ipv6: ['fe80::2e41:38ff:feab:99e2/64'], 'firmware': '1.20', 
         'bus-info': '0000:01:00.0', 'version': '3.133'"""
+        self._parse_network_ethtool()
         return
 
     def _parse_int_entry(self, fields, line):
@@ -44,7 +61,7 @@ class SOSReport:
     def _parse_interrupts(self):
         """Parse /proc/interrupts in order to associate the interrupt number
         to the proper device"""
-        intr_file = os.path.join(self.path, '/proc/interrupts')
+        intr_file = os.path.join(self.path, 'proc/interrupts')
         f = open(intr_file)
         for line in f.readlines():
             line = line.strip()
@@ -69,11 +86,12 @@ class SOSReport:
     def parse(self):
         self.redhatrelease = open(os.path.join(self.path,
             'etc/redhat-release')).read().strip()
-        self._parse_network()
         self._parse_interrupts()
+        self._parse_network()
 
 if __name__ == '__main__':
     sosreport = SOSReport('./demosos')
     sosreport.parse()
     print(sosreport.redhatrelease)
-    print(sosreport.interrupts)
+    #print(sosreport.interrupts)
+    print(sosreport.networking)
