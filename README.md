@@ -9,6 +9,7 @@ less memory and make it multi-processor capable.
 demo
 ====
 Here you can see how such a pdf looks like: http://acksyn.org/software/sarstats/sar19.pdf
+And a more complex example (~60MB): http://acksyn.org/software/sarstats/sar01.pdf
 
 Q&A
 ===
