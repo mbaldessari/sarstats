@@ -1,10 +1,5 @@
 Enhancement requests
 --------------------
-* Make "LINUX RESTART" states visible in the graphs or add a note about it and if there is a sosreport tree available
-  verify the reboots as they are not always captured by sar with a "LINUX RESTART"
-
-* What to do with N/A values
-
 * For every description add the exact kernel counter involved w/ proc path and also
   add a proper comprehensible explanation. For example in 'loadavg-1' add explanation
   when a load is high and how it relates to the number of CPUs
