@@ -115,7 +115,8 @@ class MyDocTemplate(BaseDocTemplate):
 def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
     fname = sar_stats_obj._graph_filename(dataname[1][0])
-    sar_obj.plottimeseries(dataname, fname, sar_stats_obj.extra_labels)
+    sar_obj.plottimeseries(dataname, fname, sar_stats_obj.extra_labels,
+            sar_stats_obj.showreboots)
     sys.stdout.write(".")
     sys.stdout.flush()
 
@@ -230,10 +231,11 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels_csv=''):
+        labels_csv='', show_reboots=False):
         """ Parse sar data and produce graphs of the parsed data. """
         sar = self.sar_obj
         self.extra_labels = None
+        self.showreboots = show_reboots
         if len(labels_csv) > 0:
             self.extra_labels = self.parse_labels_csv(labels_csv)
 
@@ -317,7 +319,7 @@ class SarStats(object):
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
                 fname = self._graph_filename(dataname[1][0])
-                sar.plottimeseries(dataname, fname, self.extra_labels)
+                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -399,6 +401,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--maxgraphs', dest='maxgraphs', default=MAXGRAPHS_IN_PAGE, help="""
         Sets the maximum number of graphs in a single page""")
+
+    parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
+        If the sar file is part of an existing sosreport, it will try to show
+        the system reboot times in the graphs""")
     args = parser.parse_args()
 
     # If the only argument is a directory fetch all the sar files and order
@@ -439,7 +445,7 @@ if __name__ == '__main__':
         selected_categories = []
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
-        args.labels_file)
+        args.labels_file, args.showreboots)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()

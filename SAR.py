@@ -48,9 +48,6 @@ import sosreport
 # the bottom
 LEGEND_THRESHOLD = 50
 
-# Mark reboots calculated from sosreport in each graph
-SHOW_REBOOTS = False
-
 logging.basicConfig()
 LOGGER = logging.getLogger("SAR reports parser")
 LOGGER.setLevel(logging.WARN)
@@ -590,7 +587,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
 
         return ymax
 
-    def plottimeseries(self, data, fname, extra_labels):
+    def plottimeseries(self, data, fname, extra_labels, showreboots=False):
         """ Plot timeseries data (of type dataname).
             The data can be either simple (one or no datapoint at any point in time,
             or indexed (by indextype). dataname is assumed to be in the form of
@@ -639,7 +636,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
                     )
 
         # If we have a sosreport draw the reboots
-        if SHOW_REBOOTS and self.sosreport != None and self.sosreport.reboots != None:
+        if showreboots and self.sosreport != None and self.sosreport.reboots != None:
             reboots = self.sosreport.reboots
             for reboot in reboots.keys():
                 rboot_x = mdates.date2num(reboots[reboot]['date'])
