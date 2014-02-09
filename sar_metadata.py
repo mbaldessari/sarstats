@@ -1229,7 +1229,7 @@ def get_regexp(name):
 
     raise Exception("regexp for %s could not be found" % name)
 
-def get_labels_title(names):
+def get_labels_title(names, sar_obj=None):
     if not isinstance(names, list):
         raise Exception("get_labels_title expects a list: %s" % names)
 
@@ -1264,6 +1264,16 @@ def get_labels_title(names):
     if len(perf.keys()) == 1:
         c = cat.keys()[0]
         title = "%s" % (perf.keys()[0])
+        # It is an interrupt and sosreport exists and has interrupts dictionary
+        # hence we print the device that generated it in the title
+        if re.match('i[0-9]*/s', title) and sar_obj != None \
+            and sar_obj.sosreport != None and sar_obj.sosreport.interrupts != None:
+                try:
+                    nr_int = str(int(title[1:4]))
+                    interrupts = sar_obj.sosreport.interrupts
+                    title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]['users']))
+                except: # Just leave the original title in case of errors
+                    pass
         labels = ["".join(i.split('#')[1:2]) for i in names]
         return title, labels
 

@@ -1,5 +1,7 @@
+from dateutil import parser
 import os
 import os.path
+import re
 import sys
 
 # Interrupt parsine routines taken from python-linux-procfs (GPLv2)
@@ -9,20 +11,19 @@ class SOSReport:
         if not os.path.isdir(path):
             raise Exception("{0} does not exist".format(path))
 
-        sosxml = os.path.join(path, 'sos_reports/sosreport.xml')
-        if not os.path.exists(sosxml):
-            raise Exception("{0} does not exist".format(sosxml))
+        sospath = os.path.join(path, 'sos_reports')
+        if not os.path.exists(sospath):
+            raise Exception("{0} does not exist".format(sospath))
 
         self.path = path
         self.redhatrelease = None
         self.packages = []
         self.interrupts = {}
         self.networking = {}
+        self.reboots = {}
 
     def _parse_network_ethtool(self):
         sos_networking = os.path.join(self.path, 'sos_commands/networking')
-        print(self.path)
-        print(sos_networking)
         for i in os.listdir(sos_networking):
             if not i.startswith('ethtool_-i_'):
                 continue
@@ -32,6 +33,8 @@ class SOSReport:
             f = open(os.path.join(sos_networking, i))
             for line in f.readlines():
                 line = line.strip()
+                if len(line) <= 1:
+                    continue
                 (label, value) = line.split(': ')
                 self.networking[dev][label] = value
 
@@ -83,15 +86,41 @@ class SOSReport:
         mapped to an existing physical device"""
         return
 
+    def _parse_reboots(self):
+        """Parse /var/log/messages and find out when the machine rebooted.
+        Returns an array of datetimes containing the times of reboot. First 
+        uncompress /var/log/messages*, go through them and search for lines like 
+        'Dec  4 11:02:05 illins04 kernel: Linux version 2.6.32-279.5.2.el6.x86_64'.
+        We parse messages* files because 'LINUX RESTART' in sar files is not precise"""
+        # FIXME: uncompress any compressed messages files
+        # FIXME: need to solve the fact that no year is present in /var/log/messages
+        messages_dir = os.path.join(self.path, 'var/log')
+        reboots = {}
+        reboot_re = r'.*kernel: Linux version.*$'
+        for i in os.listdir(messages_dir):
+            if not i.startswith('messages'):
+                continue
+            f = open(os.path.join(messages_dir, i))
+            for line in f.readlines():
+                line = line.strip()
+                if not re.match(reboot_re, line):
+                    continue
+
+                tokens = line.split()[0:3]
+                d = parser.parse(" ".join(tokens)) 
+                self.reboots[d] = True
+
+        return
+
     def parse(self):
         self.redhatrelease = open(os.path.join(self.path,
             'etc/redhat-release')).read().strip()
         self._parse_interrupts()
         self._parse_network()
+        self._parse_reboots()
 
 if __name__ == '__main__':
-    sosreport = SOSReport('./demosos')
+    sosreport = SOSReport('./demosos2')
     sosreport.parse()
-    print(sosreport.redhatrelease)
-    #print(sosreport.interrupts)
-    print(sosreport.networking)
+    for i in sosreport.interrupts.keys():
+        print("{0}: {1}".format(i, sosreport.interrupts[i]))

@@ -121,7 +121,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
 
 class SarStats(object):
     """Creates a pdf file given a parsed SAR object"""
-    def __init__(self, maxgraphs = MAXGRAPHS_IN_PAGE):
+    def __init__(self, sar_obj, maxgraphs = MAXGRAPHS_IN_PAGE):
         """Initialize class"""
         # Temporary dir where images are stored (one per graph)
         # NB: This is done to keep the memory usage constant
@@ -130,6 +130,7 @@ class SarStats(object):
         self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
         self.story = []
         self.maxgraphs = maxgraphs
+        self.sar_obj = sar_obj
 
     def close(self):
         """Removes temporary directory and files"""
@@ -187,7 +188,7 @@ class SarStats(object):
                 if sar_metadata.base_graphs.has_key(j) and \
                     sar_metadata.base_graphs[j]['cat'] == i and \
                     j not in skiplist:
-                        entry = sar_metadata.get_labels_title([j])
+                        entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
                         l.append([entry, [j]])
             if c.has_key(i):
                 for j in range(len(c[i])):
@@ -199,13 +200,13 @@ class SarStats(object):
                         chunks = self.chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
-                            entry = sar_metadata.get_labels_title(chunk)
+                            entry = sar_metadata.get_labels_title(chunk, sar_obj=self.sar_obj)
                             s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
                             newentry = (s, entry[1])
                             l.append(([newentry, chunk]))
                             counter += 1
                     else:
-                        entry = sar_metadata.get_labels_title(b)
+                        entry = sar_metadata.get_labels_title(b, sar_obj=self.sar_obj)
                         l.append([entry, b])
 
         return l
@@ -228,10 +229,10 @@ class SarStats(object):
 
         return extra_labels
 
-    def graph(self, sar, sar_files, skip_list, output_file='out.pdf', only_categories=[],
+    def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
         labels_csv=''):
         """ Parse sar data and produce graphs of the parsed data. """
-
+        sar = self.sar_obj
         self.extra_labels = None
         if len(labels_csv) > 0:
             self.extra_labels = self.parse_labels_csv(labels_csv)
@@ -344,7 +345,8 @@ class SarStats(object):
         doc = MyDocTemplate(output_file, pagesize=landscape(A4))
         doc.multiBuild(self.story)
 
-    def export_csv(self, sar, output_file):
+    def export_csv(self, output_file):
+        sar = self.sar_obj
         f = open(output_file, 'wb')
         writer = csv.writer(f, delimiter=',')
         all_keys = list(sar.available_data_types())
@@ -399,8 +401,6 @@ if __name__ == '__main__':
         Sets the maximum number of graphs in a single page""")
     args = parser.parse_args()
 
-    sar_stats = SarStats(int(args.maxgraphs))
-
     # If the only argument is a directory fetch all the sar files and order
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
@@ -424,9 +424,10 @@ if __name__ == '__main__':
         print("{0}\n".format(sorted(sar.available_data_types())))
         sys.exit(0)
 
+    sar_stats = SarStats(sar, int(args.maxgraphs))
     if args.csv_file != '':
         print("Export to csv: {0}".format(args.csv_file))
-        sar_stats.export_csv(sar, args.csv_file)
+        sar_stats.export_csv(args.csv_file)
         sys.exit(0)
 
     print("Building graphs: ", end='')
@@ -437,7 +438,7 @@ if __name__ == '__main__':
     else:
         selected_categories = []
 
-    sar_stats.graph(sar, args.sar_files, skip_list, args.output_file, selected_categories,
+    sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
         args.labels_file)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))

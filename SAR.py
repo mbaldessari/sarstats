@@ -42,6 +42,7 @@ import matplotlib.cm as cm
 import numpy
 
 import sar_metadata
+import sosreport
 
 # If the there are more than 50 plots in a graph we move the legend to
 # the bottom
@@ -142,10 +143,12 @@ class SAR:
         for i in range(4):
             a = os.path.split(a)[0]
 
-        self.has_sos = False
-        if os.path.isdir(os.path.join(a, 'sos_commands')) and \
-            os.path.islink(os.path.join(a, 'uptime')):
-            self.has_sos = True
+        self.sosreport = None
+        try:
+            self.sosreport = sosreport.SOSReport(a)
+            self.sosreport.parse()
+        except:
+            pass
 
     # This walks the _data structure and removes all keys that have value
     # 0 in *all* timestamps
