@@ -231,7 +231,7 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels_csv='', show_reboots=False):
+        labels_csv='', show_reboots=False, custom_graphs=''):
         """ Parse sar data and produce graphs of the parsed data. """
         sar = self.sar_obj
         self.extra_labels = None
@@ -308,6 +308,26 @@ class SarStats(object):
         else:
             category_order = only_categories
 
+        # Custom graphs are always created in non threaded mode as their number is
+        # typically quite low. Graph descriptions are in the form:
+        # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
+        custom_graph_list = {}
+        if custom_graphs != '':
+            try:
+                for i in custom_graphs.split(';'):
+                    key = i.split(':')[0]
+                    values = i.split(':')[1].split(',')
+                    custom_graph_list[key] = values
+            except:
+                raise Exception("Error in parsing custom graphs: {0}".format(custom_graphs))
+
+            for graph in custom_graph_list.keys():
+                graphs = custom_graph_list[graph]
+                fname = self._graph_filename(graphs)
+                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots)
+                sys.stdout.write(".")
+                sys.stdout.flush()
+
         count = 0
         used_cat = {}
         # Let's create all the images either via multiple threads or in sequence
@@ -322,7 +342,7 @@ class SarStats(object):
                 sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
-
+        
         # All the image files are created let's go through the files and create the pdf
         for dataname in self.graphs_order(sar, category_order, skip_list):
             fname = self._graph_filename(dataname[1][0])
@@ -343,6 +363,22 @@ class SarStats(object):
 
             self.story.append(PageBreak())
             count += 1
+
+        if len(custom_graph_list.keys()) > 0:
+            for graph in custom_graph_list.keys():
+                graphs = custom_graph_list[graph]
+                fname = self._graph_filename(graphs)
+                cat = 'Custom'
+                if not used_cat.has_key(cat): # We've not seen the category before
+                    self.do_heading(cat, h1)
+                    used_cat[cat] = True
+                else:
+                    self.story.append(Paragraph(cat, normal))
+                title = graph
+                self.do_heading(title, h2_invisible)
+                self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
+                self.story.append(Spacer(1, 0.2*inch))
+
 
         doc = MyDocTemplate(output_file, pagesize=landscape(A4))
         doc.multiBuild(self.story)
@@ -405,6 +441,13 @@ if __name__ == '__main__':
     parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
         If the sar file is part of an existing sosreport, it will try to show
         the system reboot times in the graphs""")
+
+    parser.add_argument('--custom', dest='custom_graphs', default='', help="""
+        Add custom graphs with --custom 'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'. 
+        This adds two pages in the 'Custome' category: Graph 'foo' containing 
+        udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
+        With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
+
     args = parser.parse_args()
 
     # If the only argument is a directory fetch all the sar files and order
@@ -450,7 +493,7 @@ if __name__ == '__main__':
         selected_categories = []
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
-        args.labels_file, args.showreboots)
+        args.labels_file, args.showreboots, args.custom_graphs)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()
