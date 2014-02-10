@@ -411,15 +411,20 @@ if __name__ == '__main__':
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
         s = {}
-        files = [f for f in os.listdir(args.sar_files[0]) if f.startswith('sar')]
+        root = args.sar_files[0]
+        files = [f for f in os.listdir(root) if f.startswith('sar')]
         for i in files:
             if i.strip().startswith('sar'):
-                f = os.path.join(args.sar_files[0], i)
+                f = os.path.join(root, i)
                 s[os.path.getmtime(f)] = f
 
         args.sar_files = []
         for i in sorted(s.keys()):
             args.sar_files.append(s[i])
+
+        if len(args.sar_files) == 0:
+            print("No sar files found in dir: {0}".format(root))
+            sys.exit(-1)
 
     for f in args.sar_files:
         print("Parsing file: {0}".format(f))
