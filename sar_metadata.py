@@ -596,9 +596,7 @@ base_graphs = {
                  'desc': """Total number of bytes received per second"""},
     'txbyt/s':  {'cat': 'Network',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """Total number of bytes transmitted per
-                 'regexp': _number_with_decimals_regexp,
-                 second"""},
+                 'desc': """Total number of bytes transmitted per second"""},
     'rxcmp/s':  {'cat': 'Network',
                  'regexp': _number_with_decimals_regexp,
                  'desc': """Number of compressed packets received per second
