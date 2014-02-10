@@ -411,11 +411,11 @@ if __name__ == '__main__':
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
         s = {}
-        for root, dirs, files in os.walk(args.sar_files[0]):
-            for i in files:
-                if i.strip().startswith('sar'):
-                    f = os.path.join(root, i)
-                    s[os.path.getmtime(f)] = f
+        files = [f for f in os.listdir(args.sar_files[0]) if f.startswith('sar')]
+        for i in files:
+            if i.strip().startswith('sar'):
+                f = os.path.join(args.sar_files[0], i)
+                s[os.path.getmtime(f)] = f
 
         args.sar_files = []
         for i in sorted(s.keys()):
