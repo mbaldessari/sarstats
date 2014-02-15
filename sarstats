@@ -477,7 +477,10 @@ if __name__ == '__main__':
         sar.parse()
 
     if args.list_graphs:
-        print("{0}\n".format(sorted(sar.available_data_types())))
+        print("List of graphs available:")
+        print("{0}".format(sorted(sar.available_data_types())))
+        timestamps = sorted(sar._data.keys())
+        print("Start: {0} - End: {1}".format(timestamps[0], timestamps[-1]))
         sys.exit(0)
 
     sar_stats = SarStats(sar, int(args.maxgraphs))
