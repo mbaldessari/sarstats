@@ -328,10 +328,27 @@ class SarStats(object):
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
-        count = 0
         used_cat = {}
+        if len(custom_graph_list.keys()) > 0:
+            for graph in custom_graph_list.keys():
+                graphs = custom_graph_list[graph]
+                fname = self._graph_filename(graphs)
+                cat = 'Custom'
+                if not used_cat.has_key(cat): # We've not seen the category before
+                    self.do_heading(cat, h1)
+                    used_cat[cat] = True
+                else:
+                    self.story.append(Paragraph(cat, normal))
+                title = graph
+                self.do_heading(title, h2_invisible)
+                self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
+                self.story.append(Spacer(1, 0.2*inch))
+
+        count = 0
         # Let's create all the images either via multiple threads or in sequence
-        if THREADED:
+        # FIXME: Use threaded only when there are no custom graphs otherwise we
+        # break things
+        if THREADED and len(custom_graph_list.keys()) == 0:
             pool = multiprocessing.Pool(NR_CPUS)
             l = self.graphs_order(sar, category_order, skip_list)
             f = zip(repeat(self), repeat(sar), l)
@@ -363,21 +380,6 @@ class SarStats(object):
 
             self.story.append(PageBreak())
             count += 1
-
-        if len(custom_graph_list.keys()) > 0:
-            for graph in custom_graph_list.keys():
-                graphs = custom_graph_list[graph]
-                fname = self._graph_filename(graphs)
-                cat = 'Custom'
-                if not used_cat.has_key(cat): # We've not seen the category before
-                    self.do_heading(cat, h1)
-                    used_cat[cat] = True
-                else:
-                    self.story.append(Paragraph(cat, normal))
-                title = graph
-                self.do_heading(title, h2_invisible)
-                self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
-                self.story.append(Spacer(1, 0.2*inch))
 
 
         doc = MyDocTemplate(output_file, pagesize=landscape(A4))

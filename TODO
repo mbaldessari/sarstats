@@ -10,3 +10,5 @@ Enhancement requests
 
 * Add the possibility to add custom graphs with --custom 'foo:loadavg-1,i001/s'. This would add
   a page with both graphs. This can help correlation tasks
+
+* Chase bug with --custom and THREADED = True
