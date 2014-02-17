@@ -84,9 +84,9 @@ class TestSarParsing(unittest.TestCase):
                 # Set up profiling for pdf generation
                 self.pr.enable()
 
-            stats = sarstats.SarStats()
+            stats = sarstats.SarStats(sar)
             out = "{0}.pdf".format(example)
-            stats.graph(sar, example, [], out)
+            stats.graph(example, [], out)
             if USE_PROFILER:
                 self.pr.disable()
                 s = StringIO.StringIO()
