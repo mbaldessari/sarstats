@@ -11,9 +11,17 @@ demo
 Here you can see how such a pdf looks like: http://acksyn.org/software/sarstats/sar19.pdf
 And a more complex example (~60MB): http://acksyn.org/software/sarstats/sar01.pdf
 
+The following creates a report off 'sar01' and adds a graph with three datasets (udpsck,
+rawsck,tcp-tw):
 ```
 ./sarstats --out sar01.pdf --custom 'foo:udpsck,rawsck,tcp-tw' /var/log/sa/sar01
 ```
+
+To list the names of all the possible graphs just run:
+```
+./sarstats --list /var/log/sa/sar01
+```
+
 
 Q&A
 ===
