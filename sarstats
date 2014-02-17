@@ -9,6 +9,7 @@ data contained in one or more sar reports.
 # sarstats.py - sar(1) report graphing utility
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
+#               2014  Michele Baldessari
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -405,9 +406,11 @@ if __name__ == '__main__':
 
     parser.add_argument('sar_files', metavar='sar_files', nargs='+',
         help="""Sar files to examine. It is possible to specify a single folder, in which
-        case it will look for all the sar* files and order them by file date""")
+        case it will look for all the sar* files and order them by file date. If the
+        directory containing the sar files is part of an sosreport, it will try
+        to resulve the interrupts source""")
 
-    parser.add_argument('--skip', default='lo', dest='skip_entities',
+    parser.add_argument('--skip', default='lo', dest='skip_graphs',
         help="""Graphs or entries to skip. For example adding '%%user' will
         remove that graph. Adding 'lo' will remove that interface from any 
         network graph. Use comma to separate multiple graphs to be skipped.
@@ -491,7 +494,7 @@ if __name__ == '__main__':
 
     print("Building graphs: ", end='')
 
-    skip_list = args.skip_entities.strip().split(",")
+    skip_list = args.skip_graphs.strip().split(",")
     if args.only_categories != '':
         selected_categories = args.only_categories.strip().split(",")
     else:
