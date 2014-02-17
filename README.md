@@ -36,4 +36,4 @@ Q&A
 * A: Yes, as soon as PCP is more widespread
 
 * Q: In network graphs with bonding the bond interface is never shown?
-* A: Because the underlying ethX interface has (obviously) the exact same traffic patterns and is drawn afterwards
+* A: Because, depending on the bonding mode, the underlying ethX interface has the exact same traffic patterns and is drawn afterwards
