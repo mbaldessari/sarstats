@@ -309,6 +309,25 @@ class SarStats(object):
         else:
             category_order = only_categories
 
+
+        used_cat = {}
+
+        count = 0
+        # Let's create all the images either via multiple threads or in sequence
+        # FIXME: Use threaded only when there are no custom graphs otherwise we
+        # break things
+        if THREADED:
+            pool = multiprocessing.Pool(NR_CPUS)
+            l = self.graphs_order(sar, category_order, skip_list)
+            f = zip(repeat(self), repeat(sar), l)
+            pool.map(graph_wrapper, f)
+        else:
+            for dataname in self.graphs_order(sar, category_order, skip_list):
+                fname = self._graph_filename(dataname[1][0])
+                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
+                sys.stdout.write(".")
+                sys.stdout.flush()
+
         # Custom graphs are always created in non threaded mode as their number is
         # typically quite low. Graph descriptions are in the form:
         # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
@@ -328,11 +347,6 @@ class SarStats(object):
                 sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
-
-        used_cat = {}
-        if len(custom_graph_list.keys()) > 0:
-            for graph in custom_graph_list.keys():
-                graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
                 cat = 'Custom'
                 if not used_cat.has_key(cat): # We've not seen the category before
@@ -340,26 +354,9 @@ class SarStats(object):
                     used_cat[cat] = True
                 else:
                     self.story.append(Paragraph(cat, normal))
-                title = graph
-                self.do_heading(title, h2_invisible)
+                self.do_heading(graph, h2_invisible)
                 self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
                 self.story.append(Spacer(1, 0.2*inch))
-
-        count = 0
-        # Let's create all the images either via multiple threads or in sequence
-        # FIXME: Use threaded only when there are no custom graphs otherwise we
-        # break things
-        if THREADED and len(custom_graph_list.keys()) == 0:
-            pool = multiprocessing.Pool(NR_CPUS)
-            l = self.graphs_order(sar, category_order, skip_list)
-            f = zip(repeat(self), repeat(sar), l)
-            pool.map(graph_wrapper, f)
-        else:
-            for dataname in self.graphs_order(sar, category_order, skip_list):
-                fname = self._graph_filename(dataname[1][0])
-                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
-                sys.stdout.write(".")
-                sys.stdout.flush()
         
         # All the image files are created let's go through the files and create the pdf
         for dataname in self.graphs_order(sar, category_order, skip_list):
