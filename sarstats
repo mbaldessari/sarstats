@@ -277,6 +277,12 @@ class SarStats(object):
             fontSize = 14,
             leading = 14)
 
+        mono = PS(name = 'Mono',
+            fontName = 'Courier',
+            fontSize = 16,
+            leading = 16)
+
+
         normal = PS(name = 'Normal',
             fontSize = 16,
             leading = 16)
@@ -373,8 +379,10 @@ class SarStats(object):
             self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
             self.story.append(Spacer(1, 0.2*inch))
             desc = sar_metadata.get_desc(dataname[1])
-            for (name, desc) in desc:
+            for (name, desc, detail) in desc:
                 self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), normal))
+                if detail:
+                    self.story.append(Paragraph("Counter: <i>%s</i>" % (detail), mono))
 
             self.story.append(PageBreak())
             count += 1

@@ -49,7 +49,7 @@ base_graphs = {
                  'desc': """Percentage of CPU utilization that occurred while
                  executing at the user level (application). Note that this
                  field includes time spent running virtual processors""",
-                 'detail': 'Column 1 of /proc/stat'},
+                 'detail': '%user - [/proc/stat(1)]'},
     '%usr':     {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'label': 'User Utilization (novirt %)',
@@ -58,73 +58,85 @@ base_graphs = {
                  executing at the user level (application). Note that this
                  field does NOT include time spent running virtual
                  processors""",
-                 'detail': ''},
+                 'detail': '%user [/proc/stat(1)] - %guest [/proc/stat(9)]'},
     '%system':  {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of CPU utilization that occurred while
                  executing at the system level (kernel). Note that this field
                  includes time spent servicing hardware and software
-                 interrupts"""},
+                 interrupts""",
+                 'detail': '%sys [/proc/stat(3)] + %irq [/proc/stat(6)] + %softirq[/proc/stat(7)]'},
     '%sys':     {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of CPU utilization that occurred while
                  executing at the system level (kernel). Note that this field
                  does NOT include time spent servicing hardware or software
-                 interrupts"""},
+                 interrupts""",
+                 'detail': '%sys [/proc/stat(3)]'},
     '%iowait':  {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time that the CPU or CPUs were idle
                  during which the system had an outstanding disk I/O
-                 request"""},
+                 request""",
+                 'detail': '%iowait [/proc/stat(5)]'},
     '%irq':     {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time spent by the CPU or CPUs to
-                 service hardware interrupts"""},
+                 service hardware interrupts""",
+                 'detail': '%irq [/proc/stat(6)]'},
     '%soft':    {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time spent by the CPU or CPUs to
-                 service software interrupts"""},
+                 service software interrupts""",
+                 'detail': '%softirq [/proc/stat(7)]'},
     '%nice':    {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of CPU utilization that occurred while 
-                 executing at the user level with nice priority"""},
+                 executing at the user level with nice priority""",
+                 'detail': '%nice [/proc/stat(2)]'},
     '%gnice':   {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time spent by the CPU or CPUs to run
-                 a niced guest"""},
+                 a niced guest""",
+                 'detail': '%gnice [/proc/stat(10)]'},
     '%idle':    {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time that the CPU or CPUs were idle
                  and the system did not have an outstanding disk I/O
-                 request"""},
+                 request""",
+                 'detail': '%idle [/proc/stat(4)]'},
     '%steal':   {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
                  'desc': """Percentage of time that the CPU or CPUs were idle
                  and the system did not have an outstanding disk I/O
-                 request"""},
+                 request""",
+                 'detail': '%steal [/proc/stat(8)]'},
     '%guest':   {'cat': 'Utilization',
                  'unit': 'percentage',
                  'regexp': _number_with_decimals_regexp,
                  'desc': """Percentage of time spent by the CPU or CPUs to run
-                 a virtual processor"""},
+                 a virtual processor""",
+                 'detail': '%guest [/proc/stat(9)]'},
     'runq-sz':  {'cat': 'Load',
                  'regexp': _integer_regexp,
                  'unit': 'number',
                  'desc': """Run queue length (number of tasks waiting for run
-                 time)"""},
+                 time)""",
+                 'detail': 'runq-sz [/proc/loadavg(4)]'},
     'plist-sz': {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _integer_regexp,
-                 'desc': """Number of tasks in the task list"""},
+                 'desc': """Number of tasks in the task list""",
+                 'detail': 'plist-sz [/proc/loadavg(5)]'},
     'ldavg-1':  {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _number_with_decimals_regexp,
@@ -143,28 +155,34 @@ base_graphs = {
                  <i>kernel/sched.c:calc_load()</i></link> for more details on the implementation on RHEL 5 and 6. 
                  More recent kernels moved it to 
                  <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
-                 <i>kernel/sched/proc.c:calc_load()</i></link>"""},
+                 <i>kernel/sched/proc.c:calc_load()</i></link>""",
+                 'detail': 'ldavg-1 [/proc/loadavg(1)]'},
     'ldavg-5':  {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """System load average for the past 5 minutes"""},
+                 'desc': """System load average for the past 5 minutes""",
+                 'detail': 'ldavg-5 [/proc/loadavg(2)]'},
     'ldavg-15': {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """System load average for the past 15 minutes"""},
+                 'desc': """System load average for the past 15 minutes""",
+                 'detail': 'ldavg-15 [/proc/loadavg(3)]'},
     'blocked':  {'cat': 'Load',
                  'unit': 'number',
                  'regexp': _integer_regexp,
                  'desc': """Number of tasks currently blocked, waiting for I/O
-                 to complete"""},
+                 to complete""",
+                 'detail': 'blocked [/proc/stat:procs_blocked]'},
     'proc/s':   {'cat': 'Load',
                  'unit': 'number_per_second',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """Total number of tasks created per second"""},
+                 'desc': """Total number of tasks created per second""",
+                 'detail': 'processes [/proc/stat:processes]'},
     'cswch/s':  {'cat': 'Load',
                  'unit': 'number_per_second',
                  'regexp': _number_with_decimals_regexp,
-                 'desc': """Total number of context switches per second"""},
+                 'desc': """Total number of context switches per second""",
+                 'detail': 'ctxt [/proc/stat:ctxt]'},
     'kbmemfree':{'cat': 'Memory',
                  'unit': 'kilobytes',
                  'regexp': _integer_regexp,
@@ -1312,6 +1330,8 @@ def get_category(name):
     return 'Interrupts'
 
 def get_desc(names):
+    """Given a list of graph names it returns a list of [(name, description, detail), ...]
+    list of three-element tuples. description or detail may be None"""
     if not isinstance(names, list):
         raise Exception("get_desc mandates a list: %s" % names)
 
@@ -1319,17 +1339,24 @@ def get_desc(names):
     if len(names) == 1:
         name = names[0]
         if base_graphs.has_key(name):
-            s = base_graphs[name]['desc']
-            return [[name, regex.sub(' ', s)]]
+            desc = base_graphs[name]['desc']
+            detail = None
+            if base_graphs[name].has_key('detail'):
+                detail = base_graphs[name]['detail']
+            return [[name, regex.sub(' ', desc), detail]]
 
         try:
+            # Graphs like: IFACE#eth2#rxkB/s
             (cat, key, perf) = name.split('#')
-            s = base_graphs[perf]['desc']
-            return [[perf, regex.sub(' ', s)]]
+            desc = base_graphs[perf]['desc']
+            detail = None
+            if base_graphs[perf].has_key('detail'):
+                detail = base_graphs[perf]['detail']
+            return [[perf, regex.sub(' ', desc), detail]]
         except:
             pass
         if re.match('.*i[0-9]*/s', name):
-            return [['int/s', 'Interrupts per second']]
+            return [['int/s', 'Interrupts per second', None]]
     else:
         ret = []
         previous = None
@@ -1338,18 +1365,21 @@ def get_desc(names):
                 (cat, key, perf) = i.split('#')
                 if re.match('.*i[0-9]*/s', perf):
                     if previous != 'int/s':
-                        ret.append(['int/s', 'Interrupts per second'])
+                        ret.append(['int/s', 'Interrupts per second', None])
                         previous = 'int/s'
                     continue
 
-                s = base_graphs[perf]['desc']
+                desc = base_graphs[perf]['desc']
+                detail = None
+                if base_graphs[perf].has_key('detail'):
+                    detail = base_graphs[perf]['detail']
                 if previous != perf:
-                    ret.append([perf, regex.sub(' ', s)])
+                    ret.append([perf, regex.sub(' ', desc), detail])
                     previous = perf
             except:
                 # It is a combination of simple graphs (like ldavg-{1,5,15})
-                s = base_graphs[i]['desc']
-                ret.append([i, regex.sub(' ', s)])
+                desc = base_graphs[i]['desc']
+                ret.append([i, regex.sub(' ', desc), None])
 
         return ret
 
