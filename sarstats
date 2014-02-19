@@ -72,6 +72,8 @@ def natural_sort_key(s):
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
+def ascii_date(d):
+    return "%s" % (d.strftime("%Y-%m-%d %H:%M"))
 
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
@@ -404,6 +406,34 @@ class SarStats(object):
                 s.append(sar._data[timestamps][i])
             writer.writerow(s)
 
+    def graph_ascii(self, graph):
+        """Displays a single graph in ASCII form on the terminal"""
+        rows, columns = os.popen('stty size', 'r').read().split()
+        if columns > 100: columns = 100
+        import subprocess
+        sar = self.sar_obj
+        timestamps = sorted(sar._data.keys())
+        dataset = [sar._data[d][graph] for d in timestamps]
+        gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
+        gnuplot.stdin.write("set term dumb {0} 25\n".format(columns))
+        gnuplot.stdin.write("set xdata time\n")
+        gnuplot.stdin.write('set xlabel "Time"\n')
+        gnuplot.stdin.write('set timefmt \"%Y-%m-%d %H:%M\"\n')
+        gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' % (ascii_date(timestamps[0]),
+            ascii_date(timestamps[-1])))
+        gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
+        gnuplot.stdin.write('set datafile separator ","\n')
+        gnuplot.stdin.write('set autoscale y\n')
+        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, sar._file))
+
+        gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
+        for i,j in zip(timestamps, dataset):
+            s = '\"%s\",%f\n' % (ascii_date(i), j)
+            gnuplot.stdin.write(s)
+
+        gnuplot.stdin.write("e\n")
+        gnuplot.stdin.flush()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=
         "%s - analizes sar output files and produces a pdf report" % sys.argv[0],
@@ -458,6 +488,9 @@ if __name__ == '__main__':
         udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
         With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
 
+    parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
+        Display a single graph on the terminal. (Requires installed gnuplot)""")
+
     args = parser.parse_args()
 
     # If the only argument is a directory fetch all the sar files and order
@@ -495,6 +528,10 @@ if __name__ == '__main__':
     if args.csv_file != '':
         print("Export to csv: {0}".format(args.csv_file))
         sar_stats.export_csv(args.csv_file)
+        sys.exit(0)
+
+    if args.ascii_graph != '':
+        sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
 
     print("Building graphs: ", end='')
