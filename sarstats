@@ -406,15 +406,20 @@ class SarStats(object):
                 s.append(sar._data[timestamps][i])
             writer.writerow(s)
 
-    def graph_ascii(self, graph):
+    def graph_ascii(self, graph, def_columns=80):
         """Displays a single graph in ASCII form on the terminal"""
         rows, columns = os.popen('stty size', 'r').read().split()
-        if columns > 100: columns = 100
+        if columns > def_columns: columns = def_columns
         import subprocess
         sar = self.sar_obj
         timestamps = sorted(sar._data.keys())
         dataset = [sar._data[d][graph] for d in timestamps]
-        gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
+        try:
+            gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
+        except Exception, e:
+            print("Error launching gnuplot: {0}".format(e))
+            sys.exit(-1)
+
         gnuplot.stdin.write("set term dumb {0} 25\n".format(columns))
         gnuplot.stdin.write("set xdata time\n")
         gnuplot.stdin.write('set xlabel "Time"\n')

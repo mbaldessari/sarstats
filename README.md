@@ -21,6 +21,36 @@ To list the names of all the possible graphs just run:
 ```
 ./sarstats --list /var/log/sa/sar01
 ```
+
+It is also possible to print a single graph in ascii format:
+```
+./sarstats --ascii 'tcp/s' tests/sar-files/1/sar19
+
+                           tcp/s - tests/sar-files/1/sar19
+
+   0.01 +++A-+--+--A--+--+--A--+-+--+--+--+--A--+--+-+--+--+--+--+--+--A--+++
+        |  * +     *     +  *  +    +     +  *  +    +     +   tcp/s **A*** |
+        |  *       *        *                *                         *    |
+        |  *       *        *                *                         *    |
+  0.008 ++ *       *        *                *                         *   ++
+        |  *       *        *                *                         *    |
+        |  *       *        *                *                         *    |
+  0.006 ++ *       *        *                *                         *   ++
+        |  *       *        *                *                         *    |
+        |  *       **       **               **                        **   |
+        | **       **       **               **                        **   |
+  0.004 ++**       **       **               **                        **  ++
+        | **       **       **               **                        **   |
+        | **       **       **               **                        **   |
+  0.002 ++**       **       **               **                        **  ++
+        | **       **       **               **                        **   |
+        | **       **       **               **                        **   |
+        | ** +     **    +  ** +    +     +  ** +    +     +     +     **   |
+      0 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+           02:00 04:00 06:00 08:0010:00 12:00 14:0016:00 18:00 20:00 22:00
+                                        Time
+```
+
 Q&A
 ===
 * Q: Why don't you use 'sadf' instead of doing all that parsing?
