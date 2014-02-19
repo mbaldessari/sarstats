@@ -21,8 +21,6 @@ To list the names of all the possible graphs just run:
 ```
 ./sarstats --list /var/log/sa/sar01
 ```
-
-
 Q&A
 ===
 * Q: Why don't you use 'sadf' instead of doing all that parsing?
@@ -37,3 +35,8 @@ Q&A
 
 * Q: In network graphs with bonding the bond interface is never shown?
 * A: Because, depending on the bonding mode, the underlying ethX interface has the exact same traffic patterns and is drawn afterwards
+
+Thanks
+======
+Luca Miccini
+Pablo Iranzo Gomez
