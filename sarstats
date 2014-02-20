@@ -54,7 +54,7 @@ import sar_metadata
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
-THREADED = False
+THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
@@ -119,7 +119,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
     fname = sar_stats_obj._graph_filename(dataname[1][0])
     sar_obj.plottimeseries(dataname, fname, sar_stats_obj.extra_labels,
-            sar_stats_obj.showreboots)
+            sar_stats_obj.showreboots, sar_stats_obj.grid)
     sys.stdout.write(".")
     sys.stdout.flush()
 
@@ -326,7 +326,7 @@ class SarStats(object):
         # Let's create all the images either via multiple threads or in sequence
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
-            l =  default=False,self.graphs_order(sar, category_order, skip_list)
+            l = self.graphs_order(sar, category_order, skip_list)
             f = zip(repeat(self), repeat(sar), l)
             pool.map(graph_wrapper, f)
         else:
@@ -500,7 +500,7 @@ if __name__ == '__main__':
     parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
         Display a single graph on the terminal. (Requires installed gnuplot)""")
 
-    parser.add_argument('--grid', dest='grid', action='store_true', default=False, help="""
+    parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
         This adds a basic grid to all the graphs""")
 
     args = parser.parse_args()
