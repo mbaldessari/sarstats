@@ -54,7 +54,7 @@ import sar_metadata
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
-THREADED = True
+THREADED = False
 # None means nr of available CPUs
 NR_CPUS = None
 
@@ -234,11 +234,13 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels_csv='', show_reboots=False, custom_graphs=''):
+        labels_csv='', show_reboots=False, custom_graphs='', grid_on=False):
         """ Parse sar data and produce graphs of the parsed data. """
         sar = self.sar_obj
         self.extra_labels = None
         self.showreboots = show_reboots
+        self.grid = grid_on
+
         if len(labels_csv) > 0:
             self.extra_labels = self.parse_labels_csv(labels_csv)
 
@@ -326,13 +328,13 @@ class SarStats(object):
         # break things
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
-            l = self.graphs_order(sar, category_order, skip_list)
+            l =  default=False,self.graphs_order(sar, category_order, skip_list)
             f = zip(repeat(self), repeat(sar), l)
             pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
                 fname = self._graph_filename(dataname[1][0])
-                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
+                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -352,7 +354,7 @@ class SarStats(object):
             for graph in custom_graph_list.keys():
                 graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
-                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots)
+                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 fname = self._graph_filename(graphs)
@@ -500,6 +502,9 @@ if __name__ == '__main__':
     parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
         Display a single graph on the terminal. (Requires installed gnuplot)""")
 
+    parser.add_argument('--grid', dest='grid', action='store_true', default=False, help="""
+        This adds a basic grid to all the graphs""")
+
     args = parser.parse_args()
 
     # If the only argument is a directory fetch all the sar files and order
@@ -543,6 +548,8 @@ if __name__ == '__main__':
         sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
 
+    print(args.grid)
+
     print("Building graphs: ", end='')
 
     skip_list = args.skip_graphs.strip().split(",")
@@ -552,7 +559,7 @@ if __name__ == '__main__':
         selected_categories = []
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
-        args.labels_file, args.showreboots, args.custom_graphs)
+        args.labels_file, args.showreboots, args.custom_graphs, args.grid)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()
