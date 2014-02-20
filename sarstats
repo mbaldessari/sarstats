@@ -54,7 +54,7 @@ import sar_metadata
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
-THREADED = True
+THREADED = False
 # None means nr of available CPUs
 NR_CPUS = None
 
@@ -326,7 +326,7 @@ class SarStats(object):
         # Let's create all the images either via multiple threads or in sequence
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
-            l = self.graphs_order(sar, category_order, skip_list)
+            l =  default=False,self.graphs_order(sar, category_order, skip_list)
             f = zip(repeat(self), repeat(sar), l)
             pool.map(graph_wrapper, f)
         else:
@@ -501,7 +501,7 @@ if __name__ == '__main__':
         Display a single graph on the terminal. (Requires installed gnuplot)""")
 
     parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
-        This adds a basic grid to all the graphs""")
+        This disables the grid in graphs""")
 
     args = parser.parse_args()
 
@@ -545,6 +545,8 @@ if __name__ == '__main__':
     if args.ascii_graph != '':
         sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
+
+    print(args.grid)
 
     print("Building graphs: ", end='')
 
