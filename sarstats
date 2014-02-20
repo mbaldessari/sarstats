@@ -324,8 +324,6 @@ class SarStats(object):
 
         count = 0
         # Let's create all the images either via multiple threads or in sequence
-        # FIXME: Use threaded only when there are no custom graphs otherwise we
-        # break things
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
             l =  default=False,self.graphs_order(sar, category_order, skip_list)
@@ -547,8 +545,6 @@ if __name__ == '__main__':
     if args.ascii_graph != '':
         sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
-
-    print(args.grid)
 
     print("Building graphs: ", end='')
 
