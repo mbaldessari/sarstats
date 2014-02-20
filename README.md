@@ -68,4 +68,4 @@ Q&A
 
 Thanks
 ======
-Luca Miccini, Pablo Iranzo Gomez
+Luca Miccini, Pablo Iranzo Gomez, Ali Sogukpinar
