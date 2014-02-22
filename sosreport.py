@@ -1,10 +1,8 @@
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-import datetime
 import os
 import os.path
 import re
-import sys
 
 # Interrupt parsing routines taken from python-linux-procfs (GPLv2)
 #
@@ -124,7 +122,7 @@ class SOSReport:
                     for i in self.reboots.keys():
                         t = self.reboots[i]['date']
                         # Remember which dates were decremented and only do it once
-                        if i <= counter and not self.reboots[i].has_key('decremented'):
+                        if i <= counter and not 'decremented' in self.reboots[i]:
                             self.reboots[i]['date'] = t - relativedelta(years=1)
                             self.reboots[i]['decremented'] = True
                 prev_month = d.month

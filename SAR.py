@@ -29,8 +29,6 @@ code has been tested with a variety of sar reports, in particular ones from Red
 Hat Enterprise Linux versions 3 through 6.
 """
 
-__all__ = ['SARError', 'SAR']
-
 import logging
 import datetime
 import re
@@ -54,6 +52,7 @@ LOGGER = logging.getLogger("SAR reports parser")
 LOGGER.setLevel(logging.WARN)
 
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
+
 
 def natural_sort_key(s):
     """Natural sorting function"""
@@ -166,7 +165,7 @@ class SAR(object):
         for k in all_keys.keys():
             remove = True
             for t in self._data.keys():
-                if self._data[t].has_key(k) and self._data[t][k] != 0:
+                if k in self._data[t] and self._data[t][k] != 0:
                     remove = False
                     break
 
@@ -190,7 +189,7 @@ class SAR(object):
         # This simplifies graph creation
         for t in self._data.keys():
             for i in all_keys.keys():
-                if not self._data[t].has_key(i):
+                if not i in self._data[t]:
                     self._data[t][i] = None
 
     def _parse_first_line(self, line):
@@ -229,7 +228,7 @@ class SAR(object):
         """ Parse the line as a set of column headings. """
         LOGGER.debug("SAR:_column_headers")
         restr = r"""(?x)
-            ^(""" + sar_metadata._timestamp_regexp + """)\s+
+            ^(""" + sar_metadata.TIMESTAMP_RE + """)\s+
             (
                 # Time to be strict - we don't want to
                 # accidentally end up recognising lines of
@@ -285,7 +284,7 @@ class SAR(object):
         Given a list of headers, build up a regular expression to match
         corresponding data lines.
         """
-        regexp = r'^(' + sar_metadata._timestamp_regexp + r')'
+        regexp = r'^(' + sar_metadata.TIMESTAMP_RE + r')'
         for hdr in headers:
             hre = self._column_type_regexp(hdr)
             if hre is None:
@@ -312,13 +311,13 @@ class SAR(object):
 
         # We never had this timestamp let's start with a new dictionary
         # associated to it
-        if not self._data.has_key(timestamp):
+        if not timestamp in self._data:
             self._data[timestamp] = {}
 
         column = 0
         # The column used as index/key can be different
         for i in headers:
-            if i in sar_metadata._indexcolumn:
+            if i in sar_metadata.INDEX_COLUMN:
                 break
             column += 1
 
@@ -333,7 +332,7 @@ class SAR(object):
                 # Rename ETCP retrans/s to retrant/s
                 if i == 'retrans/s' and previous == 'estres/s':
                     i = 'retrant/s'
-                if self._data[timestamp].has_key(i):
+                if i in self._data[timestamp]:
                     raise SARError("Odd timestamp %s and column %s already exist?" % (timestamp, i))
 
                 try:
@@ -366,7 +365,7 @@ class SAR(object):
                 continue
 
             s = '{0}#{1}#{2}'.format(indexcol, indexval, i)
-            if self._data[timestamp].has_key(s):
+            if s in self._data[timestamp]:
                 # LOVELY: Filesystem can have multiple entries with the same FILESYSTEM and timestamp
                 # Let's just overwrite those
                 if indexcol != 'FILESYSTEM':
@@ -462,11 +461,9 @@ class SAR(object):
 
                     matches = re.search(pattern, line)
                     if matches is None:
-                        raise SARError("""
-    Line {0}:
-    headers: "{1}",
-    line: "{2}",
-    regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pattern.pattern))
+                        raise SARError("Line {0}: headers: '{1}', line: '{2}'"
+                            "regexp '{3}': failed to parse".format(self._linecount,
+                            str(headers), line, pattern.pattern))
 
                     self._record_data(headers, matches)
                     continue
@@ -627,7 +624,7 @@ class SAR(object):
                     )
 
         # If we have a sosreport draw the reboots
-        if showreboots and self.sosreport != None and self.sosreport.reboots != None:
+        if showreboots and self.sosreport is not None and self.sosreport.reboots is not None:
             reboots = self.sosreport.reboots
             for reboot in reboots.keys():
                 rboot_x = mdates.date2num(reboots[reboot]['date'])
@@ -640,13 +637,10 @@ class SAR(object):
                     xycoords='data', xytext=(-30, -30), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->", color='blue', connectionstyle="arc3,rad=-0.1"))
 
-
-        # if --grid option is passed draw the grid
         if grid:
             axes.grid(True)
         else:
             axes.grid(False)
-
 
         lgd = None
         # Draw the legend only when needed

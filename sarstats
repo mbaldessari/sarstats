@@ -136,6 +136,14 @@ class MyDocTemplate(BaseDocTemplate):
             fontSize = 16,
             leading = 16)
 
+        self.toc = TableOfContents()
+        self.toc.levelStyles = [
+            PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
+                leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
+            PS(fontSize=10, name='TOCHeading2', leftIndent=40, firstLineIndent=-20,
+                spaceBefore=0, leading=8),
+        ]
+
 
     # Entries to the table of contents can be done either manually by calling
     # the addEntry method on the TableOfContents object or automatically by
@@ -222,13 +230,13 @@ class SarStats(object):
 
         # Here we add the combined graphs always per category
         c = {}
-        for i in sar_metadata._indexcolumn:
+        for i in sar_metadata.INDEX_COLUMN:
             s = sar.datanames_per_arg(i, False)
             try:
                 key = sar_metadata.get_category(s[0][0])
             except:
                 continue
-            if not c.has_key(key):
+            if not key in c:
                 c[key] = s
             else:
                 c[key] += s
@@ -238,12 +246,12 @@ class SarStats(object):
         l = []
         for i in cat:
             for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
-                if sar_metadata.base_graphs.has_key(j) and \
+                if j in sar_metadata.base_graphs and \
                     sar_metadata.base_graphs[j]['cat'] == i and \
                     j not in skiplist:
                     entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
                     l.append([entry, [j]])
-            if c.has_key(i):
+            if i in c:
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the skip_list
                     b = sorted([x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0],
@@ -298,7 +306,7 @@ class SarStats(object):
                     (time, label) = i.split(',')
                     time = dateutil.parser.parse(time)
                     self.extra_labels.append((time, label))
-            except Exception, e:
+            except:
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
 
@@ -313,15 +321,8 @@ class SarStats(object):
             s += " %s seconds" % secs
         self.story.append(Paragraph(s, doc.small_centered))
 
-        toc = TableOfContents()
-        toc.levelStyles = [
-            PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
-                leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
-            PS(fontSize=10, name='TOCHeading2', leftIndent=40, firstLineIndent=-20,
-                spaceBefore=0, leading=8),
-        ]
         self.do_heading('Table of contents', doc.centered_index)
-        self.story.append(toc)
+        self.story.append(doc.toc)
         self.story.append(PageBreak())
 
         if len(only_categories) == 0:
@@ -366,7 +367,7 @@ class SarStats(object):
                 sys.stdout.flush()
                 fname = self._graph_filename(graphs)
                 cat = 'Custom'
-                if not used_cat.has_key(cat): # We've not seen the category before
+                if not cat in used_cat: # We've not seen the category before
                     self.do_heading(cat, doc.h1)
                     used_cat[cat] = True
                 else:
@@ -381,7 +382,7 @@ class SarStats(object):
             cat = sarobj._categories[dataname[1][0]]
             title = dataname[0][0]
             #labels = dataname[0][1]
-            if not used_cat.has_key(cat): # We've not seen the category before
+            if not cat in used_cat: # We've not seen the category before
                 self.do_heading(cat, doc.h1)
                 used_cat[cat] = True
             else:
@@ -466,7 +467,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--category', dest='categories', default=None, help="""
         Only outputs the selected categories. Available categories: {0}""" \
-        .format(",".join(sar_metadata.list_all_categories())))
+        .format(", ".join(sar_metadata.list_all_categories())))
 
     parser.add_argument('--csv', dest='csv_file', default=None, help="""
         Outputs the data to the specified csv file.""")
