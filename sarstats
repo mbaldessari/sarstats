@@ -68,17 +68,21 @@ DEFAULT_IMG_EXT = ".png"
 GRAPH_WIDTH = 10.5
 GRAPH_HEIGHT = 6.5
 
+
 def natural_sort_key(string):
     """Natural sorting"""
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, string)]
 
+
 def ascii_date(d):
     return "%s" % (d.strftime("%Y-%m-%d %H:%M"))
+
 
 def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
     return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)]
+
 
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
@@ -87,83 +91,80 @@ class MyDocTemplate(BaseDocTemplate):
         self.allowSplitting = 0
         apply(BaseDocTemplate.__init__, (self, filename), kw)
         template = PageTemplate('normal', [Frame(0.1*inch, 0.1*inch,
-            11*inch, 8*inch, id='F1')])
+                                11*inch, 8*inch, id='F1')])
         self.addPageTemplates(template)
 
-        self.centered = PS(name = 'centered',
-            fontSize = 30,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
+        self.centered = PS(
+            name='centered',
+            fontSize=30,
+            leading=16,
+            alignment=1,
+            spaceAfter=20)
 
-        self.centered_index = PS(name = 'centered_index',
-            fontSize = 24,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
+        self.centered_index = PS(
+            name='centered_index',
+            fontSize=24,
+            leading=16,
+            alignment=1,
+            spaceAfter=20)
 
-        self.small_centered = PS(name = 'small_centered',
-            fontSize = 14,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
+        self.small_centered = PS(
+            name='small_centered',
+            fontSize=14,
+            leading=16,
+            alignment=1,
+            spaceAfter=20)
 
-        self.h1 = PS(name = 'Heading1',
-            fontSize = 16,
-            leading = 16)
+        self.h1 = PS(
+            name='Heading1',
+            fontSize=16,
+            leading=16)
 
-        self.h2 = PS(name = 'Heading2',
-            fontSize = 14,
-            leading = 14)
+        self.h2 = PS(
+            name='Heading2',
+            fontSize=14,
+            leading=14)
 
-        self.h2_center = PS(name = 'Heading2Center',
-            alignment = 1,
-            fontSize = 14,
-            leading = 14)
+        self.h2_center = PS(
+            name='Heading2Center',
+            alignment=1,
+            fontSize=14,
+            leading=14)
 
-        self.h2_invisible = PS(name = 'Heading2Invisible',
-            alignment = 1,
-            textColor = '#FFFFFF',
-            fontSize = 14,
-            leading = 14)
+        self.h2_invisible = PS(
+            name='Heading2Invisible',
+            alignment=1,
+            textColor='#FFFFFF',
+            fontSize=14,
+            leading=14)
 
-        self.mono = PS(name = 'Mono',
-            fontName = 'Courier',
-            fontSize = 16,
-            leading = 16)
+        self.mono = PS(
+            name='Mono',
+            fontName='Courier',
+            fontSize=16,
+            leading=16)
 
-        self.normal = PS(name = 'Normal',
-            fontSize = 16,
-            leading = 16)
+        self.normal = PS(
+            name='Normal',
+            fontSize=16,
+            leading=16)
 
         self.toc = TableOfContents()
         self.toc.levelStyles = [
             PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
                 leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
-            PS(fontSize=10, name='TOCHeading2', leftIndent=40, firstLineIndent=-20,
-                spaceBefore=0, leading=8),
+            PS(fontSize=10, name='TOCHeading2', leftIndent=40,
+                firstLineIndent=-20, spaceBefore=0, leading=8),
         ]
-
-
-    # Entries to the table of contents can be done either manually by calling
-    # the addEntry method on the TableOfContents object or automatically by
-    # sending a 'TOCEntry' notification in the afterFlowable method of the
-    # DocTemplate you are using. The data to be passed to notify is a list of
-    # three or four items countaining a level number, the entry text, the page
-    # number and an optional destination key which the entry should point to.
-    # This list will usually be created in a document template's method like
-    # afterFlowable(), making notification calls using the notify() method with
-    # appropriate data.
 
     def afterFlowable(self, flowable):
         """Registers TOC entries."""
         if flowable.__class__.__name__ == 'Paragraph':
             text = flowable.getPlainText()
             style = flowable.style.name
-            if style == 'Heading1' or style == 'centered_index':
+            if style in ['Heading1', 'centered_index']:
                 level = 0
-            elif style == 'Heading2' or style == 'Heading2Center' or \
-                style == 'Heading2Invisible':
+            elif style in ['Heading2', 'Heading2Center', 'Heading2Invisible']:
                 level = 1
             else:
                 return
@@ -175,6 +176,7 @@ class MyDocTemplate(BaseDocTemplate):
             self.notify('TOCEntry', tuple(entry))
             self.canv.addOutlineEntry(text, bookmark_name, level, True)
 
+
 def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
     fname = sar_stats_obj._graph_filename(dataname[1][0])
@@ -182,6 +184,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
             sar_stats_obj.showreboots, sar_stats_obj.grid)
     sys.stdout.write(".")
     sys.stdout.flush()
+
 
 class SarStats(object):
     """Creates a pdf file given a parsed SAR object"""
@@ -291,7 +294,7 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels=None, show_reboots=False, custom_graphs='', grid_on=False):
+              labels=None, show_reboots=False, custom_graphs='', grid_on=False):
         """ Parse sar data and produce graphs of the parsed data. """
         sarobj = self.sar_obj
         self.extra_labels = None
@@ -299,7 +302,7 @@ class SarStats(object):
         self.grid = grid_on
         doc = MyDocTemplate(output_file, pagesize=landscape(A4))
 
-        if labels != None:
+        if labels is not None:
             try:
                 self.extra_labels = []
                 for i in labels.strip().split(';'):
@@ -349,7 +352,7 @@ class SarStats(object):
         # typically quite low. Graph descriptions are in the form:
         # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
         custom_graph_list = {}
-        if custom_graphs != '':
+        if custom_graphs is not '':
             try:
                 for i in custom_graphs.split(';'):
                     key = i.split(':')[0]
@@ -362,7 +365,7 @@ class SarStats(object):
                 graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
                 sarobj.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels,
-                    show_reboots, grid_on)
+                                      show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 fname = self._graph_filename(graphs)
@@ -372,6 +375,7 @@ class SarStats(object):
                     used_cat[cat] = True
                 else:
                     self.story.append(Paragraph(cat, doc.normal))
+
                 self.do_heading(graph, doc.h2_invisible)
                 self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
                 self.story.append(Spacer(1, 0.2*inch))
@@ -381,8 +385,8 @@ class SarStats(object):
             fname = self._graph_filename(dataname[1][0])
             cat = sarobj._categories[dataname[1][0]]
             title = dataname[0][0]
-            #labels = dataname[0][1]
-            if not cat in used_cat: # We've not seen the category before
+            # We've not seen the category before
+            if not cat in used_cat:
                 self.do_heading(cat, doc.h1)
                 used_cat[cat] = True
             else:
@@ -425,7 +429,8 @@ class SarStats(object):
         except:
             columns = def_columns
         rows = def_rows
-        if columns > def_columns: columns = def_columns
+        if columns > def_columns:
+            columns = def_columns
         try:
             gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
         except Exception, e:
@@ -437,7 +442,7 @@ class SarStats(object):
         gnuplot.stdin.write('set xlabel "Time"\n')
         gnuplot.stdin.write('set timefmt \"%Y-%m-%d %H:%M\"\n')
         gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' % (ascii_date(timestamps[0]),
-            ascii_date(timestamps[-1])))
+                                                              ascii_date(timestamps[-1])))
         gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
         gnuplot.stdin.write('set datafile separator ","\n')
         gnuplot.stdin.write('set autoscale y\n')
@@ -452,9 +457,9 @@ class SarStats(object):
         gnuplot.stdin.flush()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=
-        "%s - analyzes sar output files and produces a pdf report" % sys.argv[0],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
+                                     "produces a pdf report".format(sys.argv[0]),
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('sar_files', metavar='sar_files', nargs='+',
         help="""Sar files to examine. It is possible to specify a single folder, in which
@@ -466,7 +471,7 @@ if __name__ == '__main__':
         Display a single graph on the terminal. (Requires installed gnuplot)""")
 
     parser.add_argument('--category', dest='categories', default=None, help="""
-        Only outputs the selected categories. Available categories: {0}""" \
+        Only outputs the selected categories. Available categories: {0}"""
         .format(", ".join(sar_metadata.list_all_categories())))
 
     parser.add_argument('--csv', dest='csv_file', default=None, help="""
@@ -499,8 +504,8 @@ if __name__ == '__main__':
         If the sar file is part of an existing sosreport, it will try to show
         the system reboot times in the graphs""")
 
-    parser.add_argument('--skip', default='lo', dest='skip_graphs',
-        help="""Graphs or entries to skip. For example adding '%%user' will
+    parser.add_argument('--skip', default='lo', dest='skip_graphs', help="""
+        Graphs or entries to skip. For example adding '%%user' will
         remove that graph. Adding 'lo' will remove that interface from any
         network graph. Use comma to separate multiple graphs to be skipped.
         For example '--skip lo,eth0' will not plot any graphs for those
@@ -541,19 +546,19 @@ if __name__ == '__main__':
         sys.exit(0)
 
     sar_stats = SarStats(sar, int(args.maxgraphs))
-    if args.csv_file != None:
+    if args.csv_file is not None:
         print("Export to csv: {0}".format(args.csv_file))
         sar_stats.export_csv(args.csv_file)
         sys.exit(0)
 
-    if args.ascii_graph != None:
+    if args.ascii_graph is not None:
         sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
 
     print("Building graphs: ", end='')
 
     skip_list = args.skip_graphs.strip().split(",")
-    if args.categories != None:
+    if args.categories is not None:
         selected_categories = args.categories.strip().split(",")
     else:
         selected_categories = []

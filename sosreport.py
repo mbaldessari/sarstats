@@ -119,7 +119,7 @@ class SOSReport:
                     # should belong to the previous year and not the current one
                     # FIXME: this breaks if we investigate sosreports older than one 
                     # year :/
-                    for i in self.reboots.keys():
+                    for i in self.reboots:
                         t = self.reboots[i]['date']
                         # Remember which dates were decremented and only do it once
                         if i <= counter and not 'decremented' in self.reboots[i]:
@@ -141,7 +141,5 @@ class SOSReport:
 if __name__ == '__main__':
     sosreport = SOSReport('./demosos')
     sosreport.parse()
-    for i in sosreport.reboots.keys():
+    for i in sosreport.reboots:
         print("{0} - {1}".format(i, sosreport.reboots[i]))
-    #for i in sosreport.interrupts.keys():
-    #    print("{0}: {1}".format(i, sosreport.interrupts[i]))
