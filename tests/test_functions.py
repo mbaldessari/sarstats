@@ -1,8 +1,10 @@
+"""
+Test unit for sarstats
+"""
 import cProfile
 import os
 import os.path
 import pstats
-import random
 import resource
 import StringIO
 import sys
@@ -24,39 +26,43 @@ TOP_PROFILED_FUNCTIONS = 15
 import SAR
 import imp
 
-sarstats = imp.load_source('sarstats', 'sarstats')
+# Hack needed because sarstats does not end in .py
+SARSTATS_MOD = imp.load_source('sarstats', 'sarstats')
 
 SAR_FILES = 'sar-files'
 
-def end_of_path(s):
-    base = os.path.basename(s)
-    dirname = os.path.dirname(s)
+def end_of_path(path):
+    """Prints the last part of an absolute path"""
+    base = os.path.basename(path)
+    dirname = os.path.dirname(path)
     return os.path.join(os.path.split(dirname)[1], base)
 
 class TestSarParsing(unittest.TestCase):
+    """Main UnitTest class"""
     def setUp(self):
+        """Sets the test cases up"""
         sar_base = os.path.join(sys.modules['tests'].__file__)
         self.sar_dir = os.path.join(os.path.abspath(os.path.dirname(sar_base)),
             SAR_FILES)
         tmp = []
         for root, dirs, files in os.walk(self.sar_dir):
-            for f in files:
-                s = f.lower().strip()
-                if s.startswith("sar"):
-                    tmp.append(os.path.join(root, f))
+            for fname in files:
+                if fname.lower().strip().startswith("sar"):
+                    tmp.append(os.path.join(root, fname))
 
         self.sar_files = sorted(tmp)
         if USE_PROFILER:
-            self.pr = cProfile.Profile()
-            self.pr.enable()
-        self.startTime = time.time()
+            self.profile = cProfile.Profile()
+            self.profile.enable()
+        self.start_time = time.time()
 
     def tearDown(self):
-        t = time.time() - self.startTime
-        print("{0}: {1:.3f}".format(self.id(), t))
+        """Called when the testrun is complete. Displays full time"""
+        tdelta = time.time() - self.start_time
+        print("{0}: {1:.5f}".format(self.id(), tdelta))
 
     def test_sar(self):
-        count = 0
+        """Parses all the sar files and creates the pdf outputs"""
         for example in self.sar_files:
             print("Parsing: {0}".format(example))
             sar = SAR.SAR([example])
@@ -66,35 +72,34 @@ class TestSarParsing(unittest.TestCase):
                 objgraph.show_growth()
                 tmp = tempfile.mkstemp(prefix='sar-test')[1]
                 scanner.dump_all_objects(tmp)
-                l = loader.load(tmp)
-                s = l.summarize()
+                leakreporter = loader.load(tmp)
+                summary = leakreporter.summarize()
             print("SAR parsing: {0} usertime={1} systime={2} mem={3} MB"
                 .format(end_of_path(example), usage[0], usage[1],
                 (usage[2] / 1024.0)))
-            count += 1
             if USE_PROFILER:
-                self.pr.disable()
-                s = StringIO.StringIO()
+                self.profile.disable()
+                str_io = StringIO.StringIO()
                 sortby = 'cumulative'
-                ps = pstats.Stats(self.pr, stream=s).sort_stats(sortby)
-                ps.print_stats(TOP_PROFILED_FUNCTIONS)
+                pstat = pstats.Stats(self.profile, stream=str_io).sort_stats(sortby)
+                pstat.print_stats(TOP_PROFILED_FUNCTIONS)
                 print("\nProfiling of sar.parse()")
-                print(s.getvalue())
+                print(str_io.getvalue())
 
                 # Set up profiling for pdf generation
-                self.pr.enable()
+                self.profile.enable()
 
-            stats = sarstats.SarStats(sar)
+            stats = SARSTATS_MOD.SarStats(sar)
             out = "{0}.pdf".format(example)
             stats.graph(example, [], out)
             if USE_PROFILER:
-                self.pr.disable()
-                s = StringIO.StringIO()
+                self.profile.disable()
+                str_io = StringIO.StringIO()
                 sortby = 'cumulative'
-                ps = pstats.Stats(self.pr, stream=s).sort_stats(sortby)
-                ps.print_stats(TOP_PROFILED_FUNCTIONS)
+                pstat = pstats.Stats(self.profile, stream=str_io).sort_stats(sortby)
+                pstat.print_stats(TOP_PROFILED_FUNCTIONS)
                 print("\nProfiling of sarstats.graph()")
-                print(s.getvalue())
+                print(str_io.getvalue())
 
             print("Wrote: {0}".format(out))
             os.remove(out)

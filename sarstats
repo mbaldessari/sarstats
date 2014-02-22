@@ -68,12 +68,17 @@ DEFAULT_IMG_EXT = ".png"
 GRAPH_WIDTH = 10.5
 GRAPH_HEIGHT = 6.5
 
-def natural_sort_key(s):
+def natural_sort_key(string):
+    """Natural sorting"""
     _nsre = re.compile('([0-9]+)')
-    return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, string)]
 
 def ascii_date(d):
     return "%s" % (d.strftime("%Y-%m-%d %H:%M"))
+
+def split_chunks(list_to_split, chunksize):
+    """Split the list l in chunks of at most n in size"""
+    return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)]
 
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
@@ -201,14 +206,11 @@ class SarStats(object):
         fname = os.path.join(self._tempdir, digest.hexdigest() + DEFAULT_IMG_EXT)
         return fname
 
-    def chunks(self, l, n):
-        """Split the list l in chunks of at most n in size"""
-        return [l[i:i+n] for i in range(0, len(l), n)]
-
-    def graphs_order(self, sar, cat, skiplist=[]):
+    def graphs_order(self, cat, skiplist=[]):
         """ Order in which to present all graphs.
         Data is grouped loosely by type. """
         l = []
+        sar = self.sar_obj
         # First we add all the simple graphs sorted by chosen category list
         for i in cat:
             for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
@@ -239,8 +241,8 @@ class SarStats(object):
                 if sar_metadata.base_graphs.has_key(j) and \
                     sar_metadata.base_graphs[j]['cat'] == i and \
                     j not in skiplist:
-                        entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
-                        l.append([entry, [j]])
+                    entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
+                    l.append([entry, [j]])
             if c.has_key(i):
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the skip_list
@@ -248,7 +250,7 @@ class SarStats(object):
                             key=SAR.natural_sort_key)
                     # If the graph has more than X columns we split it
                     if len(b) > self.maxgraphs:
-                        chunks = self.chunks(b, self.maxgraphs)
+                        chunks = split_chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
                             entry = sar_metadata.get_labels_title(chunk, sar_obj=self.sar_obj)
@@ -272,8 +274,8 @@ class SarStats(object):
         self.story.append(h)
 
     def parse_labels_csv(self, csv_file):
-        f = open(csv_file, "rb")
-        reader = csv.reader(f, delimiter=',')
+        csvf = open(csv_file, "rb")
+        reader = csv.reader(csvf, delimiter=',')
         extra_labels = []
         for line in reader:
             extra_labels.append((dateutil.parser.parse(line[0]), line[1]))
@@ -283,7 +285,7 @@ class SarStats(object):
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
         labels=None, show_reboots=False, custom_graphs='', grid_on=False):
         """ Parse sar data and produce graphs of the parsed data. """
-        sar = self.sar_obj
+        sarobj = self.sar_obj
         self.extra_labels = None
         self.showreboots = show_reboots
         self.grid = grid_on
@@ -300,12 +302,12 @@ class SarStats(object):
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
 
-        self.story.append(Paragraph('%s' % sar.hostname, doc.centered))
-        self.story.append(Paragraph('%s %s' % (sar.kernel, sar.version), doc.small_centered))
+        self.story.append(Paragraph('%s' % sarobj.hostname, doc.centered))
+        self.story.append(Paragraph('%s %s' % (sarobj.kernel, sarobj.version), doc.small_centered))
         self.story.append(Spacer(1, 0.05 * inch))
         self.story.append(Paragraph('%s' % (" ".join(sar_files)), doc.small_centered))
-        mins = int(sar.sample_frequency / 60)
-        secs = int(sar.sample_frequency % 60)
+        mins = int(sarobj.sample_frequency / 60)
+        secs = int(sarobj.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
         if secs > 0:
             s += " %s seconds" % secs
@@ -332,13 +334,13 @@ class SarStats(object):
         # Let's create all the images either via multiple threads or in sequence
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
-            l = self.graphs_order(sar, category_order, skip_list)
-            f = zip(repeat(self), repeat(sar), l)
+            l = self.graphs_order(category_order, skip_list)
+            f = zip(repeat(self), repeat(sarobj), l)
             pool.map(graph_wrapper, f)
         else:
-            for dataname in self.graphs_order(sar, category_order, skip_list):
+            for dataname in self.graphs_order(category_order, skip_list):
                 fname = self._graph_filename(dataname[1][0])
-                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots, grid_on)
+                sarobj.plottimeseries(dataname, fname, self.extra_labels, show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -358,7 +360,8 @@ class SarStats(object):
             for graph in custom_graph_list.keys():
                 graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
-                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots, grid_on)
+                sarobj.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels,
+                    show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 fname = self._graph_filename(graphs)
@@ -373,9 +376,9 @@ class SarStats(object):
                 self.story.append(Spacer(1, 0.2*inch))
 
         # All the image files are created let's go through the files and create the pdf
-        for dataname in self.graphs_order(sar, category_order, skip_list):
+        for dataname in self.graphs_order(category_order, skip_list):
             fname = self._graph_filename(dataname[1][0])
-            cat = sar._categories[dataname[1][0]]
+            cat = sarobj._categories[dataname[1][0]]
             title = dataname[0][0]
             #labels = dataname[0][1]
             if not used_cat.has_key(cat): # We've not seen the category before
@@ -395,28 +398,27 @@ class SarStats(object):
             self.story.append(PageBreak())
             count += 1
 
-
         doc.multiBuild(self.story)
 
     def export_csv(self, output_file):
-        sar = self.sar_obj
+        sarobj = self.sar_obj
         f = open(output_file, 'wb')
         writer = csv.writer(f, delimiter=',')
-        all_keys = list(sar.available_data_types())
+        all_keys = list(sarobj.available_data_types())
         print(all_keys)
         writer.writerow(all_keys)
-        for timestamps in sar._data.keys():
+        for timestamps in sarobj._data.keys():
             s = []
             for i in all_keys:
-                s.append(sar._data[timestamps][i])
+                s.append(sarobj._data[timestamps][i])
             writer.writerow(s)
 
     def graph_ascii(self, graph, def_columns=80, def_rows=25):
         """Displays a single graph in ASCII form on the terminal"""
         import subprocess
-        sar = self.sar_obj
-        timestamps = sorted(sar._data.keys())
-        dataset = [sar._data[d][graph] for d in timestamps]
+        sarobj = self.sar_obj
+        timestamps = sorted(sarobj._data.keys())
+        dataset = [sarobj._data[d][graph] for d in timestamps]
         try:
             rows, columns = os.popen('stty size', 'r').read().split()
         except:
@@ -438,7 +440,7 @@ class SarStats(object):
         gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
         gnuplot.stdin.write('set datafile separator ","\n')
         gnuplot.stdin.write('set autoscale y\n')
-        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, sar._file))
+        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, sarobj._file))
 
         gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
         for i, j in zip(timestamps, dataset):

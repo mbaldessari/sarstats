@@ -136,6 +136,7 @@ class SAR(object):
         self._date = None
         # If this one was set it means that we crossed the day during one SAR file
         self._olddate = None
+        self._prev_timestamp = None
 
         # Is this file part of an sosreport?
         # Check ../../../sos_commands exists and see if uptime is a
@@ -148,13 +149,12 @@ class SAR(object):
         try:
             self.sosreport = sosreport.SOSReport(a)
             self.sosreport.parse()
-        except Exception, e:
+        except:
             pass
 
-    # This walks the _data structure and removes all keys that have value
-    # 0 in *all* timestamps
-    # FIXME: As inefficient as it goes for now...
     def _prune_data(self):
+        """This walks the _data structure and removes all keys that have value
+        0 in *all* timestamps FIXME: As inefficient as it goes for now..."""
         # Store all possible keys looping over all time stamps
         all_keys = {}
         for t in self._data.keys():
@@ -259,7 +259,7 @@ class SAR(object):
         if matches:
             LOGGER.debug('Recognised column headers line: "{0}"'.format(line))
             hdrs = [h for h in matches.group(2).split(' ') if h != '']
-            LOGGER.debug("Column headers: %s" % hdrs)
+            LOGGER.debug("Column headers: {0}".format(hdrs))
             return matches.group(1), hdrs
         else:
             LOGGER.debug('Not recognised as a column headers line: "{0}" using pattern "{1}"'.format(line, restr))
@@ -294,18 +294,6 @@ class SAR(object):
         regexp += r'\s*$'
         LOGGER.debug('Regular expression to match data lines: "{0}"'.format(regexp))
         return regexp
-
-    def _ignore_timestamp(self, ts):
-        """ Do we want to skip recording the data for this timestamp? """
-        pattern = re.compile(r'(\d{2}):(\d{2}):(\d{2})')
-        matches = re.search(pattern, ts)
-        if matches:
-            (hh, mm, ss) = matches.groups()
-            mm = int(mm)
-            hh = int(hh)
-            ss = int(ss)
-            return ss % 60 != 0
-        raise SARError('Failed to parse "{0}" as a canonical timestamp'.format(ts))
 
     def _record_data(self, headers, matches):
         """ Record a parsed line of data """
@@ -437,7 +425,7 @@ class SAR(object):
                 if state == 'table_start':
                     (timestamp, headers) = self._column_headers(line)
                     # If in previous tables we crossed the day, we start again from the previous date
-                    if self._olddate: 
+                    if self._olddate:
                         self._date = self._olddate
                     if timestamp is None: raise SARError('Line {0}: expected column'
                             'header line but got "{1}" instead'.format(self._linecount,
