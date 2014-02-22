@@ -246,8 +246,8 @@ class SarStats(object):
         l = []
         for i in cat:
             for j in sorted(sar.available_data_types(), key=SAR.natural_sort_key):
-                if j in sar_metadata.base_graphs and \
-                    sar_metadata.base_graphs[j]['cat'] == i and \
+                if j in sar_metadata.BASE_GRAPHS and \
+                    sar_metadata.BASE_GRAPHS[j]['cat'] == i and \
                     j not in skiplist:
                     entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
                     l.append([entry, [j]])

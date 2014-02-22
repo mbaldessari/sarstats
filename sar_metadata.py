@@ -41,7 +41,7 @@ INTERRUPTS_RE = r'(?:' + NUMBER_WITH_DEC_RE + '|N/A)'
 CPU_RE = r'(?:all|\d+)'
 INT_RE = r'(?:sum|\d+)'
 
-base_graphs = {
+BASE_GRAPHS = {
     '%user':     {'cat': 'Utilization',
                   'label': 'User Utilization (%)',
                   'unit': 'percentage',
@@ -1239,8 +1239,8 @@ def get_regexp(name):
     if name in k:
         return k[name]
 
-    if name in base_graphs and 'regexp' in base_graphs[name]:
-        return base_graphs[name]['regexp']
+    if name in BASE_GRAPHS and 'regexp' in BASE_GRAPHS[name]:
+        return BASE_GRAPHS[name]['regexp']
 
     if re.match('i[0-9]*/s', name):
         return INTERRUPTS_RE
@@ -1264,10 +1264,10 @@ def get_labels_title(names, sar_obj=None):
             if len(names) != 1:
                 return " ".join(names), names
 
-            if not names[0] in base_graphs:
+            if not names[0] in BASE_GRAPHS:
                 return names[0], names[0]
-            if 'label' in base_graphs[names[0]]:
-                s = base_graphs[names[0]]['label']
+            if 'label' in BASE_GRAPHS[names[0]]:
+                s = BASE_GRAPHS[names[0]]['label']
                 return s, s
             else:
                 return names[0], names[0]
@@ -1302,8 +1302,8 @@ def get_labels_title(names, sar_obj=None):
 
 def list_all_categories():
     l = {'Load', 'Files', 'I/O', 'TTY', 'Network', 'Power', 'Intr'}
-    for i in base_graphs.keys():
-        cat = base_graphs[i]['cat']
+    for i in BASE_GRAPHS.keys():
+        cat = BASE_GRAPHS[i]['cat']
         l.update([cat])
     return l
 
@@ -1325,8 +1325,8 @@ def get_category(name):
     elif name.startswith('INTR#'):
         return 'Intr'
 
-    if name in base_graphs:
-        return base_graphs[name]['cat']
+    if name in BASE_GRAPHS:
+        return BASE_GRAPHS[name]['cat']
 
     # Everything else aka 'i[0-9]*/s' we match to 'Interrups'
     # Not using a re here due to performance reason
@@ -1343,20 +1343,20 @@ def get_desc(names):
     regex = re.compile('[\n ]+')
     if len(names) == 1:
         name = names[0]
-        if name in base_graphs:
-            desc = base_graphs[name]['desc']
+        if name in BASE_GRAPHS:
+            desc = BASE_GRAPHS[name]['desc']
             detail = None
-            if 'detail' in base_graphs[name]:
-                detail = base_graphs[name]['detail']
+            if 'detail' in BASE_GRAPHS[name]:
+                detail = BASE_GRAPHS[name]['detail']
             return [[name, regex.sub(' ', desc), detail]]
 
         try:
             # Graphs like: IFACE#eth2#rxkB/s
             perf = name.split('#')[2]
-            desc = base_graphs[perf]['desc']
+            desc = BASE_GRAPHS[perf]['desc']
             detail = None
-            if 'detail' in base_graphs[perf]:
-                detail = base_graphs[perf]['detail']
+            if 'detail' in BASE_GRAPHS[perf]:
+                detail = BASE_GRAPHS[perf]['detail']
             return [[perf, regex.sub(' ', desc), detail]]
         except:
             pass
@@ -1374,16 +1374,16 @@ def get_desc(names):
                         previous = 'int/s'
                     continue
 
-                desc = base_graphs[perf]['desc']
+                desc = BASE_GRAPHS[perf]['desc']
                 detail = None
-                if 'detail' in base_graphs[perf]:
-                    detail = base_graphs[perf]['detail']
+                if 'detail' in BASE_GRAPHS[perf]:
+                    detail = BASE_GRAPHS[perf]['detail']
                 if previous != perf:
                     ret.append([perf, regex.sub(' ', desc), detail])
                     previous = perf
             except:
                 # It is a combination of simple graphs (like ldavg-{1,5,15})
-                desc = base_graphs[i]['desc']
+                desc = BASE_GRAPHS[i]['desc']
                 ret.append([i, regex.sub(' ', desc), None])
 
         return ret
