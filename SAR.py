@@ -2,6 +2,7 @@
 # SAR.py - sar(1) report graphing utility
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
+#               2014  Michele Baldessari
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

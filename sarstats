@@ -284,7 +284,6 @@ class SarStats(object):
             fontSize = 16,
             leading = 16)
 
-
         normal = PS(name = 'Normal',
             fontSize = 16,
             leading = 16)
@@ -317,13 +316,9 @@ class SarStats(object):
         else:
             category_order = only_categories
 
-
         used_cat = {}
-
         count = 0
         # Let's create all the images either via multiple threads or in sequence
-        # FIXME: Use threaded only when there are no custom graphs otherwise we
-        # break things
         if THREADED:
             pool = multiprocessing.Pool(NR_CPUS)
             l = self.graphs_order(sar, category_order, skip_list)
@@ -454,20 +449,8 @@ if __name__ == '__main__':
         directory containing the sar files is part of an sosreport, it will try
         to resulve the interrupts source""")
 
-    parser.add_argument('--skip', default='lo', dest='skip_graphs',
-        help="""Graphs or entries to skip. For example adding '%%user' will
-        remove that graph. Adding 'lo' will remove that interface from any 
-        network graph. Use comma to separate multiple graphs to be skipped.
-        For example '--skip lo,eth0' will not plot any graphs for those 
-        interfaces and '--skip lo,miss/s' will skip the 'lo' interface and the
-        'miss/s' graph""")
-
-    parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
-        Only lists all the graphs and elements contained in the specified
-        sar files""")
-
-    parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
-        Output file name""")
+    parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
+        Display a single graph on the terminal. (Requires installed gnuplot)""")
 
     parser.add_argument('--category', dest='only_categories', default='', help="""
         Only outputs the selected categories. Available categories: {0}""" \
@@ -475,6 +458,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--csv', dest='csv_file', default='', help="""
         Outputs the data to the specified csv file.""")
+
+    parser.add_argument('--custom', dest='custom_graphs', default='', help="""
+        Add custom graphs with --custom 'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'. 
+        This adds two pages in the 'Custome' category: Graph 'foo' containing 
+        udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
+        With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
 
     parser.add_argument('--labelsfile', dest='labels_file', default='', help="""
         Reads a csv file in the format: Date (ISO format),Label and will plot
@@ -484,21 +473,26 @@ if __name__ == '__main__':
         2014-01-02 13:15:15,bar
         Will add two extra labels on each graph at those times""")
 
+    parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
+        Only lists all the graphs and elements contained in the specified
+        sar files""")
     parser.add_argument('--maxgraphs', dest='maxgraphs', default=MAXGRAPHS_IN_PAGE, help="""
         Sets the maximum number of graphs in a single page""")
+
+    parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
+        Output file name""")
 
     parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
         If the sar file is part of an existing sosreport, it will try to show
         the system reboot times in the graphs""")
 
-    parser.add_argument('--custom', dest='custom_graphs', default='', help="""
-        Add custom graphs with --custom 'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'. 
-        This adds two pages in the 'Custome' category: Graph 'foo' containing 
-        udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
-        With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
-
-    parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
-        Display a single graph on the terminal. (Requires installed gnuplot)""")
+    parser.add_argument('--skip', default='lo', dest='skip_graphs',
+        help="""Graphs or entries to skip. For example adding '%%user' will
+        remove that graph. Adding 'lo' will remove that interface from any 
+        network graph. Use comma to separate multiple graphs to be skipped.
+        For example '--skip lo,eth0' will not plot any graphs for those 
+        interfaces and '--skip lo,miss/s' will skip the 'lo' interface and the
+        'miss/s' graph""")
 
     args = parser.parse_args()
 
