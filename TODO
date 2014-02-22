@@ -4,6 +4,4 @@ Enhancement requests
   add a proper comprehensible explanation. For example in 'loadavg-1' add explanation
   when a load is high and how it relates to the number of CPUs
 
-* Add graph unit in metadata and labels
-
 * Test sar files where the collection interval is 1 or 2 minutes

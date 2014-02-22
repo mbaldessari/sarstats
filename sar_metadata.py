@@ -44,7 +44,7 @@ INT_RE = r'(?:sum|\d+)'
 BASE_GRAPHS = {
     '%user':     {'cat': 'Utilization',
                   'label': 'User Utilization (%)',
-                  'unit': 'percentage',
+                  'unit': '%',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of CPU utilization that occurred while
                   executing at the user level (application). Note that this
@@ -53,7 +53,7 @@ BASE_GRAPHS = {
     '%usr':      {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'label': 'User Utilization (novirt %)',
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of CPU utilization that occurred while
                   executing at the user level (application). Note that this
                   field does NOT include time spent running virtual
@@ -61,7 +61,7 @@ BASE_GRAPHS = {
                   'detail': '%user [/proc/stat(1)] - %guest [/proc/stat(9)]'},
     '%system':   {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of CPU utilization that occurred while
                   executing at the system level (kernel). Note that this field
                   includes time spent servicing hardware and software
@@ -70,7 +70,7 @@ BASE_GRAPHS = {
                             '%softirq[/proc/stat(7)]'},
     '%sys':      {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of CPU utilization that occurred while
                   executing at the system level (kernel). Note that this field
                   does NOT include time spent servicing hardware or software
@@ -78,68 +78,65 @@ BASE_GRAPHS = {
                   'detail': '%sys [/proc/stat(3)]'},
     '%iowait':   {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time that the CPU or CPUs were idle
                   during which the system had an outstanding disk I/O
                   request""",
                   'detail': '%iowait [/proc/stat(5)]'},
     '%irq':      {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time spent by the CPU or CPUs to
                   service hardware interrupts""",
                   'detail': '%irq [/proc/stat(6)]'},
     '%soft':     {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time spent by the CPU or CPUs to
                   service software interrupts""",
                   'detail': '%softirq [/proc/stat(7)]'},
     '%nice':     {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of CPU utilization that occurred while
                   executing at the user level with nice priority""",
                   'detail': '%nice [/proc/stat(2)]'},
     '%gnice':    {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time spent by the CPU or CPUs to run
                   a niced guest""",
                   'detail': '%gnice [/proc/stat(10)]'},
     '%idle':     {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time that the CPU or CPUs were idle
                   and the system did not have an outstanding disk I/O
                   request""",
                   'detail': '%idle [/proc/stat(4)]'},
     '%steal':    {'cat': 'Utilization',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of time that the CPU or CPUs were idle
                   and the system did not have an outstanding disk I/O
                   request""",
                   'detail': '%steal [/proc/stat(8)]'},
     '%guest':    {'cat': 'Utilization',
-                  'unit': 'percentage',
+                  'unit': '%',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of time spent by the CPU or CPUs to run
                   a virtual processor""",
                   'detail': '%guest [/proc/stat(9)]'},
     'runq-sz':   {'cat': 'Load',
                   'regexp': INTEGER_RE,
-                  'unit': 'number',
                   'desc': """Run queue length (number of tasks waiting for run
                   time)""",
                   'detail': 'runq-sz [/proc/loadavg(4)]'},
     'plist-sz':  {'cat': 'Load',
-                  'unit': 'number',
                   'regexp': INTEGER_RE,
                   'desc': """Number of tasks in the task list""",
                   'detail': 'plist-sz [/proc/loadavg(5)]'},
     'ldavg-1':   {'cat': 'Load',
-                  'unit': 'number',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """System load average for the last minute. The load
                   average is calculated as the average number of runnable or
@@ -159,28 +156,25 @@ BASE_GRAPHS = {
                   <i>kernel/sched/proc.c:calc_load()</i></link>""",
                   'detail': 'ldavg-1 [/proc/loadavg(1)]'},
     'ldavg-5':   {'cat': 'Load',
-                  'unit': 'number',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """System load average for the past 5 minutes""",
                   'detail': 'ldavg-5 [/proc/loadavg(2)]'},
     'ldavg-15':  {'cat': 'Load',
-                  'unit': 'number',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """System load average for the past 15 minutes""",
                   'detail': 'ldavg-15 [/proc/loadavg(3)]'},
     'blocked':   {'cat': 'Load',
-                  'unit': 'number',
                   'regexp': INTEGER_RE,
                   'desc': """Number of tasks currently blocked, waiting for I/O
                   to complete""",
                   'detail': 'blocked [/proc/stat:procs_blocked]'},
     'proc/s':    {'cat': 'Load',
-                  'unit': 'number_per_second',
+                  'unit': 'processes per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of tasks created per second""",
                   'detail': 'processes [/proc/stat:processes]'},
     'cswch/s':   {'cat': 'Load',
-                  'unit': 'number_per_second',
+                  'unit': 'cswitchs per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of context switches per second""",
                   'detail': 'ctxt [/proc/stat:ctxt]'},
@@ -195,7 +189,7 @@ BASE_GRAPHS = {
                   take into account memory used by the kernel itself"""},
     '%memused':  {'cat': 'Memory',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of used memory"""},
     'kbbuffers': {'cat': 'Memory',
                   'regexp': INTEGER_RE,
@@ -214,7 +208,7 @@ BASE_GRAPHS = {
                   workload.  This is an estimate of how much RAM/swap is needed
                   to guarantee that there never is out of memory"""},
     '%commit':   {'cat': 'Memory',
-                  'unit': 'percentage',
+                  'unit': '%',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of memory needed for current workload in
                   relation to the total amount of memory (RAM+swap). This number
@@ -249,18 +243,19 @@ BASE_GRAPHS = {
                   been allocated"""},
     '%hugused':  {'cat': 'Memory',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'percentage',
+                  'unit': '%',
                   'desc': """Percentage of total hugepages memory that has been
                   allocated"""},
     'frmpg/s':   {'cat': 'Memory',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'unit': 'number_per_second',
+                  'unit': 'freed pages per second',
                   'desc': """Number of memory pages freed by the system per
                   second. A negative value represents a number of pages
                   allocated by the system.  Note that a page has a size of 4 kB
                   or 8 kB according to the machine architecture"""},
     'bufpg/s':   {'cat': 'Memory',
                   'regexp': NUMBER_WITH_DEC_RE,
+                  'unit': 'memory pages per second',
                   'desc': """Number of additional memory pages used as buffers
                   by the system per second. A negative value means fewer pages
                   used as buffers by the system"""},
@@ -605,30 +600,38 @@ BASE_GRAPHS = {
                   'regexp': INTEGER_RE,
                   'desc': """Number of TCP sockets in TIME_WAIT state"""},
     'rxpck/s':   {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of packets received per second"""},
     'txpck/s':   {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of packets transmitted per second"""},
     'rxbyt/s':   {'cat': 'Network',
+                  'unit': 'bytes per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of bytes received per second"""},
     'txbyt/s':   {'cat': 'Network',
+                  'unit': 'bytes per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of bytes transmitted per second"""},
     'rxcmp/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
+                  'unit': 'packets per second',
                   'desc': """Number of compressed packets received per second
                   (for cslip etc.)"""},
     'txcmp/s':   {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of compressed packets transmitted per
                   second"""},
     'rxmcst/s':  {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of multicast packets received per
                   second"""},
     'rxerr/s':   {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of bad packets received per
                   second"""},
@@ -641,10 +644,12 @@ BASE_GRAPHS = {
                   'desc': """Number of collisions that happened per second while
                   transmitting packets"""},
     'rxdrop/s':  {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of received packets dropped per second
                   because of a lack of space in linux buffers"""},
     'txdrop/s':  {'cat': 'Network',
+                  'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of transmitted packets dropped per second
                   because of a lack of space in linux buffers"""},
@@ -908,7 +913,8 @@ BASE_GRAPHS = {
                   made a direct transition to the CLOSED state from either the
                   ESTABLISHED state or the CLOSE-WAIT state
                   [tcpEstabResets]"""},
-    # original s ar name is retrans/s which is duplicate. we rename it on the fly
+    # original s ar name is retrans/s which is duplicate (NFS value). 
+    # we renamed it to retrant/s internally
     'retrant/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The total number of segments retransmitted per
@@ -1231,11 +1237,15 @@ BASE_GRAPHS = {
 
 
 def get_regexp(name):
-    k = {'IFACE': INTERFACE_NAME_RE, 'DEV': DEVICE_NAME_RE, 'CPU': CPU_RE, 'INTR': INT_RE,
-         'iNNN/s': INTERRUPTS_RE, 'BUS': INTEGER_RE, 'FAN': INTEGER_RE, 'DEVICE': INTERFACE_NAME_RE,
-         'TEMP': INTEGER_RE, 'TTY': INTEGER_RE, 'idvendor': HEX_RE, 'idprod': HEX_RE,
+    """Given a graph name return the correct regexp to identify the data in a
+    sar file"""
+    k = {'IFACE': INTERFACE_NAME_RE, 'DEV': DEVICE_NAME_RE, 'CPU': CPU_RE,
+         'INTR': INT_RE, 'iNNN/s': INTERRUPTS_RE, 'BUS': INTEGER_RE,
+         'FAN': INTEGER_RE, 'DEVICE': INTERFACE_NAME_RE, 'TEMP': INTEGER_RE,
+         'TTY': INTEGER_RE, 'idvendor': HEX_RE, 'idprod': HEX_RE,
          'manufact': USB_NAME_RE, 'product': USB_NAME_RE, 'MHz': NUMBER_WITH_DEC_RE,
          'FILESYSTEM': FS_NAME_RE}
+
     if name in k:
         return k[name]
 
@@ -1248,10 +1258,12 @@ def get_regexp(name):
     raise Exception("regexp for %s could not be found" % name)
 
 
-def get_labels_title(names, sar_obj=None):
-    if not isinstance(names, list):
-        raise Exception("get_labels_title expects a list: %s" % names)
-
+def get_title_unit_labels(names, sar_obj=None):
+    """Given a list of graph names it returns a list of tuples of title,
+    unit, labels. title is the title of the whole graph, unit represents
+    the unit of the graph(s) if one exists and if it is the same among all
+    graphs. labels are the names of the plotted dataseries as seen in
+    the legend of the graph"""
     cat = {}
     key = {}
     perf = {}
@@ -1260,21 +1272,28 @@ def get_labels_title(names, sar_obj=None):
             (c, k, p) = i.split('#')
         # It is not in the "CPU#0#%idle" form
         except:
-            # Contemplate a combined simple graph like ldavg-{1,5,15}
-            if len(names) != 1:
-                return " ".join(names), names
-
+            # If the name does not exist in the BASE_GRAPHS dict we just
+            # use the name itself for title and label
             if not names[0] in BASE_GRAPHS:
-                return names[0], names[0]
+                return names[0], None, names[0]
+
+            # If a graph has the 'label' attribute we use that for
+            # Title and label
+            s = names[0]
             if 'label' in BASE_GRAPHS[names[0]]:
                 s = BASE_GRAPHS[names[0]]['label']
-                return s, s
-            else:
-                return names[0], names[0]
+
+            unit = None
+            if 'unit' in BASE_GRAPHS[names[0]]:
+                unit = BASE_GRAPHS[names[0]]['unit']
+
+            return s, unit, s
         cat[c] = True
         key[k] = True
         perf[p] = True
 
+    # We can raise an error here because in case of a custom graph with different
+    # datasets the label is set by the user and this function is never called
     if len(cat.keys()) > 1:
         raise Exception("Error. We do not contemplate graphing data from different categories: %s" % names)
 
@@ -1283,7 +1302,8 @@ def get_labels_title(names, sar_obj=None):
     # labels = ['CPU0', 'CPU1', 'CPU2', ...]
     if len(perf.keys()) == 1:
         c = cat.keys()[0]
-        title = "%s" % (perf.keys()[0])
+        perf_key = perf.keys()[0]
+        title = "%s" % (perf_key)
         # It is an interrupt and sosreport exists and has interrupts dictionary
         # hence we print the device that generated it in the title
         if re.match('i[0-9]*/s', title) and sar_obj is not None and \
@@ -1295,8 +1315,12 @@ def get_labels_title(names, sar_obj=None):
             # Just leave the original title in case of errors
             except:
                 pass
+        # This takes the CPU number (in case of a CPU#1#%idle series
         labels = ["".join(i.split('#')[1:2]) for i in names]
-        return title, labels
+        unit = None
+        if perf_key in BASE_GRAPHS and  'unit' in BASE_GRAPHS[perf_key]:
+            unit = BASE_GRAPHS[perf_key]['unit']
+        return title, unit, labels
 
     raise Exception("get_labels_title() error on %s" % names)
 
@@ -1308,6 +1332,7 @@ def list_all_categories():
     return l
 
 def get_category(name):
+    """Given a graph name, return the corresponding Category"""
     if name.startswith('CPU#'):
         return 'Load'
     elif name.startswith('FILESYSTEM#'):

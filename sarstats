@@ -252,7 +252,7 @@ class SarStats(object):
                 if j in sar_metadata.BASE_GRAPHS and \
                     sar_metadata.BASE_GRAPHS[j]['cat'] == i and \
                     j not in skiplist:
-                    entry = sar_metadata.get_labels_title([j], sar_obj=self.sar_obj)
+                    entry = sar_metadata.get_title_unit_labels([j], sar_obj=self.sar_obj)
                     l.append([entry, [j]])
             if i in c:
                 for j in range(len(c[i])):
@@ -264,13 +264,13 @@ class SarStats(object):
                         chunks = split_chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
-                            entry = sar_metadata.get_labels_title(chunk, sar_obj=self.sar_obj)
+                            entry = sar_metadata.get_title_unit_label(chunk, sar_obj=self.sar_obj)
                             s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
                             newentry = (s, entry[1])
                             l.append(([newentry, chunk]))
                             counter += 1
                     else:
-                        entry = sar_metadata.get_labels_title(b, sar_obj=self.sar_obj)
+                        entry = sar_metadata.get_title_unit_labels(b, sar_obj=self.sar_obj)
                         l.append([entry, b])
 
         return l
@@ -364,7 +364,7 @@ class SarStats(object):
             for graph in custom_graph_list.keys():
                 graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
-                sarobj.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels,
+                sarobj.plottimeseries((['Custom', None, graphs], graphs), fname, self.extra_labels,
                                       show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()

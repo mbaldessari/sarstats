@@ -586,7 +586,8 @@ class SAR(object):
         extra_labels is a list of tuples [(datetime, 'label'), ...]
         """
         title = data[0][0]
-        axis_labels = data[0][1]
+        unit = data[0][1]
+        axis_labels = data[0][2]
         datanames = data[1]
 
         if not isinstance(datanames, list):
@@ -601,7 +602,10 @@ class SAR(object):
         axes.xaxis.set_minor_locator(mdates.MinuteLocator(interval=20))
         fig.autofmt_xdate()
 
-        axes.set_ylabel(title + ' value')
+        ylabel = title
+        if unit:
+            ylabel += " - " + unit
+        axes.set_ylabel(ylabel)
         y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         axes.yaxis.set_major_formatter(y_formatter)
         axes.yaxis.get_major_formatter().set_scientific(False)
