@@ -58,7 +58,7 @@ THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
-# No more than the following nr of graphs in a single page 
+# No more than the following nr of graphs in a single page
 # per default
 MAXGRAPHS_IN_PAGE = 64
 
@@ -364,14 +364,14 @@ class SarStats(object):
                 fname = self._graph_filename(graphs)
                 cat = 'Custom'
                 if not used_cat.has_key(cat): # We've not seen the category before
-                    self.do_heading(cat, h1)
+                    self.do_heading(cat, doc.h1)
                     used_cat[cat] = True
                 else:
                     self.story.append(Paragraph(cat, doc.normal))
                 self.do_heading(graph, doc.h2_invisible)
                 self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
                 self.story.append(Spacer(1, 0.2*inch))
-        
+
         # All the image files are created let's go through the files and create the pdf
         for dataname in self.graphs_order(sar, category_order, skip_list):
             fname = self._graph_filename(dataname[1][0])
@@ -379,7 +379,7 @@ class SarStats(object):
             title = dataname[0][0]
             #labels = dataname[0][1]
             if not used_cat.has_key(cat): # We've not seen the category before
-                self.do_heading(cat, h1)
+                self.do_heading(cat, doc.h1)
                 used_cat[cat] = True
             else:
                 self.story.append(Paragraph(cat, doc.normal))
@@ -441,7 +441,7 @@ class SarStats(object):
         gnuplot.stdin.write('set title "%s - %s"\n' % (graph, sar._file))
 
         gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
-        for i,j in zip(timestamps, dataset):
+        for i, j in zip(timestamps, dataset):
             s = '\"%s\",%f\n' % (ascii_date(i), j)
             gnuplot.stdin.write(s)
 
@@ -470,8 +470,8 @@ if __name__ == '__main__':
         Outputs the data to the specified csv file.""")
 
     parser.add_argument('--custom', dest='custom_graphs', default='', help="""
-        Add custom graphs with --custom 'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'. 
-        This adds two pages in the 'Custome' category: Graph 'foo' containing 
+        Add custom graphs with --custom 'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'.
+        This adds two pages in the 'Custome' category: Graph 'foo' containing
         udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
         With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
 
@@ -498,9 +498,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--skip', default='lo', dest='skip_graphs',
         help="""Graphs or entries to skip. For example adding '%%user' will
-        remove that graph. Adding 'lo' will remove that interface from any 
+        remove that graph. Adding 'lo' will remove that interface from any
         network graph. Use comma to separate multiple graphs to be skipped.
-        For example '--skip lo,eth0' will not plot any graphs for those 
+        For example '--skip lo,eth0' will not plot any graphs for those
         interfaces and '--skip lo,miss/s' will skip the 'lo' interface and the
         'miss/s' graph""")
 

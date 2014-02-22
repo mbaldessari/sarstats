@@ -97,7 +97,7 @@ base_graphs = {
     '%nice':    {'cat': 'Utilization',
                  'regexp': _number_with_decimals_regexp,
                  'unit': 'percentage',
-                 'desc': """Percentage of CPU utilization that occurred while 
+                 'desc': """Percentage of CPU utilization that occurred while
                  executing at the user level with nice priority""",
                  'detail': '%nice [/proc/stat(2)]'},
     '%gnice':   {'cat': 'Utilization',
@@ -150,10 +150,10 @@ base_graphs = {
                  &bull;<i>n</i>: number of threads in running or uninterruptible state<br/>
                  &bull;<i>interval</i>: calculate interval (seconds). 5 seconds in RHEL<br/>
                  &bull;<i>min</i>: average time (minute)<br/>
-                 It is a moving average function. See 
+                 It is a moving average function. See
                  <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
-                 <i>kernel/sched.c:calc_load()</i></link> for more details on the implementation on RHEL 5 and 6. 
-                 More recent kernels moved it to 
+                 <i>kernel/sched.c:calc_load()</i></link> for more details on the implementation on RHEL 5 and 6.
+                 More recent kernels moved it to
                  <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
                  <i>kernel/sched/proc.c:calc_load()</i></link>""",
                  'detail': 'ldavg-1 [/proc/loadavg(1)]'},
@@ -1282,14 +1282,14 @@ def get_labels_title(names, sar_obj=None):
         title = "%s" % (perf.keys()[0])
         # It is an interrupt and sosreport exists and has interrupts dictionary
         # hence we print the device that generated it in the title
-        if re.match('i[0-9]*/s', title) and sar_obj != None \
-            and sar_obj.sosreport != None and sar_obj.sosreport.interrupts != None:
-                try:
-                    nr_int = str(int(title[1:4]))
-                    interrupts = sar_obj.sosreport.interrupts
-                    title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]['users']))
-                except: # Just leave the original title in case of errors
-                    pass
+        if re.match('i[0-9]*/s', title) and sar_obj != None and \
+                sar_obj.sosreport != None and sar_obj.sosreport.interrupts != None:
+            try:
+                nr_int = str(int(title[1:4]))
+                interrupts = sar_obj.sosreport.interrupts
+                title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]['users']))
+            except: # Just leave the original title in case of errors
+                pass
         labels = ["".join(i.split('#')[1:2]) for i in names]
         return title, labels
 
@@ -1347,13 +1347,13 @@ def get_desc(names):
 
         try:
             # Graphs like: IFACE#eth2#rxkB/s
-            (cat, key, perf) = name.split('#')
+            perf = name.split('#')[2]
             desc = base_graphs[perf]['desc']
             detail = None
             if base_graphs[perf].has_key('detail'):
                 detail = base_graphs[perf]['detail']
             return [[perf, regex.sub(' ', desc), detail]]
-        except:
+        except Exception, e:
             pass
         if re.match('.*i[0-9]*/s', name):
             return [['int/s', 'Interrupts per second', None]]
