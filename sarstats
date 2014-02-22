@@ -555,7 +555,6 @@ if __name__ == '__main__':
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
         args.labels, args.showreboots, args.custom_graphs, args.grid)
-        args.labels_file, args.showreboots, args.custom_graphs, args.grid)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()
