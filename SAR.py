@@ -56,6 +56,7 @@ LOGGER.setLevel(logging.WARN)
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
 
 def natural_sort_key(s):
+    """Natural sorting function"""
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
@@ -111,7 +112,7 @@ def canonicalise_timestamp(date, ts):
         raise SARError("canonicalise_timestamp error %s" % ts)
     return dt
 
-class SAR:
+class SAR(object):
     """ Class for parsing a sar report and querying its data """
 
     # Data structure representing the sar report's contents.
@@ -123,12 +124,11 @@ class SAR:
     _data = {}
     _categories = {}
 
-
     def __init__(self, fname):
         LOGGER.debug("SAR:__init__")
         self._file = fname
 
-        (self.kernel, self.version, self.hostname, tmpdate) = (None, None, None, None)
+        (self.kernel, self.version, self.hostname, self._date) = (None, None, None, None)
         self.sample_frequency = None
 
         # Current line number (for use in reporting parse errors)
@@ -149,7 +149,7 @@ class SAR:
         try:
             self.sosreport = sosreport.SOSReport(a)
             self.sosreport.parse()
-        except:
+        except Exception, e:
             pass
 
     # This walks the _data structure and removes all keys that have value
@@ -320,7 +320,7 @@ class SAR:
                 timestamp = canonicalise_timestamp(self._date, matches.group(1))
             elif timestamp < self._prev_timestamp:
                 raise SARError("Time going backwards: %s - Prev timestamp: %s -> %s" % \
-                    (timestamps, self._prev_timestamp, line))
+                    (timestamp, self._prev_timestamp, self._linecount))
         self._prev_timestamp = timestamp
 
         # We never had this timestamp let's start with a new dictionary
@@ -397,7 +397,6 @@ class SAR:
 
     def parse(self, skip_tables=['BUS']):
         """ Parse a SAR report. """
-
         self._prev_timestamp = None
         # Parsing is performed line by line using a state machine
         state = 'start'
@@ -477,7 +476,7 @@ headers: "{1}",
 line: "{2}",
 regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pattern.pattern))
 
-                ts = self._record_data(headers, matches)
+                self._record_data(headers, matches)
                 continue
 
             if state == 'table_end':
@@ -515,16 +514,15 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
         l = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
         return l
 
-    # Returns a list of all combined graphs per category. If per_key is True the list
-    # is per DEVICE/CPU/etc. Otherwise it is per "perf" attribute
-    # datanames_per_arg('DEV', True) will give:
-    # ['DEV#dev253-1#%util', 'DEV#dev253-1#avgqu-sz', 'DEV#dev253-1#avgrq-sz',..],
-    # ['DEV#dev8-0#%util', 'DEV#dev8-0#avgqu-sz', ...]]
-    #
-    # datanames_per_arg('DEV', False) will give:
-    # [['DEV#dev253-1#%util', 'DEV#dev8-0#%util', 'DEV#dev8-3#%util'],
-    #  ['DEV#dev253-1#avgqu-sz'...]]
     def datanames_per_arg(self, category, per_key=True):
+        """Returns a list of all combined graphs per category. If per_key is
+        True the list is per DEVICE/CPU/etc. Otherwise it is per "perf"
+        attribute datanames_per_arg('DEV', True) will give:
+        ['DEV#dev253-1#%util', 'DEV#dev253-1#avgqu-sz',
+        'DEV#dev253-1#avgrq-sz',..], ['DEV#dev8-0#%util',
+        'DEV#dev8-0#avgqu-sz', ...]] datanames_per_arg('DEV', False) will give:
+        [['DEV#dev253-1#%util', 'DEV#dev8-0#%util', 'DEV#dev8-3#%util'],
+        ['DEV#dev253-1#avgqu-sz'...]]"""
         l = self.available_types(category)
         ret = []
 

@@ -85,6 +85,53 @@ class MyDocTemplate(BaseDocTemplate):
             11*inch, 8*inch, id='F1')])
         self.addPageTemplates(template)
 
+        self.centered = PS(name = 'centered',
+            fontSize = 30,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        self.centered_index = PS(name = 'centered_index',
+            fontSize = 24,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        self.small_centered = PS(name = 'small_centered',
+            fontSize = 14,
+            leading = 16,
+            alignment = 1,
+            spaceAfter = 20)
+
+        self.h1 = PS(name = 'Heading1',
+            fontSize = 16,
+            leading = 16)
+
+        self.h2 = PS(name = 'Heading2',
+            fontSize = 14,
+            leading = 14)
+
+        self.h2_center = PS(name = 'Heading2Center',
+            alignment = 1,
+            fontSize = 14,
+            leading = 14)
+
+        self.h2_invisible = PS(name = 'Heading2Invisible',
+            alignment = 1,
+            textColor = '#FFFFFF',
+            fontSize = 14,
+            leading = 14)
+
+        self.mono = PS(name = 'Mono',
+            fontName = 'Courier',
+            fontSize = 16,
+            leading = 16)
+
+        self.normal = PS(name = 'Normal',
+            fontSize = 16,
+            leading = 16)
+
+
     # Entries to the table of contents can be done either manually by calling
     # the addEntry method on the TableOfContents object or automatically by
     # sending a 'TOCEntry' notification in the afterFlowable method of the
@@ -240,6 +287,8 @@ class SarStats(object):
         self.extra_labels = None
         self.showreboots = show_reboots
         self.grid = grid_on
+        doc = MyDocTemplate(output_file, pagesize=landscape(A4))
+
         if labels != None:
             try:
                 self.extra_labels = []
@@ -251,62 +300,16 @@ class SarStats(object):
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
 
-        centered = PS(name = 'centered',
-            fontSize = 30,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
-
-        centered_index = PS(name = 'centered_index',
-            fontSize = 24,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
-
-        small_centered = PS(name = 'small_centered',
-            fontSize = 14,
-            leading = 16,
-            alignment = 1,
-            spaceAfter = 20)
-
-        h1 = PS(name = 'Heading1',
-            fontSize = 16,
-            leading = 16)
-
-        h2 = PS(name = 'Heading2',
-            fontSize = 14,
-            leading = 14)
-
-        h2_center = PS(name = 'Heading2Center',
-            alignment = 1,
-            fontSize = 14,
-            leading = 14)
-
-        h2_invisible = PS(name = 'Heading2Invisible',
-            alignment = 1,
-            textColor = '#FFFFFF',
-            fontSize = 14,
-            leading = 14)
-
-        mono = PS(name = 'Mono',
-            fontName = 'Courier',
-            fontSize = 16,
-            leading = 16)
-
-        normal = PS(name = 'Normal',
-            fontSize = 16,
-            leading = 16)
-
-        self.story.append(Paragraph('%s' % sar.hostname, centered))
-        self.story.append(Paragraph('%s %s' % (sar.kernel, sar.version), small_centered))
+        self.story.append(Paragraph('%s' % sar.hostname, doc.centered))
+        self.story.append(Paragraph('%s %s' % (sar.kernel, sar.version), doc.small_centered))
         self.story.append(Spacer(1, 0.05 * inch))
-        self.story.append(Paragraph('%s' % (" ".join(sar_files)), small_centered))
+        self.story.append(Paragraph('%s' % (" ".join(sar_files)), doc.small_centered))
         mins = int(sar.sample_frequency / 60)
         secs = int(sar.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
         if secs > 0:
             s += " %s seconds" % secs
-        self.story.append(Paragraph(s, small_centered))
+        self.story.append(Paragraph(s, doc.small_centered))
 
         toc = TableOfContents()
         toc.levelStyles = [
@@ -315,7 +318,7 @@ class SarStats(object):
             PS(fontSize=10, name='TOCHeading2', leftIndent=40, firstLineIndent=-20,
                 spaceBefore=0, leading=8),
         ]
-        self.do_heading('Table of contents', centered_index)
+        self.do_heading('Table of contents', doc.centered_index)
         self.story.append(toc)
         self.story.append(PageBreak())
 
@@ -364,8 +367,8 @@ class SarStats(object):
                     self.do_heading(cat, h1)
                     used_cat[cat] = True
                 else:
-                    self.story.append(Paragraph(cat, normal))
-                self.do_heading(graph, h2_invisible)
+                    self.story.append(Paragraph(cat, doc.normal))
+                self.do_heading(graph, doc.h2_invisible)
                 self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
                 self.story.append(Spacer(1, 0.2*inch))
         
@@ -379,21 +382,20 @@ class SarStats(object):
                 self.do_heading(cat, h1)
                 used_cat[cat] = True
             else:
-                self.story.append(Paragraph(cat, normal))
-            self.do_heading(title, h2_invisible)
+                self.story.append(Paragraph(cat, doc.normal))
+            self.do_heading(title, doc.h2_invisible)
             self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
             self.story.append(Spacer(1, 0.2*inch))
             desc = sar_metadata.get_desc(dataname[1])
             for (name, desc, detail) in desc:
-                self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), normal))
+                self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), doc.normal))
                 if detail:
-                    self.story.append(Paragraph("Counter: <i>%s</i>" % (detail), mono))
+                    self.story.append(Paragraph("Counter: <i>%s</i>" % (detail), doc.mono))
 
             self.story.append(PageBreak())
             count += 1
 
 
-        doc = MyDocTemplate(output_file, pagesize=landscape(A4))
         doc.multiBuild(self.story)
 
     def export_csv(self, output_file):
