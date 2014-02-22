@@ -588,7 +588,7 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
 
         return ymax
 
-    def plottimeseries(self, data, fname, extra_labels, showreboots=False):
+    def plottimeseries(self, data, fname, extra_labels, showreboots=False, grid=False):
         """ Plot timeseries data (of type dataname).
             The data can be either simple (one or no datapoint at any point in time,
             or indexed (by indextype). dataname is assumed to be in the form of
@@ -649,6 +649,14 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
                 axes.annotate('r', xy=(mdates.date2num(reboots[reboot]['date']), ymin),
                     xycoords='data', xytext=(-30, -30), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->", color='blue', connectionstyle="arc3,rad=-0.1"))
+
+
+        # if --grid option is passed draw the grid
+        if grid:
+            axes.grid(True)
+        else:
+            axes.grid(False)
+
 
         lgd = None
         # Draw the legend only when needed

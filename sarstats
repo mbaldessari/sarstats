@@ -119,7 +119,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
     fname = sar_stats_obj._graph_filename(dataname[1][0])
     sar_obj.plottimeseries(dataname, fname, sar_stats_obj.extra_labels,
-            sar_stats_obj.showreboots)
+            sar_stats_obj.showreboots, sar_stats_obj.grid)
     sys.stdout.write(".")
     sys.stdout.flush()
 
@@ -234,11 +234,12 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels=None, show_reboots=False, custom_graphs=''):
+        labels=None, show_reboots=False, custom_graphs='', grid_on=False):
         """ Parse sar data and produce graphs of the parsed data. """
         sar = self.sar_obj
         self.extra_labels = None
         self.showreboots = show_reboots
+        self.grid = grid_on
         if labels != None:
             try:
                 self.extra_labels = []
@@ -334,7 +335,7 @@ class SarStats(object):
         else:
             for dataname in self.graphs_order(sar, category_order, skip_list):
                 fname = self._graph_filename(dataname[1][0])
-                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots)
+                sar.plottimeseries(dataname, fname, self.extra_labels, show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -354,7 +355,7 @@ class SarStats(object):
             for graph in custom_graph_list.keys():
                 graphs = custom_graph_list[graph]
                 fname = self._graph_filename(graphs)
-                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots)
+                sar.plottimeseries((['Custom', graphs], graphs), fname, self.extra_labels, show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 fname = self._graph_filename(graphs)
@@ -498,6 +499,9 @@ if __name__ == '__main__':
         interfaces and '--skip lo,miss/s' will skip the 'lo' interface and the
         'miss/s' graph""")
 
+    parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
+        This disables the grid in graphs""")
+
     args = parser.parse_args()
 
     # If the only argument is a directory fetch all the sar files and order
@@ -550,7 +554,8 @@ if __name__ == '__main__':
         selected_categories = []
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
-        args.labels, args.showreboots, args.custom_graphs)
+        args.labels, args.showreboots, args.custom_graphs, args.grid)
+        args.labels_file, args.showreboots, args.custom_graphs, args.grid)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()
