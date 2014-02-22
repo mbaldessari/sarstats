@@ -234,13 +234,21 @@ class SarStats(object):
         return extra_labels
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
-        labels_csv='', show_reboots=False, custom_graphs=''):
+        labels=None, show_reboots=False, custom_graphs=''):
         """ Parse sar data and produce graphs of the parsed data. """
         sar = self.sar_obj
         self.extra_labels = None
         self.showreboots = show_reboots
-        if len(labels_csv) > 0:
-            self.extra_labels = self.parse_labels_csv(labels_csv)
+        if labels != None:
+            try:
+                self.extra_labels = []
+                for i in labels.strip().split(';'):
+                    (time, label) = i.split(',')
+                    time = dateutil.parser.parse(time)
+                    self.extra_labels.append((time, label))
+            except Exception, e:
+                print("Unable to parse extra labels: {0}".format(labels))
+                sys.exit(-1)
 
         centered = PS(name = 'centered',
             fontSize = 30,
@@ -290,14 +298,13 @@ class SarStats(object):
 
         self.story.append(Paragraph('%s' % sar.hostname, centered))
         self.story.append(Paragraph('%s %s' % (sar.kernel, sar.version), small_centered))
-        self.story.append(Spacer(1, 0.05*inch))
+        self.story.append(Spacer(1, 0.05 * inch))
         self.story.append(Paragraph('%s' % (" ".join(sar_files)), small_centered))
         mins = int(sar.sample_frequency / 60)
         secs = int(sar.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
         if secs > 0:
             s += " %s seconds" % secs
-
         self.story.append(Paragraph(s, small_centered))
 
         toc = TableOfContents()
@@ -440,7 +447,7 @@ class SarStats(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=
-        "%s - analizes sar output files and produces a pdf report" % sys.argv[0],
+        "%s - analyzes sar output files and produces a pdf report" % sys.argv[0],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('sar_files', metavar='sar_files', nargs='+',
@@ -449,14 +456,14 @@ if __name__ == '__main__':
         directory containing the sar files is part of an sosreport, it will try
         to resulve the interrupts source""")
 
-    parser.add_argument('--ascii', dest='ascii_graph', default='', help="""
+    parser.add_argument('--ascii', dest='ascii_graph', default=None, help="""
         Display a single graph on the terminal. (Requires installed gnuplot)""")
 
-    parser.add_argument('--category', dest='only_categories', default='', help="""
+    parser.add_argument('--category', dest='categories', default=None, help="""
         Only outputs the selected categories. Available categories: {0}""" \
         .format(",".join(sar_metadata.list_all_categories())))
 
-    parser.add_argument('--csv', dest='csv_file', default='', help="""
+    parser.add_argument('--csv', dest='csv_file', default=None, help="""
         Outputs the data to the specified csv file.""")
 
     parser.add_argument('--custom', dest='custom_graphs', default='', help="""
@@ -465,13 +472,10 @@ if __name__ == '__main__':
         udpsck, rawsck and tcp-tw and graph 'bar' containing i001/s and i002/s.
         With graphs that vary too muchin y-ranges the output can be quite suboptimal""")
 
-    parser.add_argument('--labelsfile', dest='labels_file', default='', help="""
-        Reads a csv file in the format: Date (ISO format),Label and will plot
-        the additional dots on the graphs. This helps to look for correlation of
-        events. For example a file like:
-        2014-01-01 13:45:03,foo
-        2014-01-02 13:15:15,bar
-        Will add two extra labels on each graph at those times""")
+    parser.add_argument('--labels', dest='labels', default=None, help="""
+        Adds labels to a graph at specified time. For example --label '2014-01-01 13:45:03,foo;
+        2014-01-02 13:15:15,bar' will add two extra labels on every graph at those times.
+        This is useful for correlation work""")
 
     parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
         Only lists all the graphs and elements contained in the specified
@@ -528,25 +532,25 @@ if __name__ == '__main__':
         sys.exit(0)
 
     sar_stats = SarStats(sar, int(args.maxgraphs))
-    if args.csv_file != '':
+    if args.csv_file != None:
         print("Export to csv: {0}".format(args.csv_file))
         sar_stats.export_csv(args.csv_file)
         sys.exit(0)
 
-    if args.ascii_graph != '':
+    if args.ascii_graph != None:
         sar_stats.graph_ascii(args.ascii_graph)
         sys.exit(0)
 
     print("Building graphs: ", end='')
 
     skip_list = args.skip_graphs.strip().split(",")
-    if args.only_categories != '':
-        selected_categories = args.only_categories.strip().split(",")
+    if args.categories != None:
+        selected_categories = args.categories.strip().split(",")
     else:
         selected_categories = []
 
     sar_stats.graph(args.sar_files, skip_list, args.output_file, selected_categories,
-        args.labels_file, args.showreboots, args.custom_graphs)
+        args.labels, args.showreboots, args.custom_graphs)
     sar.close()
     print("\nWrote: {0}".format(args.output_file))
     sar_stats.close()
