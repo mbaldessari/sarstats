@@ -1255,7 +1255,7 @@ def get_labels_title(names, sar_obj=None):
     for i in names:
         try:
             (c, k, p) = i.split('#')
-        except: # It is not in the "CPU#0#%idle" form
+        except Exception, e: # It is not in the "CPU#0#%idle" form
             # Contemplate a combined simple graph like ldavg-{1,5,15}
             if len(names) != 1:
                 return " ".join(names), names
@@ -1353,7 +1353,7 @@ def get_desc(names):
             if base_graphs[perf].has_key('detail'):
                 detail = base_graphs[perf]['detail']
             return [[perf, regex.sub(' ', desc), detail]]
-        except Exception, e:
+        except:
             pass
         if re.match('.*i[0-9]*/s', name):
             return [['int/s', 'Interrupts per second', None]]
@@ -1362,7 +1362,7 @@ def get_desc(names):
         previous = None
         for i in names:
             try:
-                (cat, key, perf) = i.split('#')
+                perf = i.split('#')[2]
                 if re.match('.*i[0-9]*/s', perf):
                     if previous != 'int/s':
                         ret.append(['int/s', 'Interrupts per second', None])

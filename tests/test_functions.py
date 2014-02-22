@@ -59,7 +59,7 @@ class TestSarParsing(unittest.TestCase):
         count = 0
         for example in self.sar_files:
             print("Parsing: {0}".format(example))
-            sar = SAR.SAR(example)
+            sar = SAR.SAR([example])
             sar.parse()
             usage = resource.getrusage(resource.RUSAGE_SELF)
             if USE_MELIAE:

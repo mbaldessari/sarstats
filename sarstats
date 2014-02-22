@@ -525,11 +525,9 @@ if __name__ == '__main__':
             print("No sar files found in dir: {0}".format(root))
             sys.exit(-1)
 
-    print("Parsing file: ", end='')
-    for f in args.sar_files:
-        print("{0} ".format(f), end='')
-        sar = SAR.SAR(f)
-        sar.parse()
+    print("Parsing files: {0}".format(" ".join(args.sar_files)), end='')
+    sar = SAR.SAR(args.sar_files)
+    sar.parse()
     print()
 
     if args.list_graphs:

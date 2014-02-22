@@ -113,20 +113,19 @@ def canonicalise_timestamp(date, ts):
     return dt
 
 class SAR(object):
-    """ Class for parsing a sar report and querying its data """
-
-    # Data structure representing the sar report's contents.
-    # Dictionary of dictionaries. First index is timestamp (datetime)
-    # and the second index is the column:
-    # '%commit', '%memused', '%swpcad', '%swpused', '%vmeff'
-    # 'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
-    # 'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',
+    """ Class for parsing a sar report and querying its data
+    Data structure representing the sar report's contents.
+    Dictionary of dictionaries. First index is timestamp (datetime)
+    and the second index is the column:
+    '%commit', '%memused', '%swpcad', '%swpused', '%vmeff'
+    'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
+    'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',..."""
     _data = {}
     _categories = {}
 
-    def __init__(self, fname):
+    def __init__(self, fnames):
         LOGGER.debug("SAR:__init__")
-        self._file = fname
+        self._files = fnames
 
         (self.kernel, self.version, self.hostname, self._date) = (None, None, None, None)
         self.sample_frequency = None
@@ -141,7 +140,7 @@ class SAR(object):
         # Is this file part of an sosreport?
         # Check ../../../sos_commands exists and see if uptime is a
         # symlink
-        a = os.path.abspath(fname)
+        a = os.path.abspath(fnames[0])
         for i in range(4):
             a = os.path.split(a)[0]
 
@@ -397,99 +396,104 @@ class SAR(object):
 
     def parse(self, skip_tables=['BUS']):
         """ Parse a SAR report. """
-        self._prev_timestamp = None
         # Parsing is performed line by line using a state machine
-        state = 'start'
-        headers = None
-        fd = open(self._file, "r")
-        for line in fd.readlines():
-            self._linecount += 1
-            line = line.rstrip('\n')
-            if state == 'start':
-                self._do_start(line)
-                state = 'after_first_line'
-                continue
-
-            if state == 'after_first_line':
-                if not _empty_line(line):
-                    raise SARError('Line {0}: expected empty line but got "{1}" instead'.format(self._linecount, line))
-                state = 'after_empty_line'
-                continue
-
-            if state == 'after_empty_line':
-                if _empty_line(line):
+        for file_name in self._files:
+            self._prev_timestamp = None
+            state = 'start'
+            headers = None
+            fd = open(file_name, "r")
+            for line in fd.readlines():
+                self._linecount += 1
+                line = line.rstrip('\n')
+                if state == 'start':
+                    self._do_start(line)
+                    state = 'after_first_line'
                     continue
 
-                if _average_line(line):
-                    state = 'table_end'
-                    continue
-
-                state = 'table_start'
-                # Continue processing this line
-
-            if state == 'skip_until_eot':
-                if not _empty_line(line):
-                    continue
-                else:
-                    state = 'after_empty_line'
-
-
-            if state == 'table_start':
-                (timestamp, headers) = self._column_headers(line)
-                if self._olddate: # If in previous tables we crossed the day, we start again from the previous date
-                    self._date = self._olddate
-                if timestamp is None:
-                    raise SARError('Line {0}: expected column header line but got "{1}" instead'.format(self._linecount, line))
-                if headers == ['LINUX', 'RESTART']:
-                    # FIXME: restarts should really be recorded, in a smart # way.
-                    state = 'table_end'
-                    continue
-                # FIXME: we might want to skip even if it is present in other columns
-                elif headers[0] in skip_tables:
-                    state = 'skip_until_eot'
-                    print("Skipping: {0}".format(headers))
-                    continue
-
-                try:
-                    pattern = re.compile(self._build_data_line_regexp(headers))
-                except AssertionError:
-                    raise SARError('Line {0}: exceeding python interpreter limit with regexp for this line "{1}"'.format(self._linecount, line))
-
-                self._prev_timestamp = False
-                state = 'table_row'
-                continue
-
-            if state == 'table_row':
-                if _empty_line(line):
+                if state == 'after_first_line':
+                    if not _empty_line(line):
+                        raise SARError('Line {0}: expected empty line but got "{1}" instead'.format(self._linecount, line))
                     state = 'after_empty_line'
                     continue
 
-                if _average_line(line):
-                    state = 'table_end'
+                if state == 'after_empty_line':
+                    if _empty_line(line):
+                        continue
+
+                    if _average_line(line):
+                        state = 'table_end'
+                        continue
+
+                    state = 'table_start'
+                    # Continue processing this line
+
+                if state == 'skip_until_eot':
+                    if not _empty_line(line):
+                        continue
+                    else:
+                        state = 'after_empty_line'
+
+
+                if state == 'table_start':
+                    (timestamp, headers) = self._column_headers(line)
+                    # If in previous tables we crossed the day, we start again from the previous date
+                    if self._olddate: 
+                        self._date = self._olddate
+                    if timestamp is None: raise SARError('Line {0}: expected column'
+                            'header line but got "{1}" instead'.format(self._linecount,
+                            line))
+                    if headers == ['LINUX', 'RESTART']:
+                        # FIXME: restarts should really be recorded, in a smart way
+                        state = 'table_end'
+                        continue
+                    # FIXME: we might want to skip even if it is present in other columns
+                    elif headers[0] in skip_tables:
+                        state = 'skip_until_eot'
+                        print("Skipping: {0}".format(headers))
+                        continue
+
+                    try:
+                        pattern = re.compile(self._build_data_line_regexp(headers))
+                    except AssertionError:
+                        raise SARError('Line {0}: exceeding python interpreter'
+                                'limit with regexp for this line "{1}"'.format(
+                                self._linecount, line))
+
+                    self._prev_timestamp = False
+                    state = 'table_row'
                     continue
 
-                matches = re.search(pattern, line)
-                if matches is None:
-                    raise SARError("""
-Line {0}:
-headers: "{1}",
-line: "{2}",
-regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pattern.pattern))
+                if state == 'table_row':
+                    if _empty_line(line):
+                        state = 'after_empty_line'
+                        continue
 
-                self._record_data(headers, matches)
-                continue
+                    if _average_line(line):
+                        state = 'table_end'
+                        continue
 
-            if state == 'table_end':
-                if _empty_line(line):
-                    state = 'after_empty_line'
+                    matches = re.search(pattern, line)
+                    if matches is None:
+                        raise SARError("""
+    Line {0}:
+    headers: "{1}",
+    line: "{2}",
+    regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pattern.pattern))
+
+                    self._record_data(headers, matches)
                     continue
 
-                if _average_line(line):
-                    # Remain in 'table_end' state
-                    continue
+                if state == 'table_end':
+                    if _empty_line(line):
+                        state = 'after_empty_line'
+                        continue
 
-                raise SARError('Line {0}: "{1}" expecting end of table'.format(self._linecount, line))
-        fd.close()
+                    if _average_line(line):
+                        # Remain in 'table_end' state
+                        continue
+
+                    raise SARError('Line {0}: "{1}" expecting end of table'.format(self._linecount, line))
+            fd.close()
 
         # Remove unneeded columns
         self._prune_data()
@@ -588,10 +592,10 @@ regexp "{3}": failed to parse""".format(self._linecount, str(headers), line, pat
 
     def plottimeseries(self, data, fname, extra_labels, showreboots=False, grid=False):
         """ Plot timeseries data (of type dataname).
-            The data can be either simple (one or no datapoint at any point in time,
-            or indexed (by indextype). dataname is assumed to be in the form of
-            [title, [label1, label2, ...], [data1, data2, ...]]
-            extra_labels is a list of tuples [(datetime, 'label'), ...]
+        The data can be either simple (one or no datapoint at any point in time,
+        or indexed (by indextype). dataname is assumed to be in the form of
+        [title, [label1, label2, ...], [data1, data2, ...]]
+        extra_labels is a list of tuples [(datetime, 'label'), ...]
         """
         title = data[0][0]
         axis_labels = data[0][1]
