@@ -446,7 +446,7 @@ class SarStats(object):
         gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
         gnuplot.stdin.write('set datafile separator ","\n')
         gnuplot.stdin.write('set autoscale y\n')
-        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, sarobj._file))
+        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, " ".join(sarobj._files)))
 
         gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
         for i, j in zip(timestamps, dataset):
