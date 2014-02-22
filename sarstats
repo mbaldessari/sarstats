@@ -433,7 +433,7 @@ class SarStats(object):
             columns = def_columns
         try:
             gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
-        except Exception, e:
+        except Exception as e:
             print("Error launching gnuplot: {0}".format(e))
             sys.exit(-1)
 

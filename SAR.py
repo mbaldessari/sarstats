@@ -77,17 +77,20 @@ class SARError(Exception):
         else:
             return "SAR Parser error: " + self._msg
 
+
 def _empty_line(line):
     """ Parse an empty line. """
 
     pattern = re.compile(r'^\s*$')
     return re.search(pattern, line)
 
+
 def _average_line(line):
     """ Parse a line starting with "Average:" or "Summary:" """
 
     pattern = re.compile(r'^Average:|^Summary')
     return re.search(pattern, line)
+
 
 def canonicalise_timestamp(date, ts):
     """ Canonicalise timestamps to full datetime object. The date is taken
@@ -110,6 +113,7 @@ def canonicalise_timestamp(date, ts):
     else:
         raise SARError("canonicalise_timestamp error %s" % ts)
     return dt
+
 
 class SAR(object):
     """ Class for parsing a sar report and querying its data
@@ -212,7 +216,7 @@ class SAR(object):
         else:
             raise SARError('Line {0}: "{1}" failed to parse as a first line'.format(self._linecount, line))
         LOGGER.debug('Kernel: {0}; version: {1}; hostname: {2}; date: {3}'.format(self.kernel,
-            self.version, self.hostname, tmpdate))
+                     self.version, self.hostname, tmpdate))
 
         pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
         matches = re.search(pattern, tmpdate)
@@ -305,8 +309,8 @@ class SAR(object):
                 self._date = (nextday.year, nextday.month, nextday.day)
                 timestamp = canonicalise_timestamp(self._date, matches.group(1))
             elif timestamp < self._prev_timestamp:
-                raise SARError("Time going backwards: %s - Prev timestamp: %s -> %s" % \
-                    (timestamp, self._prev_timestamp, self._linecount))
+                raise SARError("Time going backwards: {0} - Prev timestamp: {1} -> {2}".
+                               format(timestamp, self._prev_timestamp, self._linecount))
         self._prev_timestamp = timestamp
 
         # We never had this timestamp let's start with a new dictionary
@@ -420,15 +424,14 @@ class SAR(object):
                     else:
                         state = 'after_empty_line'
 
-
                 if state == 'table_start':
                     (timestamp, headers) = self._column_headers(line)
                     # If in previous tables we crossed the day, we start again from the previous date
                     if self._olddate:
                         self._date = self._olddate
-                    if timestamp is None: raise SARError('Line {0}: expected column'
-                            'header line but got "{1}" instead'.format(self._linecount,
-                            line))
+                    if timestamp is None:
+                        raise SARError('Line {0}: expected column header line but'
+                                       'got "{1}" instead'.format(self._linecount, line))
                     if headers == ['LINUX', 'RESTART']:
                         # FIXME: restarts should really be recorded, in a smart way
                         state = 'table_end'
@@ -443,8 +446,8 @@ class SAR(object):
                         pattern = re.compile(self._build_data_line_regexp(headers))
                     except AssertionError:
                         raise SARError('Line {0}: exceeding python interpreter'
-                                'limit with regexp for this line "{1}"'.format(
-                                self._linecount, line))
+                                       'limit with regexp for this line "{1}"'.
+                                       format(self._linecount, line))
 
                     self._prev_timestamp = False
                     state = 'table_row'
@@ -462,8 +465,8 @@ class SAR(object):
                     matches = re.search(pattern, line)
                     if matches is None:
                         raise SARError("Line {0}: headers: '{1}', line: '{2}'"
-                            "regexp '{3}': failed to parse".format(self._linecount,
-                            str(headers), line, pattern.pattern))
+                                       "regexp '{3}': failed to parse".format(self._linecount,
+                                       str(headers), line, pattern.pattern))
 
                     self._record_data(headers, matches)
                     continue
@@ -567,7 +570,7 @@ class SAR(object):
     def find_max(self, timestamp, datanames):
         """Finds the max Y value given an approx timestamp and a list of datanames"""
         timestamps = self._data.keys()
-        time_key = min(timestamps, key=lambda date : abs(timestamp - date))
+        time_key = min(timestamps, key=lambda date: abs(timestamp - date))
         ymax = -1
         for i in datanames:
             if self._data[time_key][i] > ymax:
@@ -617,11 +620,9 @@ class SAR(object):
         if extra_labels:
             for extra in extra_labels:
                 axes.annotate(extra[1], xy=(mdates.date2num(extra[0]),
-                    self.find_max(extra[0], datanames)), xycoords='data',
-                    xytext=(30, 30), textcoords='offset points',
-                    arrowprops=dict(arrowstyle="->",
-                        connectionstyle="arc3,rad=.2")
-                    )
+                              self.find_max(extra[0], datanames)), xycoords='data',
+                              xytext=(30, 30), textcoords='offset points',
+                              arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
 
         # If we have a sosreport draw the reboots
         if showreboots and self.sosreport is not None and self.sosreport.reboots is not None:
@@ -634,8 +635,9 @@ class SAR(object):
                     continue
 
                 axes.annotate('r', xy=(mdates.date2num(reboots[reboot]['date']), ymin),
-                    xycoords='data', xytext=(-30, -30), textcoords='offset points',
-                    arrowprops=dict(arrowstyle="->", color='blue', connectionstyle="arc3,rad=-0.1"))
+                              xycoords='data', xytext=(-30, -30), textcoords='offset points',
+                              arrowprops=dict(arrowstyle="->", color='blue',
+                              connectionstyle="arc3,rad=-0.1"))
 
         if grid:
             axes.grid(True)
