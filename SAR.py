@@ -124,6 +124,8 @@ class SAR(object):
     'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
     'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',..."""
     _data = {}
+
+    # This dict holds the relationship graph->category
     _categories = {}
 
     def __init__(self, fnames):
@@ -195,6 +197,12 @@ class SAR(object):
             for i in all_keys.keys():
                 if not i in self._data[t]:
                     self._data[t][i] = None
+
+        # We need to prune self._categories as well
+        for i in self._categories.keys():
+            if i not in all_keys:
+                self._categories.pop(i)
+
 
     def _parse_first_line(self, line):
         """ Parse the line as a first line of a SAR report. """
