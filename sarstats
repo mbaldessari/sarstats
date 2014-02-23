@@ -35,6 +35,7 @@ import hashlib
 import os
 import re
 import shutil
+import string
 import tempfile
 from hashlib import sha1
 import multiprocessing
@@ -419,12 +420,11 @@ class SarStats(object):
                 s.append(sarobj._data[timestamps][i])
             writer.writerow(s)
 
-    def graph_ascii(self, graph, def_columns=80, def_rows=25):
+    def graph_ascii(self, graphs, def_columns=80, def_rows=25):
         """Displays a single graph in ASCII form on the terminal"""
         import subprocess
         sarobj = self.sar_obj
         timestamps = sorted(sarobj._data.keys())
-        dataset = [sarobj._data[d][graph] for d in timestamps]
         try:
             rows, columns = os.popen('stty size', 'r').read().split()
         except:
@@ -432,30 +432,33 @@ class SarStats(object):
         rows = def_rows
         if columns > def_columns:
             columns = def_columns
-        try:
-            gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
-        except Exception as e:
-            print("Error launching gnuplot: {0}".format(e))
-            sys.exit(-1)
 
-        gnuplot.stdin.write("set term dumb {0} {1}\n".format(columns, rows))
-        gnuplot.stdin.write("set xdata time\n")
-        gnuplot.stdin.write('set xlabel "Time"\n')
-        gnuplot.stdin.write('set timefmt \"%Y-%m-%d %H:%M\"\n')
-        gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' % (ascii_date(timestamps[0]),
-                                                              ascii_date(timestamps[-1])))
-        gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
-        gnuplot.stdin.write('set datafile separator ","\n')
-        gnuplot.stdin.write('set autoscale y\n')
-        gnuplot.stdin.write('set title "%s - %s"\n' % (graph, " ".join(sarobj._files)))
+        for graph in graphs:
+            try:
+                gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
+            except Exception as e:
+                print("Error launching gnuplot: {0}".format(e))
+                sys.exit(-1)
 
-        gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
-        for i, j in zip(timestamps, dataset):
-            s = '\"%s\",%f\n' % (ascii_date(i), j)
-            gnuplot.stdin.write(s)
+            gnuplot.stdin.write("set term dumb {0} {1}\n".format(columns, rows))
+            gnuplot.stdin.write("set xdata time\n")
+            gnuplot.stdin.write('set xlabel "Time"\n')
+            gnuplot.stdin.write('set timefmt \"%Y-%m-%d %H:%M\"\n')
+            gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' % (ascii_date(timestamps[0]),
+                                                                  ascii_date(timestamps[-1])))
+            gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
+            gnuplot.stdin.write('set datafile separator ","\n')
+            gnuplot.stdin.write('set autoscale y\n')
+            gnuplot.stdin.write('set title "%s - %s"\n' % (graph, " ".join(sarobj._files)))
+            dataset = [sarobj._data[d][graph] for d in timestamps]
+            gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
+            for i, j in zip(timestamps, dataset):
+                s = '\"%s\",%f\n' % (ascii_date(i), j)
+                gnuplot.stdin.write(s)
 
-        gnuplot.stdin.write("e\n")
-        gnuplot.stdin.flush()
+            gnuplot.stdin.write("e\n")
+            gnuplot.stdin.write("exit\n")
+            gnuplot.stdin.flush()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
@@ -470,9 +473,10 @@ if __name__ == '__main__':
                         sosreport, it will try to resulve the interrupts
                         source""")
 
-    parser.add_argument('--ascii', dest='ascii_graph', default=None, help="""
-                        Display a single graph on the terminal. (Requires
-                        installed gnuplot)""")
+    parser.add_argument('--ascii', dest='ascii_graphs', default=None, help="""
+                        Display single graphs on the terminal. Separate multiple
+                        graphs with a comma: --ascii 'proc/s,ldavg-1' (Requires
+                        gnuplot)""")
 
     parser.add_argument('--category', dest='categories', default=None, help="""
                         Only outputs the selected categories. Available
@@ -570,8 +574,9 @@ if __name__ == '__main__':
         sar_stats.export_csv(args.csv_file)
         sys.exit(0)
 
-    if args.ascii_graph is not None:
-        sar_stats.graph_ascii(args.ascii_graph)
+    if args.ascii_graphs is not None:
+        graphs = map(string.strip, args.ascii_graphs.split(","))
+        sar_stats.graph_ascii(graphs)
         sys.exit(0)
 
     print("Building graphs: ", end='')
