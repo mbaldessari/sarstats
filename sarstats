@@ -51,6 +51,7 @@ from reportlab.lib.pagesizes import A4, landscape
 import SAR
 import sar_metadata
 
+VERSION = 0.1
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
@@ -461,7 +462,7 @@ if __name__ == '__main__':
                                      "produces a pdf report".format(sys.argv[0]),
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('sar_files', metavar='sar_files', nargs='+', help="""
+    parser.add_argument('sar_files', metavar='sar_files', nargs='*', help="""
                         Sar files to examine. It is possible to specify a
                         single folder, in which case it will look for all the
                         sar* files and order them by file date. If the
@@ -523,7 +524,14 @@ if __name__ == '__main__':
                         and '--skip lo,miss/s' will skip the 'lo' interface and
                         the 'miss/s' graph""")
 
+    parser.add_argument('--version', dest='version', action='store_true', default=False, help="""
+                        Show the program's version""")
+
     args = parser.parse_args()
+
+    if args.version:
+        print("{0} - Version: {1}".format(sys.argv[0], VERSION))
+        sys.exit(0)
 
     # If the only argument is a directory fetch all the sar files and order
     # them automatically

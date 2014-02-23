@@ -1,9 +1,9 @@
 Name:           sarstats
-Version:        0.2
+Version:        0.1
 Release:        1%{?dist}
 Summary:        Creates a performance report from sar files
 License:        GPLv2
-URL:            http://acksyn.org/software/sarstats
+URL:            https://github.com/mbaldessari/sarstats
 Source0:        sarstats-0.1.tar.gz
 BuildArch:	noarch
 BuildRequires:  python
@@ -33,8 +33,5 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.py[oc]
 
 %changelog
-* Sat Dec 28 2013 Michele Baldessari <michele@redhat.com> - 0.2-1
-- New upstream
-
 * Fri Dec 27 2013 Michele Baldessari <michele@acksyn.org> - 0.1-1
 - Initial release
