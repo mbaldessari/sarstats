@@ -562,10 +562,27 @@ if __name__ == '__main__':
     print()
 
     if args.list_graphs:
-        print("List of graphs available:")
-        print("{0}".format(sorted(sar.available_data_types())))
         timestamps = sorted(sar._data.keys())
-        print("Start: {0} - End: {1}".format(timestamps[0], timestamps[-1]))
+        print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
+        print("List of graphs available:")
+        inv_map = {}
+        for k, v in sar._categories.iteritems():
+            inv_map[v] = inv_map.get(v, [])
+            inv_map[v].append(k)
+
+        all_graphs = sar.available_data_types()
+        try:
+            rows, columns = os.popen('stty size', 'r').read().split()
+        except:
+            columns = 80
+        columns = int(columns) - 10
+
+        import textwrap
+        for i in sorted(inv_map):
+            line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
+            indent = ' ' * (len(i) + 2)
+            text = textwrap.fill(line, width=columns, initial_indent='', subsequent_indent=indent)
+            print("{0}: {1}".format(i, text))
         sys.exit(0)
 
     sar_stats = SarStats(sar, int(args.maxgraphs))
