@@ -286,15 +286,6 @@ class SarStats(object):
         h._bookmarkName = bn
         self.story.append(h)
 
-    def parse_labels_csv(self, csv_file):
-        csvf = open(csv_file, "rb")
-        reader = csv.reader(csvf, delimiter=',')
-        extra_labels = []
-        for line in reader:
-            extra_labels.append((dateutil.parser.parse(line[0]), line[1]))
-
-        return extra_labels
-
     def graph(self, sar_files, skip_list, output_file='out.pdf', only_categories=[],
               labels=None, show_reboots=False, custom_graphs='', grid_on=False):
         """ Parse sar data and produce graphs of the parsed data. """
