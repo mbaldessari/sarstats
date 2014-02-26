@@ -412,7 +412,6 @@ class SarStats(object):
         f = open(output_file, 'wb')
         writer = csv.writer(f, delimiter=',')
         all_keys = list(sarobj.available_data_types())
-        print(all_keys)
         writer.writerow(all_keys)
         for timestamps in sarobj._data.keys():
             s = []
@@ -557,6 +556,10 @@ if __name__ == '__main__':
             sys.exit(-1)
 
     print("Parsing files: {0}".format(" ".join(args.sar_files)), end='')
+    if len(args.sar_files) == 0:
+        print("Error: No sar files passed as argument")
+        sys.exit(-1)
+
     sar = SAR.SAR(args.sar_files)
     sar.parse()
     print()
