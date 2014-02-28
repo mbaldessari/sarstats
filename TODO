@@ -3,3 +3,19 @@ Enhancement requests
 * For every description add the exact kernel counter involved w/ proc path and also
   add a proper comprehensible explanation. For example in 'loadavg-1' add explanation
   when a load is high and how it relates to the number of CPUs
+
+* Normalize the y-scale
+  Currently the maximum value on the y-scale is simply the maximum value of the graph.
+  Add an --option (--normalize-max) that makes the maximum always the same so that
+  different graphs are easily comparable. We'd need to define "similar" graphs and
+  choose the maximum of the graph among all the similar graphs. For example:
+  all % graphs will have the max at 100. If an sosreport is present, we could use
+  certain values there to define the max. For example: /proc/meminfo will give
+  us the maximum amount of RAM. Use that to set the maximum. Suggested by Luca
+  Miccini.
+
+* Allow --ascii graphs to have multiple datasets
+  Currently we only allow one dataset in the --ascii output
+
+* Add --svg output
+  Add the possibility the output in .svg format for a single (and combined) graph.
