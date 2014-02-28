@@ -586,7 +586,8 @@ class SAR(object):
 
         return ymax
 
-    def plottimeseries(self, data, fname, extra_labels, showreboots=False, grid=False):
+    def plottimeseries(self, data, fname, extra_labels, showreboots=False,
+                       grid=False, output='pdf'):
         """ Plot timeseries data (of type dataname).
         The data can be either simple (one or no datapoint at any point in time,
         or indexed (by indextype). dataname is assumed to be in the form of

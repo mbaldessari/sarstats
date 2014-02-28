@@ -206,7 +206,7 @@ class SarStats(object):
         if os.path.isdir(self._tempdir):
             shutil.rmtree(self._tempdir)
 
-    def _graph_filename(self, graph):
+    def _graph_filename(self, graph, extension=DEFAULT_IMG_EXT):
         """Creates a unique constant file name given a graph or graph list"""
         if isinstance(graph, list):
             temp = "_".join(graph)
@@ -216,7 +216,7 @@ class SarStats(object):
         temp = temp.replace('/', '_')
         digest = hashlib.sha1()
         digest.update(temp)
-        fname = os.path.join(self._tempdir, digest.hexdigest() + DEFAULT_IMG_EXT)
+        fname = os.path.join(self._tempdir, digest.hexdigest() + extension)
         return fname
 
     def graphs_order(self, cat, skiplist=[]):
@@ -450,6 +450,27 @@ class SarStats(object):
             gnuplot.stdin.write("exit\n")
             gnuplot.stdin.flush()
 
+    def graph_svg(self, graphs, output):
+        """Outputs a series of graphs as svg files"""
+        sarobj = self.sar_obj
+        if output == 'out.pdf':
+            output = 'graph'
+        counter = 1
+        fnames = []
+        for i in graphs:
+            subgraphs = i.split(',')
+            fname = self._graph_filename(subgraphs, '.svg')
+            fnames.append(fname)
+            sarobj.plottimeseries((['', None, subgraphs], subgraphs), fname, '')
+            dest = os.path.join(os.getcwd(), "{0}{1}.svg".format(output, counter))
+            shutil.move(fname, dest)
+            print("Created: {0}".format(dest))
+            counter += 1
+
+        # removes all temporary files and directories
+        self.close()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
                                      "produces a pdf report".format(sys.argv[0]),
@@ -503,7 +524,9 @@ if __name__ == '__main__':
                         Disable the grid in graphs""")
 
     parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
-                        Output file name""")
+                        Output file name. If multiple svg files are specified this
+                        parameter represents the basename: --output foo will give
+                        foo1.svg, foo2.svg, ...""")
 
     parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
                         If the sar file is part of an existing sosreport, it
@@ -518,6 +541,11 @@ if __name__ == '__main__':
                         lo,eth0' will not plot any graphs for those interfaces
                         and '--skip lo,miss/s' will skip the 'lo' interface and
                         the 'miss/s' graph""")
+
+    parser.add_argument('--svg', dest='svg_graphs', default=None, action='append', help="""
+                        Output graphs as svg files. Can be used multiple times:
+                        --svg 'proc/s' --svg 'ldavg-1,ldavg-5'. Separate multiple
+                        datasets with a comma.)""")
 
     parser.add_argument('--version', dest='version', action='store_true', default=False, help="""
                         Show the program's version""")
@@ -589,6 +617,11 @@ if __name__ == '__main__':
     if args.ascii_graphs is not None:
         graphs = map(string.strip, args.ascii_graphs)
         sar_stats.graph_ascii(graphs)
+        sys.exit(0)
+
+    if args.svg_graphs is not None:
+        graphs = map(string.strip, args.svg_graphs)
+        sar_stats.graph_svg(graphs, args.output_file)
         sys.exit(0)
 
     print("Building graphs: ", end='')

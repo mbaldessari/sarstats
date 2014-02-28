@@ -16,6 +16,3 @@ Enhancement requests
 
 * Allow --ascii graphs to have multiple datasets
   Currently we only allow one dataset in the --ascii output
-
-* Add --svg output
-  Add the possibility the output in .svg format for a single (and combined) graph.
