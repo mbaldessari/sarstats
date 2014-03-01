@@ -100,7 +100,6 @@ class SAR(object):
     _categories = {}
 
     def __init__(self, fnames):
-        LOGGER.debug("SAR:__init__")
         self._files = fnames
 
         (self.kernel, self.version, self.hostname, self._date) = (None, None, None, None)
@@ -178,7 +177,6 @@ class SAR(object):
     def _parse_first_line(self, line):
         """ Parse the line as a first line of a SAR report. """
 
-        LOGGER.debug("SAR:_parse_first_line")
         pattern = re.compile(r"""(?x)
             ^(\S+)\s+                 # Kernel name (uname -s)
             (\S+)\s+                  # Kernel release (uname -r)
@@ -190,12 +188,9 @@ class SAR(object):
 
         matches = re.search(pattern, line)
         if matches:
-            LOGGER.debug('Successfully parsed first line: "{0}"'.format(line))
             (self.kernel, self.version, self.hostname, tmpdate) = matches.groups()
         else:
             raise Exception('Line {0}: "{1}" failed to parse as a first line'.format(self._linecount, line))
-        LOGGER.debug('Kernel: {0}; version: {1}; hostname: {2}; date: {3}'.format(self.kernel,
-                     self.version, self.hostname, tmpdate))
 
         pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
         matches = re.search(pattern, tmpdate)
@@ -209,7 +204,6 @@ class SAR(object):
 
     def _column_headers(self, line):
         """ Parse the line as a set of column headings. """
-        LOGGER.debug("SAR:_column_headers")
         restr = r"""(?x)
             ^(""" + sar_metadata.TIMESTAMP_RE + """)\s+
             (
@@ -239,12 +233,9 @@ class SAR(object):
         pattern = re.compile(restr)
         matches = re.search(pattern, line)
         if matches:
-            LOGGER.debug('Recognised column headers line: "{0}"'.format(line))
             hdrs = [h for h in matches.group(2).split(' ') if h != '']
-            LOGGER.debug("Column headers: {0}".format(hdrs))
             return matches.group(1), hdrs
         else:
-            LOGGER.debug('Not recognised as a column headers line: "{0}" using pattern "{1}"'.format(line, restr))
             return None, None
 
     def _do_start(self, line):
@@ -274,7 +265,6 @@ class SAR(object):
                 raise Exception('Line {0}: column header "{1}" unknown {2}'.format(self._linecount, hdr))
             regexp = regexp + r'\s+(' + str(hre) + r')'
         regexp += r'\s*$'
-        LOGGER.debug('Regular expression to match data lines: "{0}"'.format(regexp))
         return regexp
 
     def _record_data(self, headers, matches):
