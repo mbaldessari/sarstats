@@ -1,5 +1,5 @@
 #
-# SAR.py - sar(1) report graphing utility
+# SarParser.py - sar(1) graphs parsing class
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
 #               2014  Michele Baldessari
@@ -26,18 +26,12 @@ sar(1) provides system activity reports that are useful in the analysis of
 system performance issues. This module provides a class that can parse sar
 reports and that allows for easy querying of the data contained in them. This
 code has been tested with a variety of sar reports, in particular ones from Red
-Hat Enterprise Linux versions 3 through 6.
+Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 """
 
 import datetime
 import re
 import os
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import matplotlib.colors as colors
-import matplotlib.cm as cm
-import numpy
 
 import sar_metadata
 import sosreport
