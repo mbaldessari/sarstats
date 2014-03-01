@@ -29,7 +29,6 @@ code has been tested with a variety of sar reports, in particular ones from Red
 Hat Enterprise Linux versions 3 through 6.
 """
 
-import logging
 import datetime
 import re
 import os
@@ -47,12 +46,7 @@ import sosreport
 # the bottom
 LEGEND_THRESHOLD = 50
 
-logging.basicConfig()
-LOGGER = logging.getLogger("SAR reports parser")
-LOGGER.setLevel(logging.WARN)
-
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
-
 
 def natural_sort_key(s):
     """Natural sorting function"""
