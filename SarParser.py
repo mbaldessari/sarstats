@@ -1,4 +1,3 @@
-#
 # SarParser.py - sar(1) graphs parsing class
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
@@ -30,8 +29,9 @@ Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 """
 
 import datetime
-import re
 import os
+import numpy
+import re
 
 import sar_metadata
 import sosreport
@@ -40,32 +40,38 @@ import sosreport
 # the bottom
 LEGEND_THRESHOLD = 50
 
+# regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
 
 def natural_sort_key(s):
-    """Natural sorting function"""
+    """Natural sorting function. Given a string, it returns a list of the strings
+    and numbers. For example: natural_sort_key("michele0123") will return:
+    ['michele', 123, '']"""
+
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
 
 
 def _empty_line(line):
-    """ Parse an empty line. """
+    """Parse an empty line"""
 
     pattern = re.compile(r'^\s*$')
     return re.search(pattern, line)
 
 
 def _average_line(line):
-    """ Parse a line starting with "Average:" or "Summary:" """
+    """Parse a line starting with 'Average:'or 'Summary:'"""
 
-    pattern = re.compile(r'^Average:|^Summary')
+    pattern = re.compile(r'^Average|^Summary')
     return re.search(pattern, line)
 
 
 def canonicalise_timestamp(date, ts):
-    """ Canonicalise timestamps to full datetime object. The date is taken
-        from self._date which must have been parsed already"""
+    """sar files start with a date string (yyyy-mm-dd) and a 
+    series of lines starting with the time. Given the initial
+    sar datetime date object as base and the time string columnt
+    return a full datetime object"""
 
     matches = re.search(TIMESTAMP_RE, ts)
     if matches:
@@ -86,11 +92,12 @@ def canonicalise_timestamp(date, ts):
     return dt
 
 
-class SAR(object):
-    """ Class for parsing a sar report and querying its data
+class SarParser(object):
+    """Class for parsing a sar report and querying its data
     Data structure representing the sar report's contents.
-    Dictionary of dictionaries. First index is timestamp (datetime)
-    and the second index is the column:
+    Main _data structure is a dictionary of dictionaries.
+    First dictionary index is a timestamp (datetime class)
+    and the second index is the graph's type:
     '%commit', '%memused', '%swpcad', '%swpused', '%vmeff'
     'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
     'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',..."""
@@ -100,18 +107,22 @@ class SAR(object):
     _categories = {}
 
     def __init__(self, fnames):
+        """Constructor: takes a list of files to be parsed. The parsing
+        itself is done in the .parse() method"""
         self._files = fnames
-
-        (self.kernel, self.version, self.hostname, self._date) = (None, None, None, None)
+        self.kernel = None
+        self.version = None
+        self.hostname = None
+        self._date = None
         self.sample_frequency = None
-
-        # Current line number (for use in reporting parse errors)
-        self._linecount = 0
         # Date of the report
         self._date = None
         # If this one was set it means that we crossed the day during one SAR file
         self._olddate = None
         self._prev_timestamp = None
+
+        # Current line number (for use in reporting parse errors)
+        self._linecount = 0
 
         # Is this file part of an sosreport?
         # Check ../../../sos_commands exists and see if uptime is a
@@ -128,15 +139,15 @@ class SAR(object):
             pass
 
     def _prune_data(self):
-        """This walks the _data structure and removes all keys that have value
-        0 in *all* timestamps FIXME: As inefficient as it goes for now..."""
+        """This walks the _data structure and removes all graph keys that 
+        have a 0 value in *all* timestamps. FIXME: As inefficient as it
+        goes for now..."""
         # Store all possible keys looping over all time stamps
         all_keys = {}
         for t in self._data.keys():
             for i in self._data[t].keys():
                 all_keys[i] = True
-        #print("Timestamps: {0} - Columns all: {1} - Columns firs row: {2}".format(len(self._data.keys()),
-        #    len(all_keys.keys()), len(self._data[self._data.keys()[0]].keys())))
+
         keys_to_remove = {}
         for k in all_keys.keys():
             remove = True
@@ -175,7 +186,7 @@ class SAR(object):
 
 
     def _parse_first_line(self, line):
-        """ Parse the line as a first line of a SAR report. """
+        """Parse the line as a first line of a SAR report"""
 
         pattern = re.compile(r"""(?x)
             ^(\S+)\s+                 # Kernel name (uname -s)
@@ -203,7 +214,7 @@ class SAR(object):
         self._date = map(int, tmpdate.split('-'))
 
     def _column_headers(self, line):
-        """ Parse the line as a set of column headings. """
+        """Parse the line as a set of column headings"""
         restr = r"""(?x)
             ^(""" + sar_metadata.TIMESTAMP_RE + """)\s+
             (
@@ -239,17 +250,18 @@ class SAR(object):
             return None, None
 
     def _do_start(self, line):
-        """ Actions for the "start" state of the parser. """
+        """Actions for the "start" state of the parser"""
 
         self._parse_first_line(line)
 
     def _column_type_regexp(self, hdr):
-        """ Get the regular expression to match entries under a particular header """
+        """Get the regular expression to match entries under a
+        particular header"""
 
         return sar_metadata.get_regexp(hdr)
 
     def _valid_column_header_name(self, hdr):
-        """ Is hdr a valid column name? """
+        """Is hdr a valid column name? """
 
         return self._column_type_regexp(hdr) is not None
 
@@ -268,7 +280,7 @@ class SAR(object):
         return regexp
 
     def _record_data(self, headers, matches):
-        """ Record a parsed line of data """
+        """Record a parsed line of data"""
         timestamp = canonicalise_timestamp(self._date, matches.group(1))
         if self._prev_timestamp and timestamp:
             # FIXME: This breaks if sar interval is bigger > 119 mins
@@ -355,8 +367,10 @@ class SAR(object):
         return timestamp
 
     def parse(self, skip_tables=['BUS']):
-        """ Parse a SAR report. """
-        # Parsing is performed line by line using a state machine
+        """Parse a the sar files. This method does the actual
+        parsing and will populate the ._data structure. The
+        parsing is performed line by line via a simple state
+        machine"""
         for file_name in self._files:
             self._prev_timestamp = None
             state = 'start'
@@ -460,17 +474,17 @@ class SAR(object):
         diff = [(x - k[i - 1]).total_seconds() for i, x in enumerate(k) if i > 0]
         self.sample_frequency = numpy.mean(diff)
 
-    def del_date(self, d):
-        self._data.pop(d, None)
-
-    def available_dates(self):
+    def available_timestamps(self):
+        """Returns all available timestamps"""
         return self._data.keys()
 
     def close(self):
-        for i in self._data.keys():
-            self.del_date(i)
+        """Explicitly removes the main ._data structure from memory"""
+        del self._data
 
     def available_types(self, category):
+        """Given a category string returns all the graphs starting
+        with it"""
         t = self._data.keys()[0]
         l = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
         return l
