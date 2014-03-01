@@ -49,23 +49,6 @@ def natural_sort_key(s):
             for text in re.split(_nsre, s)]
 
 
-class SARError(Exception):
-    """
-    Exception class for use when parsing of a supposed SAR file fails, or for
-    problems querying a SAR object
-    """
-
-    def __init__(self, msg=None):
-        self._msg = msg
-        Exception.__init__(self)
-
-    def __str__(self):
-        if self._msg is None:
-            return "SAR Parser error - no further details"
-        else:
-            return "SAR Parser error: " + self._msg
-
-
 def _empty_line(line):
     """ Parse an empty line. """
 
@@ -99,7 +82,7 @@ def canonicalise_timestamp(date, ts):
             hours = 0
         dt = datetime.datetime(date[0], date[1], date[2], hours, minutes, seconds)
     else:
-        raise SARError("canonicalise_timestamp error %s" % ts)
+        raise Exception("canonicalise_timestamp error %s" % ts)
     return dt
 
 
@@ -210,7 +193,7 @@ class SAR(object):
             LOGGER.debug('Successfully parsed first line: "{0}"'.format(line))
             (self.kernel, self.version, self.hostname, tmpdate) = matches.groups()
         else:
-            raise SARError('Line {0}: "{1}" failed to parse as a first line'.format(self._linecount, line))
+            raise Exception('Line {0}: "{1}" failed to parse as a first line'.format(self._linecount, line))
         LOGGER.debug('Kernel: {0}; version: {1}; hostname: {2}; date: {3}'.format(self.kernel,
                      self.version, self.hostname, tmpdate))
 
@@ -288,7 +271,7 @@ class SAR(object):
         for hdr in headers:
             hre = self._column_type_regexp(hdr)
             if hre is None:
-                raise SARError('Line {0}: column header "{1}" unknown {2}'.format(self._linecount, hdr))
+                raise Exception('Line {0}: column header "{1}" unknown {2}'.format(self._linecount, hdr))
             regexp = regexp + r'\s+(' + str(hre) + r')'
         regexp += r'\s*$'
         LOGGER.debug('Regular expression to match data lines: "{0}"'.format(regexp))
@@ -305,7 +288,7 @@ class SAR(object):
                 self._date = (nextday.year, nextday.month, nextday.day)
                 timestamp = canonicalise_timestamp(self._date, matches.group(1))
             elif timestamp < self._prev_timestamp:
-                raise SARError("Time going backwards: {0} - Prev timestamp: {1} -> {2}".
+                raise Exception("Time going backwards: {0} - Prev timestamp: {1} -> {2}".
                                format(timestamp, self._prev_timestamp, self._linecount))
         self._prev_timestamp = timestamp
 
@@ -333,7 +316,7 @@ class SAR(object):
                 if i == 'retrans/s' and previous == 'estres/s':
                     i = 'retrant/s'
                 if i in self._data[timestamp]:
-                    raise SARError("Odd timestamp %s and column %s already exist?" % (timestamp, i))
+                    raise Exception("Odd timestamp %s and column %s already exist?" % (timestamp, i))
 
                 try:
                     v = float(matches.group(counter + 2))
@@ -369,7 +352,7 @@ class SAR(object):
                 # LOVELY: Filesystem can have multiple entries with the same FILESYSTEM and timestamp
                 # Let's just overwrite those
                 if indexcol != 'FILESYSTEM':
-                    raise SARError("Odd timestamp %s and column %s already exist?" % (timestamp, s))
+                    raise Exception("Odd timestamp %s and column %s already exist?" % (timestamp, s))
 
             try:
                 v = float(matches.group(counter + 2))
@@ -399,7 +382,7 @@ class SAR(object):
 
                 if state == 'after_first_line':
                     if not _empty_line(line):
-                        raise SARError('Line {0}: expected empty line but got "{1}" instead'.format(self._linecount, line))
+                        raise Exception('Line {0}: expected empty line but got "{1}" instead'.format(self._linecount, line))
                     state = 'after_empty_line'
                     continue
 
@@ -426,7 +409,7 @@ class SAR(object):
                     if self._olddate:
                         self._date = self._olddate
                     if timestamp is None:
-                        raise SARError('Line {0}: expected column header line but'
+                        raise Exception('Line {0}: expected column header line but'
                                        'got "{1}" instead'.format(self._linecount, line))
                     if headers == ['LINUX', 'RESTART']:
                         # FIXME: restarts should really be recorded, in a smart way
@@ -441,7 +424,7 @@ class SAR(object):
                     try:
                         pattern = re.compile(self._build_data_line_regexp(headers))
                     except AssertionError:
-                        raise SARError('Line {0}: exceeding python interpreter'
+                        raise Exception('Line {0}: exceeding python interpreter'
                                        'limit with regexp for this line "{1}"'.
                                        format(self._linecount, line))
 
@@ -460,7 +443,7 @@ class SAR(object):
 
                     matches = re.search(pattern, line)
                     if matches is None:
-                        raise SARError("Line {0}: headers: '{1}', line: '{2}'"
+                        raise Exception("Line {0}: headers: '{1}', line: '{2}'"
                                        "regexp '{3}': failed to parse".format(self._linecount,
                                        str(headers), line, pattern.pattern))
 
@@ -476,7 +459,7 @@ class SAR(object):
                         # Remain in 'table_end' state
                         continue
 
-                    raise SARError('Line {0}: "{1}" expecting end of table'.format(self._linecount, line))
+                    raise Exception('Line {0}: "{1}" expecting end of table'.format(self._linecount, line))
             fd.close()
 
         # Remove unneeded columns
@@ -677,6 +660,6 @@ class SAR(object):
         plt.close('all')
 
 if __name__ == '__main__':
-    raise SARError('No self-test code implemented')
+    raise Exception('No self-test code implemented')
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
