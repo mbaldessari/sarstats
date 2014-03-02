@@ -24,7 +24,8 @@ To list the names of all the possible graphs just run:
 
 To export a single custom graph in svg format run:
 ```
-./sarstats --output base --svg 'ldavg-1,ldavg-5,ldavg-15' --label 'peak:2014-02-17 14:30:00' demo/var/log/sa/
+./sarstats --output base --svg 'ldavg-1,ldavg-5,ldavg-15' \
+  --label 'peak:2014-02-17 14:30:00' demo/var/log/sa/
 ```
 
 This will produce the following output:
