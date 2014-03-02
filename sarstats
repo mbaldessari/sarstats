@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     if args.svg_graphs is not None:
         graphs = map(string.strip, args.svg_graphs)
-        sar_grapher.plot_svg(graphs, args.output_file)
+        sar_stats.plot_svg(graphs, args.output_file, args.labels)
         sys.exit(0)
 
     print("Building graphs: ", end='')

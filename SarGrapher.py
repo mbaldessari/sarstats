@@ -160,7 +160,7 @@ class SarGrapher(object):
         plt.clf()
         plt.close('all')
 
-    def plot_svg(self, graphs, output):
+    def plot_svg(self, graphs, output, labels):
         """Given a list of graphs, output an svg file per graph.
         Input is a list of strings. A graph with multiple datasets
         is a string with datasets separated by comma"""
@@ -172,7 +172,7 @@ class SarGrapher(object):
             subgraphs = i.split(',')
             fname = self._graph_filename(subgraphs, '.svg')
             fnames.append(fname)
-            self.plot_datasets((['', None, subgraphs], subgraphs), fname, '')
+            self.plot_datasets((['', None, subgraphs], subgraphs), fname, labels)
             dest = os.path.join(os.getcwd(), "{0}{1}.svg".format(output, counter))
             shutil.move(fname, dest)
             print("Created: {0}".format(dest))

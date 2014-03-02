@@ -69,6 +69,19 @@ def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
     return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)]
 
+def parse_labels(labels):
+    """Parses list of labels in the form of foo:2014-01-01 13:45:03
+    and returns a list of tuples [(datetime, 'label), ...]"""
+
+    ret_labels = []
+    for i in labels:
+        # labels are in the form "foo:2014-01-01 13:45:03"
+        label = i.split(':')[0]
+        time = "".join(i.split(':')[1:])
+        time = dateutil.parser.parse(time)
+        ret_labels.append((time, label))
+
+    return ret_labels
 
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
@@ -261,13 +274,7 @@ class SarStats(object):
 
         if labels is not None:
             try:
-                self.extra_labels = []
-                for i in labels:
-                    # labels are in the form "foo:2014-01-01 13:45:03"
-                    label = i.split(':')[0]
-                    time = "".join(i.split(':')[1:])
-                    time = dateutil.parser.parse(time)
-                    self.extra_labels.append((time, label))
+                self.extra_labels = parse_labels(labels)
             except:
                 raise
                 print("Unable to parse extra labels: {0}".format(labels))
@@ -378,6 +385,10 @@ class SarStats(object):
 
     def plot_ascii(self, graphs):
         self.sar_grapher.plot_ascii(graphs)
+
+    def plot_svg(self, graphs, output, labels=''):
+        extra_labels = parse_labels(labels)
+        self.sar_grapher.plot_svg(graphs, output, extra_labels)
 
     def list_graphs(self):
         sar_grapher = self.sar_grapher
