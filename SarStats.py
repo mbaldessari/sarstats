@@ -181,7 +181,6 @@ class SarStats(object):
         self.maxgraphs = maxgraphs
         self.sar_grapher = sar_grapher
 
-
     def graphs_order(self, cat, skiplist=[]):
         """ Order in which to present all graphs.
         Data is grouped loosely by type. """
@@ -232,8 +231,8 @@ class SarStats(object):
                         for chunk in chunks:
                             entry = sar_metadata.get_title_unit_labels(chunk, sar_obj=sar_parser)
                             s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
-                            newentry = (s, entry[1])
-                            l.append(([newentry, chunk]))
+                            newentry = (s, entry[1], entry[2])
+                            l.append([newentry, chunk])
                             counter += 1
                     else:
                         entry = sar_metadata.get_title_unit_labels(b, sar_obj=sar_parser)

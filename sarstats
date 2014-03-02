@@ -53,7 +53,7 @@ if __name__ == '__main__':
                         Only lists all the graphs and elements contained in the
                         specified sar files""")
 
-    parser.add_argument('--maxgraphs', dest='maxgraphs', default=None, help="""
+    parser.add_argument('--maxgraphs', dest='maxgraphs', default=64, help="""
                         Sets the maximum number of graphs in a single page""")
 
     parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
@@ -118,7 +118,14 @@ if __name__ == '__main__':
 
     sar_grapher = SarGrapher.SarGrapher(args.sar_files)
     print()
-    sar_stats = SarStats.SarStats(sar_grapher)
+
+    try:
+        maxgraphs = int(args.maxgraphs)
+    except:
+        print("Error parsing --maxgraphs: {0}".format(args.maxgraphs))
+        sys.exit(-1)
+
+    sar_stats = SarStats.SarStats(sar_grapher, maxgraphs)
 
     if args.list_graphs:
         sar_stats.list_graphs()

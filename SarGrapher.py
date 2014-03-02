@@ -93,7 +93,11 @@ class SarGrapher(object):
         timestamps = self.timestamps()
         counter = 0
         for i in datanames:
-            dataset = [sar_parser._data[d][i] for d in timestamps]
+            try:
+                dataset = [sar_parser._data[d][i] for d in timestamps]
+            except:
+                print("Key {0} does not exist in this graph".format(i))
+                raise
             axes.plot(timestamps, dataset, 'o:', label=axis_labels[counter], color=scalar_map.to_rgba(counter))
             counter += 1
 
