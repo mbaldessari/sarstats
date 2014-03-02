@@ -28,7 +28,7 @@ To export a single custom graph in svg format run:
 ```
 
 This will produce the following output:
-![svg_output](mbaldessari.github.io/sarstats/base1.svg)
+![svg_output](http://mbaldessari.github.io/sarstats/base1.svg)
 
 It is also possible to print a single graph in ascii format:
 ```
