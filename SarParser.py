@@ -36,10 +36,6 @@ import re
 import sar_metadata
 import sosreport
 
-# If the there are more than 50 plots in a graph we move the legend to
-# the bottom
-LEGEND_THRESHOLD = 50
-
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
 
@@ -51,7 +47,6 @@ def natural_sort_key(s):
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
-
 
 def _empty_line(line):
     """Parse an empty line"""
@@ -473,6 +468,12 @@ class SarParser(object):
         k = sorted(self._data.keys())
         diff = [(x - k[i - 1]).total_seconds() for i, x in enumerate(k) if i > 0]
         self.sample_frequency = numpy.mean(diff)
+
+    def available_datasets(self):
+        """Returns all available datasets"""
+        first_timestamp = self._data.keys()[0]
+        datasets = [i for i in sorted(self._data[first_timestamp].keys())]
+        return datasets
 
     def available_timestamps(self):
         """Returns all available timestamps"""
