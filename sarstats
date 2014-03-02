@@ -69,7 +69,7 @@ if __name__ == '__main__':
                         will try to show the system reboot times in the
                         graphs""")
 
-    parser.add_argument('--skip', default='lo', dest='skip_graphs', help="""
+    parser.add_argument('--skip', default='', dest='skip_graphs', help="""
                         Graphs or entries to skip. For example adding '%%user'
                         will remove that graph. Adding 'lo' will remove that
                         interface from any network graph. Use comma to separate
