@@ -24,8 +24,8 @@ if __name__ == '__main__':
                         sosreport, it will try to resulve the interrupts
                         source""")
 
-    parser.add_argument('--ascii', dest='ascii_graphs', default=None, action='append', help="""
-                        Display single graphs on the terminal. Can be used multiple
+    parser.add_argument('--ascii', dest='ascii_graphs', default=None, action='append',
+                        help="""Display single graphs on the terminal. Can be used multiple
                         times: --ascii 'proc/s' --ascii 'ldavg-1'. Only one dataset per
                         graph is currently supported. (Note this functionality requires
                         gnuplot to be installed)""")
@@ -33,13 +33,13 @@ if __name__ == '__main__':
     parser.add_argument('--csv', dest='csv_file', default=None, help="""
                         Outputs the data to the specified csv file.""")
 
-    parser.add_argument('--custom', dest='custom_graphs', default='', help="""
-                        Add custom graphs with --custom
-                        'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'.  This
-                        adds two pages in the 'Custome' category: Graph 'foo'
+    parser.add_argument('--custom', dest='custom_graphs', default=None, action='append',
+                        help="""Add custom graphs with --custom
+                        'foo:udpsck,rawsck,tcp-tw' --custom 'bar:i001/s,i002/s'.
+                        This adds two pages in the 'Custom' category: Graph 'foo'
                         containing udpsck, rawsck and tcp-tw and graph 'bar'
                         containing i001/s and i002/s.  With graphs that vary
-                        too muchin y-ranges the output can be quite
+                        too much in y-ranges the output can be quite
                         suboptimal""")
 
     parser.add_argument('--labels', dest='labels', default=None, help="""

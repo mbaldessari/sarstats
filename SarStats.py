@@ -308,9 +308,9 @@ class SarStats(object):
         # typically quite low. Graph descriptions are in the form:
         # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
         custom_graph_list = {}
-        if custom_graphs is not '':
+        if custom_graphs is not None:
             try:
-                for i in custom_graphs.split(';'):
+                for i in custom_graphs:
                     key = i.split(':')[0]
                     values = i.split(':')[1].split(',')
                     custom_graph_list[key] = values
