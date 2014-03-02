@@ -22,6 +22,14 @@ To list the names of all the possible graphs just run:
 ./sarstats --list /var/log/sa/sar01
 ```
 
+To export a single custom graph in svg format run:
+```
+./sarstats --output base --svg 'ldavg-1,ldavg-5,ldavg-15' --label 'peak:2014-02-17 14:30:00' demo/var/log/sa/
+```
+
+This will produce the following output:
+![svg_output](mbaldessari.github.com/sarstats/base1.svg)
+
 It is also possible to print a single graph in ascii format:
 ```
 ./sarstats --ascii 'tcp/s' tests/sar-files/1/sar19
