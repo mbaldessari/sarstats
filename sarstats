@@ -42,10 +42,10 @@ if __name__ == '__main__':
                         too much in y-ranges the output can be quite
                         suboptimal""")
 
-    parser.add_argument('--labels', dest='labels', default=None, help="""
-                        Adds labels to a graph at specified time. For example
-                        --label '2014-01-01 13:45:03,foo; 2014-01-02
-                        13:15:15,bar' will add two extra labels on every graph
+    parser.add_argument('--label', dest='labels', default=None, action='append', help="""
+                        Adds label to a graph at specified time. For example
+                        --label 'foo:2014-01-01 13:45:03' --label 'bar:2014-01-02
+                        13:15:15' will add two extra labels on every graph
                         at those times.  This is useful for correlation
                         work""")
 

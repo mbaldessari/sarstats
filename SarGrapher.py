@@ -101,7 +101,7 @@ class SarGrapher(object):
         if extra_labels:
             for extra in extra_labels:
                 axes.annotate(extra[1], xy=(mdates.date2num(extra[0]),
-                              self.find_max(extra[0], datanames)), xycoords='data',
+                              sar_parser.find_max(extra[0], datanames)), xycoords='data',
                               xytext=(30, 30), textcoords='offset points',
                               arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
 

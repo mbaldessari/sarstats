@@ -263,11 +263,14 @@ class SarStats(object):
         if labels is not None:
             try:
                 self.extra_labels = []
-                for i in labels.strip().split(';'):
-                    (time, label) = i.split(',')
+                for i in labels:
+                    # labels are in the form "foo:2014-01-01 13:45:03"
+                    label = i.split(':')[0]
+                    time = "".join(i.split(':')[1:])
                     time = dateutil.parser.parse(time)
                     self.extra_labels.append((time, label))
             except:
+                raise
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
 
