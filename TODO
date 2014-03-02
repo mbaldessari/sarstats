@@ -17,5 +17,5 @@ Enhancement requests
 * Allow --ascii graphs to have multiple datasets
   Currently we only allow one dataset in the --ascii output
 
-* Remove the --skip and --category options in favour of multiple --graph options that
-  work just like --svg
+* Add multiple --graph options that work just like --svg and create a single short
+  pdf file with the listed graphs
