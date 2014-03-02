@@ -61,6 +61,7 @@ class SarGrapher(object):
         [title, [label1, label2, ...], [data1, data2, ...]]
         extra_labels is a list of tuples [(datetime, 'label'), ...]
         """
+        sar_parser = self.sar_parser
         title = data[0][0]
         unit = data[0][1]
         axis_labels = data[0][2]
@@ -92,7 +93,7 @@ class SarGrapher(object):
         timestamps = self.timestamps()
         counter = 0
         for i in datanames:
-            dataset = [self.sar_parser._data[d][i] for d in timestamps]
+            dataset = [sar_parser._data[d][i] for d in timestamps]
             axes.plot(timestamps, dataset, 'o:', label=axis_labels[counter], color=scalar_map.to_rgba(counter))
             counter += 1
 
@@ -105,8 +106,8 @@ class SarGrapher(object):
                               arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
 
         # If we have a sosreport draw the reboots
-        if showreboots and self.sosreport is not None and self.sosreport.reboots is not None:
-            reboots = self.sosreport.reboots
+        if showreboots and sar_parser.sosreport is not None and sar_parser.sosreport.reboots is not None:
+            reboots = sar_parser.sosreport.reboots
             for reboot in reboots.keys():
                 rboot_x = mdates.date2num(reboots[reboot]['date'])
                 (xmin, xmax) = plt.xlim()
@@ -206,7 +207,12 @@ class SarGrapher(object):
             gnuplot.stdin.write('set autoscale y\n')
             gnuplot.stdin.write('set title "%s - %s"\n' % (graph, " ".join(sar_parser._files)))
             # FIXME: do it through a method
-            dataset = [sar_parser._data[d][graph] for d in timestamps]
+            try:
+                dataset = [sar_parser._data[d][graph] for d in timestamps]
+            except KeyError:
+                print("Key '{0}' could not be found")
+                return
+
             gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
             for i, j in zip(timestamps, dataset):
                 s = '\"%s\",%f\n' % (ascii_date(i), j)

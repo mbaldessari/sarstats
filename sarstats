@@ -6,7 +6,6 @@ import os
 import string
 import sys
 
-from SarParser import natural_sort_key
 import SarGrapher
 import SarStats
 
@@ -118,42 +117,20 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     sar_grapher = SarGrapher.SarGrapher(args.sar_files)
-    print()
+    sar_stats = SarStats.SarStats(sar_grapher)
 
     if args.list_graphs:
-        timestamps = sar_grapher.timestamps()
-        print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
-        print("List of graphs available:")
-        inv_map = {}
-        # FIXME: expose _categories through a method
-        for k, v in sar_grapher.sar_parser._categories.iteritems():
-            inv_map[v] = inv_map.get(v, [])
-            inv_map[v].append(k)
-
-        all_graphs = sar_grapher.datasets()
-        try:
-            rows, columns = os.popen('stty size', 'r').read().split()
-        except:
-            columns = 80
-        columns = int(columns) - 10
-
-        import textwrap
-        for i in sorted(inv_map):
-            line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
-            indent = ' ' * (len(i) + 2)
-            text = textwrap.fill(line, width=columns, initial_indent='',
-                                 subsequent_indent=indent)
-            print("{0}: {1}".format(i, text))
+        sar_stats.list_graphs()
         sys.exit(0)
 
     if args.csv_file is not None:
         print("Export to csv: {0}".format(args.csv_file))
-        sar_grapher.export_csv(args.csv_file)
+        sar_stats.export_csv(args.csv_file)
         sys.exit(0)
 
     if args.ascii_graphs is not None:
         graphs = map(string.strip, args.ascii_graphs)
-        sar_grapher.plot_ascii(graphs)
+        sar_stats.plot_ascii(graphs)
         sys.exit(0)
 
     if args.svg_graphs is not None:
@@ -164,13 +141,9 @@ if __name__ == '__main__':
     print("Building graphs: ", end='')
 
     skip_list = args.skip_graphs.strip().split(",")
-    sar_stats = SarStats.SarStats(sar_grapher)
-
     sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
                       args.showreboots, args.custom_graphs, args.grid)
     sar_grapher.close()
     print("\nWrote: {0}".format(args.output_file))
-    sar_grapher.close()
-
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

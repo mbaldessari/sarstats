@@ -47,7 +47,7 @@ config = {
     'url': 'http://acksyn.org',
     'license': 'GPLv2',
     'cmdclass': {'test': DiscoverTest},
-    'py_modules': ['SAR', 'sar_metadata'],
+    'py_modules': ['SarParser', 'SarStats', 'sar_metadata', 'SarGrapher', 'SosReport'],
     'scripts': ['sarstats'],
     'classifiers': [
         "Development Status :: 3 - Alpha",

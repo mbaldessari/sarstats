@@ -27,12 +27,13 @@ data contained in one or more sar reports.
 
 from __future__ import print_function
 from itertools import repeat
-import sys
-import csv
 from hashlib import sha1
-import multiprocessing
-
+import csv
 import dateutil
+import multiprocessing
+import os
+import sys
+
 from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus import PageBreak, Image, Spacer
 from reportlab.platypus.paragraph import Paragraph
@@ -48,7 +49,7 @@ import sar_metadata
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
-THREADED = False
+THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
@@ -164,7 +165,8 @@ class MyDocTemplate(BaseDocTemplate):
 
 def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     """This is a wrapper due to pool.map() single argument limit"""
-    fname = sar_stats_obj._graph_filename(dataname[1][0])
+    sar_grapher = sar_stats_obj.sar_grapher
+    fname = sar_grapher._graph_filename(dataname[1][0])
     sar_obj.plot_datasets(dataname, fname, sar_stats_obj.extra_labels,
             sar_stats_obj.showreboots, sar_stats_obj.grid)
     sys.stdout.write(".")
@@ -360,16 +362,46 @@ class SarStats(object):
         doc.multiBuild(self.story)
 
     def export_csv(self, output_file):
-        sarobj = self.sar_obj
+        sar_grapher = self.sar_grapher
+        sar_parser = sar_grapher.sar_parser
         f = open(output_file, 'wb')
         writer = csv.writer(f, delimiter=',')
-        all_keys = list(sarobj.available_data_types())
+        all_keys = list(sar_parser.available_data_types())
         writer.writerow(all_keys)
-        for timestamps in sarobj._data.keys():
+        for timestamps in sar_parser._data:
             s = []
             for i in all_keys:
-                s.append(sarobj._data[timestamps][i])
+                s.append(sar_parser._data[timestamps][i])
             writer.writerow(s)
+        f.close()
 
+    def plot_ascii(self, graphs):
+        self.sar_grapher.plot_ascii(graphs)
+
+    def list_graphs(self):
+        sar_grapher = self.sar_grapher
+        sar_parser = sar_grapher.sar_parser
+        timestamps = sar_grapher.timestamps()
+        print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
+        print("List of graphs available:")
+        inv_map = {}
+        # FIXME: expose _categories through a method
+        for k, v in sar_parser._categories.iteritems():
+            inv_map[v] = inv_map.get(v, [])
+            inv_map[v].append(k)
+
+        try:
+            rows, columns = os.popen('stty size', 'r').read().split()
+        except:
+            columns = 80
+        columns = int(columns) - 10
+
+        import textwrap
+        for i in sorted(inv_map):
+            line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
+            indent = ' ' * (len(i) + 2)
+            text = textwrap.fill(line, width=columns, initial_indent='',
+                                 subsequent_indent=indent)
+            print("{0}: {1}".format(i, text))
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

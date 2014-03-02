@@ -17,17 +17,14 @@ USE_MELIAE = False
 if USE_MELIAE:
     from meliae import scanner, loader
     import objgraph
-    import gc
 
 # To profile speed
 USE_PROFILER = True
 TOP_PROFILED_FUNCTIONS = 15
 
-import SAR
-import imp
+import SarGrapher
+import SarStats
 
-# Hack needed because sarstats does not end in .py
-SARSTATS_MOD = imp.load_source('sarstats', 'sarstats')
 
 SAR_FILES = 'sar-files'
 
@@ -65,8 +62,8 @@ class TestSarParsing(unittest.TestCase):
         """Parses all the sar files and creates the pdf outputs"""
         for example in self.sar_files:
             print("Parsing: {0}".format(example))
-            sar = SAR.SAR([example])
-            sar.parse()
+            sar_grapher = SarGrapher.SarGrapher([example])
+            sar_stats = SarStats.SarStats(sar_grapher)
             usage = resource.getrusage(resource.RUSAGE_SELF)
             if USE_MELIAE:
                 objgraph.show_growth()
@@ -74,9 +71,11 @@ class TestSarParsing(unittest.TestCase):
                 scanner.dump_all_objects(tmp)
                 leakreporter = loader.load(tmp)
                 summary = leakreporter.summarize()
+
             print("SAR parsing: {0} usertime={1} systime={2} mem={3} MB"
                 .format(end_of_path(example), usage[0], usage[1],
                 (usage[2] / 1024.0)))
+
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
@@ -89,9 +88,8 @@ class TestSarParsing(unittest.TestCase):
                 # Set up profiling for pdf generation
                 self.profile.enable()
 
-            stats = SARSTATS_MOD.SarStats(sar)
             out = "{0}.pdf".format(example)
-            stats.graph(example, [], out)
+            sar_stats.graph(example, [], out)
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
@@ -103,10 +101,9 @@ class TestSarParsing(unittest.TestCase):
 
             print("Wrote: {0}".format(out))
             os.remove(out)
-            sar.close()
-            del sar
-            stats.close()
-            del stats
+            sar_grapher.close()
+            del sar_grapher
+            del sar_stats
             usage = resource.getrusage(resource.RUSAGE_SELF)
             print("SAR graphing: {0} usertime={1} systime={2} mem={3} MB"
                 .format(end_of_path(example), usage[0], usage[1],
