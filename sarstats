@@ -1,0 +1,176 @@
+#!/usr/bin/python
+from __future__ import print_function
+
+import argparse
+import os
+import string
+import sys
+
+from SarParser import natural_sort_key
+import SarGrapher
+import SarStats
+
+VERSION = 0.1
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
+                                     "produces a pdf report".format(sys.argv[0]),
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('sar_files', metavar='sar_files', nargs='*', help="""
+                        Sar files to examine. It is possible to specify a
+                        single folder, in which case it will look for all the
+                        sar* files and order them by file date. If the
+                        directory containing the sar files is part of an
+                        sosreport, it will try to resulve the interrupts
+                        source""")
+
+    parser.add_argument('--ascii', dest='ascii_graphs', default=None, action='append', help="""
+                        Display single graphs on the terminal. Can be used multiple
+                        times: --ascii 'proc/s' --ascii 'ldavg-1'. Only one dataset per
+                        graph is currently supported. (Note this functionality requires
+                        gnuplot to be installed)""")
+
+    parser.add_argument('--csv', dest='csv_file', default=None, help="""
+                        Outputs the data to the specified csv file.""")
+
+    parser.add_argument('--custom', dest='custom_graphs', default='', help="""
+                        Add custom graphs with --custom
+                        'foo:udpsck,rawsck,tcp-tw;bar:i001/s,i002/s'.  This
+                        adds two pages in the 'Custome' category: Graph 'foo'
+                        containing udpsck, rawsck and tcp-tw and graph 'bar'
+                        containing i001/s and i002/s.  With graphs that vary
+                        too muchin y-ranges the output can be quite
+                        suboptimal""")
+
+    parser.add_argument('--labels', dest='labels', default=None, help="""
+                        Adds labels to a graph at specified time. For example
+                        --label '2014-01-01 13:45:03,foo; 2014-01-02
+                        13:15:15,bar' will add two extra labels on every graph
+                        at those times.  This is useful for correlation
+                        work""")
+
+    parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
+                        Only lists all the graphs and elements contained in the
+                        specified sar files""")
+
+    parser.add_argument('--maxgraphs', dest='maxgraphs', default=None, help="""
+                        Sets the maximum number of graphs in a single page""")
+
+    parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
+                        Disable the grid in graphs""")
+
+    parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
+                        Output file name. If multiple svg files are specified this
+                        parameter represents the basename: --output foo will give
+                        foo1.svg, foo2.svg, ...""")
+
+    parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
+                        If the sar file is part of an existing sosreport, it
+                        will try to show the system reboot times in the
+                        graphs""")
+
+    parser.add_argument('--skip', default='lo', dest='skip_graphs', help="""
+                        Graphs or entries to skip. For example adding '%%user'
+                        will remove that graph. Adding 'lo' will remove that
+                        interface from any network graph. Use comma to separate
+                        multiple graphs to be skipped.  For example '--skip
+                        lo,eth0' will not plot any graphs for those interfaces
+                        and '--skip lo,miss/s' will skip the 'lo' interface and
+                        the 'miss/s' graph""")
+
+    parser.add_argument('--svg', dest='svg_graphs', default=None, action='append', help="""
+                        Output graphs as svg files. Can be used multiple times:
+                        --svg 'proc/s' --svg 'ldavg-1,ldavg-5'. Separate multiple
+                        datasets with a comma.)""")
+
+    parser.add_argument('--version', dest='version', action='store_true', default=False, help="""
+                        Show the program's version""")
+
+    args = parser.parse_args()
+
+    if args.version:
+        print("{0} - Version: {1}".format(sys.argv[0], VERSION))
+        sys.exit(0)
+
+    # If the only argument is a directory fetch all the sar files and order
+    # them automatically
+    if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
+        s = {}
+        root = args.sar_files[0]
+        files = [f for f in os.listdir(root) if f.startswith('sar')]
+        for i in files:
+            if i.strip().startswith('sar'):
+                f = os.path.join(root, i)
+                s[os.path.getmtime(f)] = f
+
+        args.sar_files = []
+        for i in sorted(s.keys()):
+            args.sar_files.append(s[i])
+
+        if len(args.sar_files) == 0:
+            print("No sar files found in dir: {0}".format(root))
+            sys.exit(-1)
+
+    print("Parsing files: {0}".format(" ".join(args.sar_files)), end='')
+    if len(args.sar_files) == 0:
+        print("Error: No sar files passed as argument")
+        sys.exit(-1)
+
+    sar_grapher = SarGrapher.SarGrapher(args.sar_files)
+    print()
+
+    if args.list_graphs:
+        timestamps = sar_grapher.timestamps()
+        print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
+        print("List of graphs available:")
+        inv_map = {}
+        # FIXME: expose _categories through a method
+        for k, v in sar_grapher.sar_parser._categories.iteritems():
+            inv_map[v] = inv_map.get(v, [])
+            inv_map[v].append(k)
+
+        all_graphs = sar_grapher.datasets()
+        try:
+            rows, columns = os.popen('stty size', 'r').read().split()
+        except:
+            columns = 80
+        columns = int(columns) - 10
+
+        import textwrap
+        for i in sorted(inv_map):
+            line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
+            indent = ' ' * (len(i) + 2)
+            text = textwrap.fill(line, width=columns, initial_indent='',
+                                 subsequent_indent=indent)
+            print("{0}: {1}".format(i, text))
+        sys.exit(0)
+
+    if args.csv_file is not None:
+        print("Export to csv: {0}".format(args.csv_file))
+        sar_grapher.export_csv(args.csv_file)
+        sys.exit(0)
+
+    if args.ascii_graphs is not None:
+        graphs = map(string.strip, args.ascii_graphs)
+        sar_grapher.plot_ascii(graphs)
+        sys.exit(0)
+
+    if args.svg_graphs is not None:
+        graphs = map(string.strip, args.svg_graphs)
+        sar_grapher.plot_svg(graphs, args.output_file)
+        sys.exit(0)
+
+    print("Building graphs: ", end='')
+
+    skip_list = args.skip_graphs.strip().split(",")
+    sar_stats = SarStats.SarStats(sar_grapher)
+
+    sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
+                      args.showreboots, args.custom_graphs, args.grid)
+    sar_grapher.close()
+    print("\nWrote: {0}".format(args.output_file))
+    sar_grapher.close()
+
+
+# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
