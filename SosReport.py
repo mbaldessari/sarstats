@@ -1,3 +1,6 @@
+# Note: This is just a temporary class
+# I am working on a more complete sosreport parsing class
+# which will supersede this one
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
 import os
@@ -11,7 +14,7 @@ def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
 
-class SOSReport:
+class SosReport:
     def __init__(self, path):
         if not os.path.isdir(path):
             raise Exception("{0} does not exist".format(path))
@@ -139,7 +142,7 @@ class SOSReport:
         self._parse_reboots()
 
 if __name__ == '__main__':
-    sosreport = SOSReport('./demosos')
+    sosreport = SosReport('./demosos')
     sosreport.parse()
     for i in sosreport.reboots:
         print("{0} - {1}".format(i, sosreport.reboots[i]))

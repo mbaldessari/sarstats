@@ -34,7 +34,7 @@ import numpy
 import re
 
 import sar_metadata
-import sosreport
+import SosReport
 
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
@@ -128,7 +128,7 @@ class SarParser(object):
 
         self.sosreport = None
         try:
-            self.sosreport = sosreport.SOSReport(a)
+            self.sosreport = SosReport.SosReport(a)
             self.sosreport.parse()
         except:
             pass
