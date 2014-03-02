@@ -1,0 +1,30 @@
+Short description of the classes:
+--- sar_metadata (module)
+- Holds the descriptions of the graphs
+- Has methods to categorize data
+- Holds other metadata for each graph
+
+--- SarParser (class)
+- Loads the SAR files
+- Parses the data
+- Prunes the data from unneeded rows or columns
+- Exposes methods to manipulate and extract the data
+
+--- SarGrapher (class)
+- Is in charge of producing the graphs
+- Uses SarParser to hold the data
+- Has methods to output via ascii, pdf and svg
+
+--- SarStats (class)
+- Uses the SarGrapher class to produce
+  a full pdf with index and content table
+- Has methods to creade ascii and svg outputs
+
+--- sarstats (executable)
+- Main executable
+- Uses SarStats to create graphs
+
+--- SosReport (class)
+- Parses some aspects of a sosreport when available
+- Very temporary and will be replaced with a fully-
+  fledged module
