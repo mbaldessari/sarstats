@@ -230,7 +230,7 @@ class SarStats(object):
                         chunks = split_chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
-                            entry = sar_metadata.get_title_unit_label(chunk, sar_obj=sar_parser)
+                            entry = sar_metadata.get_title_unit_labels(chunk, sar_obj=sar_parser)
                             s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
                             newentry = (s, entry[1])
                             l.append(([newentry, chunk]))
@@ -319,12 +319,11 @@ class SarStats(object):
 
             for graph in custom_graph_list.keys():
                 graphs = custom_graph_list[graph]
-                fname = self._graph_filename(graphs)
-                sar_grapher.plottimeseries((['Custom', None, graphs], graphs), fname, self.extra_labels,
+                fname = sar_grapher._graph_filename(graphs)
+                sar_grapher.plot_datasets((['Custom', None, graphs], graphs), fname, self.extra_labels,
                                       show_reboots, grid_on)
                 sys.stdout.write(".")
                 sys.stdout.flush()
-                fname = self._graph_filename(graphs)
                 cat = 'Custom'
                 if not cat in used_cat: # We've not seen the category before
                     self.do_heading(cat, doc.h1)
