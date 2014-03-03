@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import string
 import sys
 
 import SarGrapher
@@ -137,12 +136,12 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.ascii_graphs is not None:
-        graphs = map(string.strip, args.ascii_graphs)
+        graphs = [x.strip() for x in args.ascii_graphs]
         sar_stats.plot_ascii(graphs)
         sys.exit(0)
 
     if args.svg_graphs is not None:
-        graphs = map(string.strip, args.svg_graphs)
+        graphs = [x.strip() for x in args.svg_graphs]
         sar_stats.plot_svg(graphs, args.output_file, args.labels)
         sys.exit(0)
 
