@@ -128,7 +128,6 @@ class SarParser(object):
         try:
             self.sosreport = SosReport.SosReport(a)
             self.sosreport.parse()
-            print("Sosreport found at: {0}".format(a))
         except:
             pass
 
