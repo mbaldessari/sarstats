@@ -20,13 +20,38 @@
 from __future__ import print_function
 
 import argparse
+import dateutil
 import os
+import re
 import sys
 
 import SarGrapher
 import SarStats
 
 VERSION = '0.2'
+
+
+def parse_sar_date(fname):
+    """Given a sar filename it tries to parse the first line
+    in order to parse the date of the report"""
+
+    sar_file = open(fname, "r")
+    first_line = sar_file.readline()
+    sar_file.close()
+    pattern = re.compile(r"""(?x)
+        ^(\S+)\s+                 # Kernel name (uname -s)
+        (\S+)\s+                  # Kernel release (uname -r)
+        \((\S+)\)\s+              # Hostname
+        ((?:\d{4}-\d{2}-\d{2})|   # Date in YYYY-MM-DD format
+         (?:\d{2}/\d{2}/\d{2,4})) #      in MM/DD/(YY)YY format
+        .*$                       # Remainder, ignored
+        """)
+
+    matches = re.search(pattern, first_line)
+    if matches:
+        return dateutil.parser.parse(matches.group(4))
+
+    return None
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
@@ -115,14 +140,16 @@ if __name__ == '__main__':
         s = {}
         root = args.sar_files[0]
         files = [f for f in os.listdir(root) if f.startswith('sar')]
+        real_dates = {}
+        # Store exact dates of sarfiles in dict
         for i in files:
-            if i.strip().startswith('sar'):
-                f = os.path.join(root, i)
-                s[os.path.getmtime(f)] = f
+            real_dates[parse_sar_date(i)] = i
 
+        # Add the files in a sorted manner
         args.sar_files = []
-        for i in sorted(s.keys()):
-            args.sar_files.append(s[i])
+        for i in sorted(real_dates.keys()):
+            f = os.path.join(root, real_dates[i])
+            args.sar_files.append(f)
 
         if len(args.sar_files) == 0:
             print("No sar files found in dir: {0}".format(root))
