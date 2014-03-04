@@ -5,7 +5,7 @@ sar(1) provides system activity reports that are useful in the analysis of
 system performance issues. This script produces a PDF file with graphs of the
 data contained in one or more sar reports.
 """
-# sarstats.py - sar(1) report graphing utility
+# SarStats.py - sar(1) report graphing utility
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
 #               2014  Michele Baldessari
