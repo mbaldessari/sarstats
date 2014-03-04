@@ -134,6 +134,10 @@ if __name__ == '__main__':
         print("{0} - Version: {1}".format(sys.argv[0], VERSION))
         sys.exit(0)
 
+    if len(args.sar_files) == 1 and not os.path.exists(args.sar_files[0]):
+        print("Path does not exist: {0}".format(args.sar_files[0]))
+        sys.exit(-1)
+
     # If the only argument is a directory fetch all the sar files and order
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
@@ -143,19 +147,19 @@ if __name__ == '__main__':
         real_dates = {}
         # Store exact dates of sarfiles in dict
         for i in files:
-            real_dates[parse_sar_date(i)] = i
+            f = os.path.join(root, i)
+            real_dates[parse_sar_date(f)] = f
 
         # Add the files in a sorted manner
         args.sar_files = []
         for i in sorted(real_dates.keys()):
-            f = os.path.join(root, real_dates[i])
-            args.sar_files.append(f)
+            args.sar_files.append(real_dates[i])
 
         if len(args.sar_files) == 0:
             print("No sar files found in dir: {0}".format(root))
             sys.exit(-1)
 
-    print("Parsing files: {0}".format(" ".join(args.sar_files)), end='')
+    print("Parsing files: {0}".format(" ".join(map(os.path.basename, args.sar_files))), end='')
     if len(args.sar_files) == 0:
         print("Error: No sar files passed as argument")
         sys.exit(-1)
