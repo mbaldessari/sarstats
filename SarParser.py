@@ -120,8 +120,6 @@ class SarParser(object):
         self._linecount = 0
 
         # Is this file part of an sosreport?
-        # Check ../../../sos_commands exists and see if uptime is a
-        # symlink
         a = os.path.abspath(fnames[0])
         for i in range(4):
             a = os.path.split(a)[0]
