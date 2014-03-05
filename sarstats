@@ -98,9 +98,6 @@ if __name__ == '__main__':
     parser.add_argument('--maxgraphs', dest='maxgraphs', default=64, help="""
                         Sets the maximum number of graphs in a single page""")
 
-    parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
-                        Disable the grid in graphs""")
-
     parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
                         Output file name. If multiple svg files are specified this
                         parameter represents the basename: --output foo will give
@@ -198,7 +195,7 @@ if __name__ == '__main__':
 
     skip_list = args.skip_graphs.strip().split(",")
     sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
-                      args.showreboots, args.custom_graphs, args.grid)
+                      args.showreboots, args.custom_graphs)
     sar_grapher.close()
     print("\nWrote: {0}".format(args.output_file))
 

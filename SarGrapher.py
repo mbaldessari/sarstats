@@ -54,7 +54,7 @@ class SarGrapher(object):
         return sorted(self.sar_parser.available_timestamps())
 
     def plot_datasets(self, data, fname, extra_labels, showreboots=False,
-                      grid=False, output='pdf'):
+                      output='pdf'):
         """ Plot timeseries data (of type dataname).
         The data can be either simple (one or no datapoint at any point in time,
         or indexed (by indextype). dataname is assumed to be in the form of
@@ -124,10 +124,8 @@ class SarGrapher(object):
                               arrowprops=dict(arrowstyle="->", color='blue',
                               connectionstyle="arc3,rad=-0.1"))
 
-        if grid:
-            axes.grid(True)
-        else:
-            axes.grid(False)
+        # Add a grid to the graph to ease visualization
+        axes.grid(True)
 
         lgd = None
         # Draw the legend only when needed
