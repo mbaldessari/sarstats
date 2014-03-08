@@ -34,7 +34,7 @@ import numpy
 import re
 
 import sar_metadata
-import SosReport
+from sos_report import SosReport
 
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
