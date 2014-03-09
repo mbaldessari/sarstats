@@ -22,8 +22,8 @@ if USE_MELIAE:
 USE_PROFILER = True
 TOP_PROFILED_FUNCTIONS = 15
 
-import SarGrapher
-import SarStats
+from sar_grapher import SarGrapher
+from sar_stats import SarStats
 
 
 SAR_FILES = 'sar-files'
@@ -62,8 +62,8 @@ class TestSarParsing(unittest.TestCase):
         """Parses all the sar files and creates the pdf outputs"""
         for example in self.sar_files:
             print("Parsing: {0}".format(example))
-            sar_grapher = SarGrapher.SarGrapher([example])
-            sar_stats = SarStats.SarStats(sar_grapher)
+            grapher = SarGrapher([example])
+            stats = SarStats(grapher)
             usage = resource.getrusage(resource.RUSAGE_SELF)
             if USE_MELIAE:
                 objgraph.show_growth()
@@ -89,7 +89,7 @@ class TestSarParsing(unittest.TestCase):
                 self.profile.enable()
 
             out = "{0}.pdf".format(example)
-            sar_stats.graph(example, [], out)
+            stats.graph(example, [], out)
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
@@ -101,9 +101,9 @@ class TestSarParsing(unittest.TestCase):
 
             print("Wrote: {0}".format(out))
             os.remove(out)
-            sar_grapher.close()
-            del sar_grapher
-            del sar_stats
+            grapher.close()
+            del grapher
+            del stats
             usage = resource.getrusage(resource.RUSAGE_SELF)
             print("SAR graphing: {0} usertime={1} systime={2} mem={3} MB"
                 .format(end_of_path(example), usage[0], usage[1],
