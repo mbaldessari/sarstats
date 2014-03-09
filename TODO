@@ -19,3 +19,5 @@ Enhancement requests
 
 * Add multiple --graph options that work just like --svg and create a single short
   pdf file with the listed graphs
+
+* In custom graphs it should be possible to specify a custom time interval

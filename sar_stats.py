@@ -43,7 +43,7 @@ from reportlab.platypus.frames import Frame
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4, landscape
 
-from SarParser import natural_sort_key
+from sar_parser import natural_sort_key
 import sar_metadata
 
 

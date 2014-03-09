@@ -8,7 +8,7 @@ import os
 import shutil
 import tempfile
 
-import SarParser
+from sar_parser import SarParser
 
 # If the there are more than 50 plots in a graph we move the legend to the
 # bottom
@@ -29,7 +29,7 @@ class SarGrapher(object):
         # matplotlib is simply inefficient in this area)
         self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
 
-        self.sar_parser = SarParser.SarParser(filenames)
+        self.sar_parser = SarParser(filenames)
         self.sar_parser.parse()
 
     def _graph_filename(self, graph, extension='.png'):
