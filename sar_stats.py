@@ -194,9 +194,10 @@ class SarStats(object):
         self.maxgraphs = maxgraphs
         self.sar_grapher = sar_grapher
 
-    def graphs_order(self, cat, skiplist=[]):
+    def graphs_order(self, cat, skip_list=None):
         """ Order in which to present all graphs.
         Data is grouped loosely by type. """
+        skiplist = skip_list or []
         l = []
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
