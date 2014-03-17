@@ -181,7 +181,7 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     sar_grapher = sar_stats_obj.sar_grapher
     fname = sar_grapher._graph_filename(dataname[1][0])
     sar_obj.plot_datasets(dataname, fname, sar_stats_obj.extra_labels,
-            sar_stats_obj.showreboots, sar_stats_obj.grid)
+            sar_stats_obj.showreboots)
     sys.stdout.write(".")
     sys.stdout.flush()
 
@@ -264,13 +264,12 @@ class SarStats(object):
         self.story.append(h)
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', labels=None,
-              show_reboots=False, custom_graphs='', grid_on=False):
+              show_reboots=False, custom_graphs=''):
         """ Parse sar data and produce graphs of the parsed data. """
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
         self.extra_labels = None
         self.showreboots = show_reboots
-        self.grid = grid_on
         doc = MyDocTemplate(output_file, pagesize=landscape(A4))
 
         if labels is not None:
@@ -310,7 +309,7 @@ class SarStats(object):
         else:
             for dataname in self.graphs_order(category_order, skip_list):
                 fname = sar_grapher._graph_filename(dataname[1][0])
-                sar_grapher.plot_datasets(dataname, fname, self.extra_labels, show_reboots, grid_on)
+                sar_grapher.plot_datasets(dataname, fname, self.extra_labels, show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -328,10 +327,13 @@ class SarStats(object):
                 raise Exception("Error in parsing custom graphs: {0}".format(custom_graphs))
 
             for graph in custom_graph_list.keys():
-                graphs = custom_graph_list[graph]
+                graphs = set(custom_graph_list[graph]).intersection(sar_parser.available_datasets())
+                graphs = list(graphs)
+                if len(graphs) == 0:
+                    continue
                 fname = sar_grapher._graph_filename(graphs)
-                sar_grapher.plot_datasets((['Custom', None, graphs], graphs), fname, self.extra_labels,
-                                      show_reboots, grid_on)
+                sar_grapher.plot_datasets(([graph, None, graphs], graphs), fname, self.extra_labels,
+                                      show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 cat = 'Custom'

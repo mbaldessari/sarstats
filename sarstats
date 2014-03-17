@@ -75,8 +75,10 @@ if __name__ == '__main__':
     parser.add_argument('--csv', dest='csv_file', default=None, help="""
                         Outputs the data to the specified csv file.""")
 
-    parser.add_argument('--custom', dest='custom_graphs', default=None, action='append',
-                        help="""Add custom graphs with --custom
+    parser.add_argument('--custom', dest='custom_graphs', default=['load:ldavg-1,ldavg-5,ldavg-15',
+                        'tps io:rtps,wtps,tps', 'block io:bread/s,bwrtn/s', 'pgpg:pgpgin/s,pgpgout/s',
+                        'processes:plist-sz,proc/s,runq-sz'],
+                        action='append', help="""Add custom graphs with --custom
                         'foo:udpsck,rawsck,tcp-tw' --custom 'bar:i001/s,i002/s'.
                         This adds two pages in the 'Custom' category: Graph 'foo'
                         containing udpsck, rawsck and tcp-tw and graph 'bar'
@@ -97,9 +99,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--maxgraphs', dest='maxgraphs', default=64, help="""
                         Sets the maximum number of graphs in a single page""")
-
-    parser.add_argument('--nogrid', dest='grid', action='store_false', default=True, help="""
-                        Disable the grid in graphs""")
 
     parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
                         Output file name. If multiple svg files are specified this
@@ -198,7 +197,7 @@ if __name__ == '__main__':
 
     skip_list = args.skip_graphs.strip().split(",")
     sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
-                      args.showreboots, args.custom_graphs, args.grid)
+                      args.showreboots, args.custom_graphs)
     sar_grapher.close()
     print("\nWrote: {0}".format(args.output_file))
 
