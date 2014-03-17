@@ -328,8 +328,10 @@ class SarStats(object):
             for graph in custom_graph_list.keys():
                 graphs = set(custom_graph_list[graph]).intersection(sar_parser.available_datasets())
                 graphs = list(graphs)
+                if len(graphs) == 0:
+                    continue
                 fname = sar_grapher._graph_filename(graphs)
-                sar_grapher.plot_datasets((['Custom', None, graphs], graphs), fname, self.extra_labels,
+                sar_grapher.plot_datasets(([graph, None, graphs], graphs), fname, self.extra_labels,
                                       show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
