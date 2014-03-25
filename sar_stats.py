@@ -73,6 +73,8 @@ def parse_labels(labels):
     """Parses list of labels in the form of foo:2014-01-01 13:45:03
     and returns a list of tuples [(datetime, 'label), ...]"""
 
+    if labels == None:
+        return []
     ret_labels = []
     for i in labels:
         # labels are in the form "foo:2014-01-01 13:45:03"
