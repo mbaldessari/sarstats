@@ -400,6 +400,12 @@ class SarStats(object):
         sar_parser = sar_grapher.sar_parser
         timestamps = sar_grapher.timestamps()
         print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
+        if sar_parser.sosreport and sar_parser.sosreport.reboots:
+            reboots = sar_parser.sosreport.reboots
+            print("Reboots: ", end='')
+            for i in reboots:
+                print("{0} ".format(reboots[i]['date']), end='')
+            print('')
         print("List of graphs available:")
         inv_map = {}
         # FIXME: expose _categories through a method

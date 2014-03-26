@@ -119,14 +119,17 @@ class SarParser(object):
         # Current line number (for use in reporting parse errors)
         self._linecount = 0
 
-        # Is this file part of an sosreport?
-        a = os.path.abspath(fnames[0])
-        for i in range(4):
-            a = os.path.split(a)[0]
+        absdir = os.path.abspath(fnames[0])
+
+        # if we were passed a file we need to calculate where the
+        # sosreport base is
+        if not os.path.isdir(absdir):
+            for i in range(4):
+                absdir = os.path.split(absdir)[0]
 
         self.sosreport = None
         try:
-            self.sosreport = SosReport.SosReport(a)
+            self.sosreport = SosReport(absdir)
             self.sosreport.parse()
         except:
             pass

@@ -103,7 +103,6 @@ class SosReport:
         # FIXME: uncompress any compressed messages files
         # FIXME: This is still potentially *very* fragile
         messages_dir = os.path.join(self.path, 'var/log')
-        reboots = {}
         reboot_re = r'.*kernel: Linux version.*$'
         files = [f for f in os.listdir(messages_dir) if f.startswith('messages')]
         for i in sorted(files, key=natural_sort_key, reverse=True):
