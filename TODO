@@ -1,7 +1,7 @@
 Enhancement requests
 --------------------
 * For every description add the exact kernel counter involved w/ proc path and also
-  add a proper comprehensible explanation. For example in 'loadavg-1' add explanation
+  add a proper comprehensible explanation. For example in 'ldavg-1' add explanation
   when a load is high and how it relates to the number of CPUs
 
 * Normalize the y-scale
@@ -21,3 +21,9 @@ Enhancement requests
   pdf file with the listed graphs
 
 * In custom graphs it should be possible to specify a custom time interval
+
+* Implement a --range option that highlights the area between two times/dates
+
+* Kill --showreboots. This should work normally when an sosreport is found
+
+* Add regexp possibility when creating custom graphs or svg
