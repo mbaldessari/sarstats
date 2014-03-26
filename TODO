@@ -24,6 +24,4 @@ Enhancement requests
 
 * Implement a --range option that highlights the area between two times/dates
 
-* Kill --showreboots. This should work normally when an sosreport is found
-
 * Add regexp possibility when creating custom graphs or svg

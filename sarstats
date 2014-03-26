@@ -51,7 +51,8 @@ def parse_sar_date(fname):
     if matches:
         return dateutil.parser.parse(matches.group(4))
 
-    return None
+    raise Exception("Could not parse the date of file {0}: {1}".format(
+        fname, first_line))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
@@ -104,11 +105,6 @@ if __name__ == '__main__':
                         Output file name. If multiple svg files are specified this
                         parameter represents the basename: --output foo will give
                         foo1.svg, foo2.svg, ...""")
-
-    parser.add_argument('--showreboots', dest='showreboots', default=False, action='store_false', help="""
-                        If the sar file is part of an existing sosreport, it
-                        will try to show the system reboot times in the
-                        graphs""")
 
     parser.add_argument('--skip', default='', dest='skip_graphs', help="""
                         Graphs or entries to skip. For example adding '%%user'
@@ -197,7 +193,7 @@ if __name__ == '__main__':
 
     skip_list = args.skip_graphs.strip().split(",")
     sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
-                      args.showreboots, args.custom_graphs)
+                    True, args.custom_graphs)
     sar_grapher.close()
     print("\nWrote: {0}".format(args.output_file))
 

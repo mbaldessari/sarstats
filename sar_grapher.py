@@ -113,13 +113,14 @@ class SarGrapher(object):
         if showreboots and sar_parser.sosreport is not None and sar_parser.sosreport.reboots is not None:
             reboots = sar_parser.sosreport.reboots
             for reboot in reboots.keys():
-                rboot_x = mdates.date2num(reboots[reboot]['date'])
+                reboot_date = reboots[reboot]['date']
+                rboot_x = mdates.date2num(reboot_date)
                 (xmin, xmax) = plt.xlim()
                 (ymin, ymax) = plt.ylim()
                 if rboot_x < xmin or rboot_x > xmax:
                     continue
 
-                axes.annotate('r', xy=(mdates.date2num(reboots[reboot]['date']), ymin),
+                axes.annotate('', xy=(mdates.date2num(reboot_date), ymin),
                               xycoords='data', xytext=(-30, -30), textcoords='offset points',
                               arrowprops=dict(arrowstyle="->", color='blue',
                               connectionstyle="arc3,rad=-0.1"))
