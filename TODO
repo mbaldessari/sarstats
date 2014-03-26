@@ -25,3 +25,5 @@ Enhancement requests
 * Implement a --range option that highlights the area between two times/dates
 
 * Add regexp possibility when creating custom graphs or svg
+
+* Resolve devX-Y to proper device names via sosreport parsing
