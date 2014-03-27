@@ -563,6 +563,29 @@ class SarParser(object):
 
         return ymax
 
+    def find_data_gaps(self):
+        """Returns a list of tuples containing the data gaps. A data gap is an interval
+        of time longer than the collecting frequency that does not contain any data.
+        NOTE: The algorithm is not super-smart, but covers the most blatant cases. 
+        This is because the sampling frequency calculation is skewed a bit when the 
+        sysstat is not running.
+        Returns: [(gap1start, gap1end), (.., ..), ...] or []"""
+
+        # in seconds
+        freq = self.sample_frequency
+        last = None
+        ret = []
+        for time in sorted(self.available_timestamps()):
+            if not last:
+                last = time
+                continue
+            delta = time - last
+            if delta.total_seconds() > int(freq):
+                ret.append((last, time))
+            last = time
+
+        return ret
+
 if __name__ == '__main__':
     raise Exception('No self-test code implemented')
 

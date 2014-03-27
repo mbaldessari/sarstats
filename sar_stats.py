@@ -406,6 +406,13 @@ class SarStats(object):
             for i in reboots:
                 print("{0} ".format(reboots[i]['date']), end='')
             print('')
+
+        gaps = sar_parser.find_data_gaps()
+        if len(gaps) > 0:
+            print("Gaps:")
+            for i in gaps:
+                print("{0} - {1}".format(i[0], i[1]))
+
         print("List of graphs available:")
         inv_map = {}
         # FIXME: expose _categories through a method
