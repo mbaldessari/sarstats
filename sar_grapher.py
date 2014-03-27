@@ -134,7 +134,7 @@ class SarGrapher(object):
                 x1 = mdates.date2num(g1)
                 x2 = mdates.date2num(g2)
                 (ymin, ymax) = plt.ylim()
-                axes.add_patch(Rectangle((x1, ymax*0.9), x2 - x1, ymax*0.1, facecolor="grey"))
+                axes.add_patch(Rectangle((x1, ymin), x2 - x1, ymax-ymin, facecolor="lightgrey"))
 
         # Add a grid to the graph to ease visualization
         axes.grid(True)

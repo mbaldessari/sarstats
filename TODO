@@ -27,5 +27,3 @@ Enhancement requests
 * Add regexp possibility when creating custom graphs or svg
 
 * Resolve devX-Y to proper device names via sosreport parsing
-
-* Visually show data gaps
