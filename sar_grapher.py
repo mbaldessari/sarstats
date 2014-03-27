@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from matplotlib.patches import Rectangle
 import os
 import shutil
 import tempfile
@@ -124,6 +125,16 @@ class SarGrapher(object):
                               xycoords='data', xytext=(-30, -30), textcoords='offset points',
                               arrowprops=dict(arrowstyle="->", color='blue',
                               connectionstyle="arc3,rad=-0.1"))
+
+        # Marg any data collection gaps in the graph
+        gaps = sar_parser.find_data_gaps()
+        if len(gaps) > 0:
+            for i in gaps:
+                (g1, g2) = i
+                x1 = mdates.date2num(g1)
+                x2 = mdates.date2num(g2)
+                (ymin, ymax) = plt.ylim()
+                axes.add_patch(Rectangle((x1, ymax*0.9), x2 - x1, ymax*0.1, facecolor="grey"))
 
         # Add a grid to the graph to ease visualization
         axes.grid(True)
