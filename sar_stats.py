@@ -409,7 +409,7 @@ class SarStats(object):
 
         gaps = sar_parser.find_data_gaps()
         if len(gaps) > 0:
-            print("Gaps:")
+            print("Data gaps:")
             for i in gaps:
                 print("{0} - {1}".format(i[0], i[1]))
 
