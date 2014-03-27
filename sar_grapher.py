@@ -126,7 +126,7 @@ class SarGrapher(object):
                               arrowprops=dict(arrowstyle="->", color='blue',
                               connectionstyle="arc3,rad=-0.1"))
 
-        # Marg any data collection gaps in the graph
+        # Show any data collection gaps in the graph
         gaps = sar_parser.find_data_gaps()
         if len(gaps) > 0:
             for i in gaps:
