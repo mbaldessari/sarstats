@@ -333,7 +333,10 @@ class SarStats(object):
                 # For each customer graph o through every dataset
                 for i in custom_graph_list[graph]:
                     # For each match add it to the set
-                    ret = sar_parser.match_datasets(i)
+                    try:
+                        ret = sar_parser.match_datasets(i)
+                    except:
+                        raise Exception("Error in regex for: {0}".format(i))
                     for j in ret:
                         matched_graphs.add(j)
 
