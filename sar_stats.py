@@ -322,15 +322,22 @@ class SarStats(object):
         if custom_graphs is not None:
             try:
                 for i in custom_graphs:
-                    key = i.split(':')[0]
+                    label = i.split(':')[0]
                     values = i.split(':')[1].split(',')
-                    custom_graph_list[key] = values
+                    custom_graph_list[label] = values
             except:
                 raise Exception("Error in parsing custom graphs: {0}".format(custom_graphs))
 
             for graph in custom_graph_list.keys():
-                graphs = set(custom_graph_list[graph]).intersection(sar_parser.available_datasets())
-                graphs = list(graphs)
+                matched_graphs = set()
+                # For each customer graph o through every dataset
+                for i in custom_graph_list[graph]:
+                    # For each match add it to the set
+                    ret = sar_parser.match_datasets(i)
+                    for j in ret:
+                        matched_graphs.add(j)
+
+                graphs = list(matched_graphs)
                 if len(graphs) == 0:
                     continue
                 fname = sar_grapher._graph_filename(graphs)

@@ -476,6 +476,17 @@ class SarParser(object):
         datasets = [i for i in sorted(self._data[first_timestamp].keys())]
         return datasets
 
+    def match_datasets(self, regex):
+        """Returns all datasets that match a certain regex"""
+        first_timestamp = self._data.keys()[0]
+        expression = re.compile(regex)
+        ret = []
+        for i in sorted(self._data[first_timestamp].keys()):
+            if expression.match(i):
+                ret.append(i)
+        return ret
+
+
     def available_timestamps(self):
         """Returns all available timestamps"""
         return self._data.keys()
