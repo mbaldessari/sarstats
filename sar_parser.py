@@ -577,8 +577,8 @@ class SarParser(object):
     def find_data_gaps(self):
         """Returns a list of tuples containing the data gaps. A data gap is an interval
         of time longer than the collecting frequency that does not contain any data.
-        NOTE: The algorithm is not super-smart, but covers the most blatant cases. 
-        This is because the sampling frequency calculation is skewed a bit when the 
+        NOTE: The algorithm is not super-smart, but covers the most blatant cases.
+        This is because the sampling frequency calculation is skewed a bit when the
         sysstat is not running.
         Returns: [(gap1start, gap1end), (.., ..), ...] or []"""
 
@@ -591,7 +591,10 @@ class SarParser(object):
                 last = time
                 continue
             delta = time - last
-            if delta.total_seconds() > int(freq):
+            # If the delta > (freq + 10%) we consider it a gap
+            # NB: we must add a bit of percentage to make
+            # sure we do not display gaps unnecessarily
+            if delta.total_seconds() > int(freq * 1.1):
                 ret.append((last, time))
             last = time
 
