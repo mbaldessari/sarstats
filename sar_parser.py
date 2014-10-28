@@ -371,6 +371,7 @@ class SarParser(object):
             self._prev_timestamp = None
             state = 'start'
             headers = None
+            self.cur_file = file_name
             fd = open(file_name, "r")
             for line in fd.readlines():
                 self._linecount += 1
@@ -443,9 +444,9 @@ class SarParser(object):
 
                     matches = re.search(pattern, line)
                     if matches is None:
-                        raise Exception("Line {0}: headers: '{1}', line: '{2}'"
-                                       "regexp '{3}': failed to parse".format(self._linecount,
-                                       str(headers), line, pattern.pattern))
+                        raise Exception("File: {0} - Line {1}: headers: '{2}', line: '{3}'"
+                                        "regexp '{4}': failed to parse".format(self.cur_file,
+                                        self._linecount, str(headers), line, pattern.pattern))
 
                     self._record_data(headers, matches)
                     continue
