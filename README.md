@@ -75,6 +75,9 @@ Q&A
 * Q: In network graphs with bonding the bond interface is never shown?
 * A: Because, depending on the bonding mode, the underlying ethX interface has the exact same traffic patterns and is drawn afterwards
 
+* Q: When using --maxgraphs 15 on a big sar file (one with many scsi devices for example) I get a traceback with IOError: Cannot open resource "...."
+* A: You are hitting the file number limit due to the many images that are being opened. Increase the limit per user (https://rtcamp.com/tutorials/linux/increase-open-files-limit/)
+
 Thanks
 ======
 Luca Miccini, Pablo Iranzo Gomez, Ali Sogukpinar
