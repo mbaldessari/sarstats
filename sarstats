@@ -94,6 +94,16 @@ if __name__ == '__main__':
                         at those times.  This is useful for correlation
                         work""")
 
+    parser.add_argument('--start', dest='starttime', default=None, action='append', help="""
+                        Sets a start time for the data to be evaluated.
+                        --start '2014-01-01 13:45:03'. Entries before the start
+                        time will be ignored.""")
+
+    parser.add_argument('--end', dest='endtime', default=None, action='append', help="""
+                        Sets an end time for the data to be evaluated.
+                        --end '2014-01-01 13:45:03'. Entries after the end
+                        time will be ignored.""")
+
     parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
                         Only lists all the graphs and elements contained in the
                         specified sar files""")
@@ -159,7 +169,7 @@ if __name__ == '__main__':
         print("Error: No sar files passed as argument")
         sys.exit(-1)
 
-    sar_grapher = SarGrapher(args.sar_files)
+    sar_grapher = SarGrapher(args.sar_files, args.starttime[0], args.endtime[0])
     print()
 
     try:

@@ -29,9 +29,11 @@ Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 """
 
 import datetime
+import dateutil
 import os
 import numpy
 import re
+import sys
 
 import sar_metadata
 from sos_report import SosReport
@@ -65,7 +67,7 @@ def _average_line(line):
 def canonicalise_timestamp(date, ts):
     """sar files start with a date string (yyyy-mm-dd) and a 
     series of lines starting with the time. Given the initial
-    sar datetime date object as base and the time string columnt
+    sar datetime date object as base and the time string column
     return a full datetime object"""
 
     matches = re.search(TIMESTAMP_RE, ts)
@@ -101,7 +103,7 @@ class SarParser(object):
     # This dict holds the relationship graph->category
     _categories = {}
 
-    def __init__(self, fnames):
+    def __init__(self, fnames, starttime=None, endtime=None):
         """Constructor: takes a list of files to be parsed. The parsing
         itself is done in the .parse() method"""
         self._files = fnames
@@ -115,6 +117,14 @@ class SarParser(object):
         # If this one was set it means that we crossed the day during one SAR file
         self._olddate = None
         self._prev_timestamp = None
+        self.starttime = None
+        self.endtime = None
+        if starttime:
+            self.starttime = dateutil.parser.parse(starttime)
+
+        if endtime:
+            self.endtime = dateutil.parser.parse(endtime)
+
 
         # Current line number (for use in reporting parse errors)
         self._linecount = 0
@@ -278,6 +288,12 @@ class SarParser(object):
     def _record_data(self, headers, matches):
         """Record a parsed line of data"""
         timestamp = canonicalise_timestamp(self._date, matches.group(1))
+        # We skip recording values if the timestamp is not within the limits
+        # defined by the user
+        if self.starttime and timestamp < self.starttime:
+            return
+        if self.endtime and timestamp > self.endtime:
+            return
         if self._prev_timestamp and timestamp:
             # FIXME: This breaks if sar interval is bigger > 119 mins
             if self._prev_timestamp.hour == 23 and timestamp.hour == 0:
