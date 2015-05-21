@@ -9,10 +9,13 @@ import re
 
 # Interrupt parsing routines taken from python-linux-procfs (GPLv2)
 #
+
+
 def natural_sort_key(s):
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
+
 
 class SosReport:
     def __init__(self, path):
@@ -49,7 +52,7 @@ class SosReport:
     def _parse_network(self):
         """Parse network configuration and create a hash like the following:
         self.network['eth0'] = {'module': 'igb', ipv4: ['10.0.0.1/24'],
-        ipv6: ['fe80::2e41:38ff:feab:99e2/64'], 'firmware': '1.20', 
+        ipv6: ['fe80::2e41:38ff:feab:99e2/64'], 'firmware': '1.20',
         'bus-info': '0000:01:00.0', 'version': '3.133'"""
         self._parse_network_ethtool()
         return
@@ -84,7 +87,7 @@ class SosReport:
             self.interrupts[irq] = {}
             self.interrupts[irq] = self._parse_int_entry(fields[1:], line)
             try:
-                nirq = int(irq)
+                nirq = int(irq)  # FIXME: nirq defined but never used
             except:
                 continue
         return
@@ -96,8 +99,8 @@ class SosReport:
 
     def _parse_reboots(self):
         """Parse /var/log/messages and find out when the machine rebooted.
-        Returns an array of datetimes containing the times of reboot. First 
-        uncompress /var/log/messages*, go through them and search for lines like 
+        Returns an array of datetimes containing the times of reboot. First
+        uncompress /var/log/messages*, go through them and search for lines like
         'Dec  4 11:02:05 illins04 kernel: Linux version 2.6.32-279.5.2.el6.x86_64'.
         We parse messages* files because 'LINUX RESTART' in sar files is not precise"""
         # FIXME: uncompress any compressed messages files
@@ -115,16 +118,16 @@ class SosReport:
                     continue
 
                 tokens = line.split()[0:3]
-                d = parser.parse(" ".join(tokens)) 
+                d = parser.parse(" ".join(tokens))
                 if d.month == 1 and prev_month == 12:
                     # We crossed a year. This means that all the dates read until now
                     # should belong to the previous year and not the current one
-                    # FIXME: this breaks if we investigate sosreports older than one 
+                    # FIXME: this breaks if we investigate sosreports older than one
                     # year :/
                     for i in self.reboots:
                         t = self.reboots[i]['date']
                         # Remember which dates were decremented and only do it once
-                        if i <= counter and not 'decremented' in self.reboots[i]:
+                        if i <= counter and 'decremented' not in self.reboots[i]:
                             self.reboots[i]['date'] = t - relativedelta(years=1)
                             self.reboots[i]['decremented'] = True
                 prev_month = d.month
@@ -135,7 +138,7 @@ class SosReport:
 
     def parse(self):
         self.redhatrelease = open(os.path.join(self.path,
-            'etc/redhat-release')).read().strip()
+                                  'etc/redhat-release')).read().strip()
         self._parse_interrupts()
         self._parse_network()
         self._parse_reboots()

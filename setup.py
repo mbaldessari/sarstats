@@ -5,6 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
+
 def discover_and_run_tests():
     import os
     import sys
@@ -29,6 +30,7 @@ def discover_and_run_tests():
     test_runner.run(test_suite)
 
 from setuptools.command.test import test
+
 
 class DiscoverTest(test):
     def finalize_options(self):

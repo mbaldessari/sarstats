@@ -33,13 +33,14 @@ import dateutil
 import os
 import numpy
 import re
-import sys
+import sys  # FIXME imported but never used
 
 import sar_metadata
 from sos_report import SosReport
 
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r'(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?')
+
 
 def natural_sort_key(s):
     """Natural sorting function. Given a string, it returns a list of the strings
@@ -49,6 +50,7 @@ def natural_sort_key(s):
     _nsre = re.compile('([0-9]+)')
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(_nsre, s)]
+
 
 def _empty_line(line):
     """Parse an empty line"""
@@ -65,7 +67,7 @@ def _average_line(line):
 
 
 def canonicalise_timestamp(date, ts):
-    """sar files start with a date string (yyyy-mm-dd) and a 
+    """sar files start with a date string (yyyy-mm-dd) and a
     series of lines starting with the time. Given the initial
     sar datetime date object as base and the time string column
     return a full datetime object"""
@@ -125,7 +127,6 @@ class SarParser(object):
         if endtime:
             self.endtime = dateutil.parser.parse(endtime)
 
-
         # Current line number (for use in reporting parse errors)
         self._linecount = 0
 
@@ -145,7 +146,7 @@ class SarParser(object):
             pass
 
     def _prune_data(self):
-        """This walks the _data structure and removes all graph keys that 
+        """This walks the _data structure and removes all graph keys that
         have a 0 value in *all* timestamps. FIXME: As inefficient as it
         goes for now..."""
         # Store all possible keys looping over all time stamps
@@ -182,14 +183,13 @@ class SarParser(object):
         # This simplifies graph creation
         for t in self._data.keys():
             for i in all_keys.keys():
-                if not i in self._data[t]:
+                if i not in self._data[t]:
                     self._data[t][i] = None
 
         # We need to prune self._categories as well
         for i in self._categories.keys():
             if i not in all_keys:
                 self._categories.pop(i)
-
 
     def _parse_first_line(self, line):
         """Parse the line as a first line of a SAR report"""
@@ -303,12 +303,12 @@ class SarParser(object):
                 timestamp = canonicalise_timestamp(self._date, matches.group(1))
             elif timestamp < self._prev_timestamp:
                 raise Exception("Time going backwards: {0} - Prev timestamp: {1} -> {2}".
-                               format(timestamp, self._prev_timestamp, self._linecount))
+                                format(timestamp, self._prev_timestamp, self._linecount))
         self._prev_timestamp = timestamp
 
         # We never had this timestamp let's start with a new dictionary
         # associated to it
-        if not timestamp in self._data:
+        if timestamp not in self._data:
             self._data[timestamp] = {}
 
         column = 0
@@ -427,7 +427,7 @@ class SarParser(object):
                         self._date = self._olddate
                     if timestamp is None:
                         raise Exception('Line {0}: expected column header line but'
-                                       'got "{1}" instead'.format(self._linecount, line))
+                                        'got "{1}" instead'.format(self._linecount, line))
                     if headers == ['LINUX', 'RESTART']:
                         # FIXME: restarts should really be recorded, in a smart way
                         state = 'table_end'
@@ -442,8 +442,8 @@ class SarParser(object):
                         pattern = re.compile(self._build_data_line_regexp(headers))
                     except AssertionError:
                         raise Exception('Line {0}: exceeding python interpreter'
-                                       'limit with regexp for this line "{1}"'.
-                                       format(self._linecount, line))
+                                        'limit with regexp for this line "{1}"'.
+                                        format(self._linecount, line))
 
                     self._prev_timestamp = False
                     state = 'table_row'
@@ -462,7 +462,7 @@ class SarParser(object):
                     if matches is None:
                         raise Exception("File: {0} - Line {1}: headers: '{2}', line: '{3}'"
                                         "regexp '{4}': failed to parse".format(self.cur_file,
-                                        self._linecount, str(headers), line, pattern.pattern))
+                                                                               self._linecount, str(headers), line, pattern.pattern))
 
                     self._record_data(headers, matches)
                     continue
@@ -502,7 +502,6 @@ class SarParser(object):
             if expression.match(i):
                 ret.append(i)
         return ret
-
 
     def available_timestamps(self):
         """Returns all available timestamps"""

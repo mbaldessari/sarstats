@@ -64,16 +64,16 @@ GRAPH_WIDTH = 10.5
 GRAPH_HEIGHT = 6.5
 
 
-
 def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
-    return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)]
+    return [list_to_split[i:i + chunksize] for i in range(0, len(list_to_split), chunksize)]
+
 
 def parse_labels(labels):
     """Parses list of labels in the form of foo:2014-01-01 13:45:03
     and returns a list of tuples [(datetime, 'label), ...]"""
 
-    if labels == None:
+    if labels is None:
         return []
     ret_labels = []
     for i in labels:
@@ -85,14 +85,15 @@ def parse_labels(labels):
 
     return ret_labels
 
+
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
     for certain type of text"""
     def __init__(self, filename, **kw):
         self.allowSplitting = 0
         apply(BaseDocTemplate.__init__, (self, filename), kw)
-        template = PageTemplate('normal', [Frame(0.1*inch, 0.1*inch,
-                                11*inch, 8*inch, id='F1')])
+        template = PageTemplate('normal', [Frame(0.1 * inch, 0.1 * inch,
+                                11 * inch, 8 * inch, id='F1')])
         self.addPageTemplates(template)
 
         self.centered = PS(
@@ -170,7 +171,7 @@ class MyDocTemplate(BaseDocTemplate):
             else:
                 return
             entry = [level, text, self.page]
-            #if we have a bookmark name append that to our notify data
+            # if we have a bookmark name append that to our notify data
             bookmark_name = getattr(flowable, '_bookmarkName', None)
             if bookmark_name is not None:
                 entry.append(bookmark_name)
@@ -183,14 +184,14 @@ def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
     sar_grapher = sar_stats_obj.sar_grapher
     fname = sar_grapher._graph_filename(dataname[1][0])
     sar_obj.plot_datasets(dataname, fname, sar_stats_obj.extra_labels,
-            sar_stats_obj.showreboots)
+                          sar_stats_obj.showreboots)
     sys.stdout.write(".")
     sys.stdout.flush()
 
 
 class SarStats(object):
     """Creates a pdf file given a parsed SAR object"""
-    def __init__(self, sar_grapher, maxgraphs = MAXGRAPHS_IN_PAGE):
+    def __init__(self, sar_grapher, maxgraphs=MAXGRAPHS_IN_PAGE):
         """Initialize class"""
         self.story = []
         self.maxgraphs = maxgraphs
@@ -220,7 +221,7 @@ class SarStats(object):
                 key = sar_metadata.get_category(s[0][0])
             except:
                 continue
-            if not key in c:
+            if key not in c:
                 c[key] = s
             else:
                 c[key] += s
@@ -231,15 +232,15 @@ class SarStats(object):
         for i in cat:
             for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
                 if j in sar_metadata.BASE_GRAPHS and \
-                    sar_metadata.BASE_GRAPHS[j]['cat'] == i and \
-                    j not in skiplist:
+                        sar_metadata.BASE_GRAPHS[j]['cat'] == i and \
+                        j not in skiplist:
                     entry = sar_metadata.get_title_unit_labels([j], sar_obj=sar_parser)
                     l.append([entry, [j]])
             if i in c:
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the skip_list
                     b = sorted([x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0],
-                            key=natural_sort_key)
+                               key=natural_sort_key)
                     # If the graph has more than X columns we split it
                     if len(b) > self.maxgraphs:
                         chunks = split_chunks(b, self.maxgraphs)
@@ -266,7 +267,7 @@ class SarStats(object):
         self.story.append(h)
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', labels=None,
-            show_reboots=False, custom_graphs=''):
+              show_reboots=False, custom_graphs=''):
         """ Parse sar data and produce graphs of the parsed data. """
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
@@ -345,19 +346,19 @@ class SarStats(object):
                     continue
                 fname = sar_grapher._graph_filename(graphs)
                 sar_grapher.plot_datasets(([graph, None, graphs], graphs), fname, self.extra_labels,
-                                      show_reboots)
+                                          show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
                 cat = 'Custom'
-                if not cat in used_cat: # We've not seen the category before
+                if cat not in used_cat:  # We've not seen the category before
                     self.do_heading(cat, doc.h1)
                     used_cat[cat] = True
                 else:
                     self.story.append(Paragraph(cat, doc.normal))
 
                 self.do_heading(graph, doc.h2_invisible)
-                self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
-                self.story.append(Spacer(1, 0.2*inch))
+                self.story.append(Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch))
+                self.story.append(Spacer(1, 0.2 * inch))
 
         # All the image files are created let's go through the files and create the pdf
         for dataname in self.graphs_order(category_order, skip_list):
@@ -365,14 +366,14 @@ class SarStats(object):
             cat = sar_parser._categories[dataname[1][0]]
             title = dataname[0][0]
             # We've not seen the category before
-            if not cat in used_cat:
+            if cat not in used_cat:
                 self.do_heading(cat, doc.h1)
                 used_cat[cat] = True
             else:
                 self.story.append(Paragraph(cat, doc.normal))
             self.do_heading(title, doc.h2_invisible)
-            self.story.append(Image(fname, width=GRAPH_WIDTH*inch, height=GRAPH_HEIGHT*inch))
-            self.story.append(Spacer(1, 0.2*inch))
+            self.story.append(Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch))
+            self.story.append(Spacer(1, 0.2 * inch))
             desc = sar_metadata.get_desc(dataname[1])
             for (name, desc, detail) in desc:
                 self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), doc.normal))
