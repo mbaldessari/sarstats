@@ -15,6 +15,7 @@ from sar_parser import SarParser
 # bottom
 LEGEND_THRESHOLD = 50
 
+
 def ascii_date(d):
     return "%s" % (d.strftime("%Y-%m-%d %H:%M"))
 
@@ -26,7 +27,7 @@ class SarGrapher(object):
         # Temporary dir where images are stored (one per graph)
         # NB: This is done to keep the memory usage constant
         # in spite of being a bit slower (before this change
-        # we could use > 12GB RAM for a simple sar file - 
+        # we could use > 12GB RAM for a simple sar file -
         # matplotlib is simply inefficient in this area)
         self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
 
@@ -134,7 +135,7 @@ class SarGrapher(object):
                 x1 = mdates.date2num(g1)
                 x2 = mdates.date2num(g2)
                 (ymin, ymax) = plt.ylim()
-                axes.add_patch(Rectangle((x1, ymin), x2 - x1, ymax-ymin, facecolor="lightgrey"))
+                axes.add_patch(Rectangle((x1, ymin), x2 - x1, ymax - ymin, facecolor="lightgrey"))
 
         # Add a grid to the graph to ease visualization
         axes.grid(True)
@@ -146,10 +147,10 @@ class SarGrapher(object):
             # and not take up too much room
             fontproperties = matplotlib.font_manager.FontProperties(size='xx-small')
             if len(datanames) < LEGEND_THRESHOLD:
-                cols = int((len(datanames)**0.5))
+                cols = int((len(datanames) ** 0.5))
                 lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=fontproperties)
             else:
-                cols = int(len(datanames)**0.6)
+                cols = int(len(datanames) ** 0.6)
                 lgd = axes.legend(loc=9, ncol=cols, bbox_to_anchor=(0.5, -0.29), shadow=True, prop=fontproperties)
 
         if len(datanames) == 0:
@@ -235,7 +236,6 @@ class SarGrapher(object):
             gnuplot.stdin.write("e\n")
             gnuplot.stdin.write("exit\n")
             gnuplot.stdin.flush()
-
 
     def export_csv(self):
         return

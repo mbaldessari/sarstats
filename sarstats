@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--custom', dest='custom_graphs', default=['load:ldavg-1,ldavg-5,ldavg-15',
                         'tps io:rtps,wtps,tps', 'block io:bread/s,bwrtn/s', 'pgpg:pgpgin/s,pgpgout/s',
-                        'processes:plist-sz,proc/s,runq-sz'],
+                                                                   'processes:plist-sz,proc/s,runq-sz'],
                         action='append', help="""Add custom graphs with --custom
                         'foo:udpsck,rawsck,tcp-tw' --custom 'bar:i001/s,i002/s'.
                         This adds two pages in the 'Custom' category: Graph 'foo'
