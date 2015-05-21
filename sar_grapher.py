@@ -20,7 +20,7 @@ def ascii_date(d):
 
 
 class SarGrapher(object):
-    def __init__(self, filenames):
+    def __init__(self, filenames, starttime=None, endtime=None):
         """Initializes the class, creates a SarParser class
         given a list of files and also parsers the files"""
         # Temporary dir where images are stored (one per graph)
@@ -30,7 +30,7 @@ class SarGrapher(object):
         # matplotlib is simply inefficient in this area)
         self._tempdir = tempfile.mkdtemp(prefix='sargrapher')
 
-        self.sar_parser = SarParser(filenames)
+        self.sar_parser = SarParser(filenames, starttime, endtime)
         self.sar_parser.parse()
 
     def _graph_filename(self, graph, extension='.png'):

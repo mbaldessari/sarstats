@@ -266,7 +266,7 @@ class SarStats(object):
         self.story.append(h)
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', labels=None,
-              show_reboots=False, custom_graphs=''):
+            show_reboots=False, custom_graphs=''):
         """ Parse sar data and produce graphs of the parsed data. """
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
