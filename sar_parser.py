@@ -122,10 +122,10 @@ class SarParser(object):
         self.starttime = None
         self.endtime = None
         if starttime:
-            self.starttime = dateutil.parser.parse(starttime)
+            self.starttime = dateutil.parser.parse(starttime[0])
 
         if endtime:
-            self.endtime = dateutil.parser.parse(endtime)
+            self.endtime = dateutil.parser.parse(endtime[0])
 
         # Current line number (for use in reporting parse errors)
         self._linecount = 0

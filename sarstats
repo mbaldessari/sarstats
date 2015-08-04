@@ -169,7 +169,7 @@ if __name__ == '__main__':
         print("Error: No sar files passed as argument")
         sys.exit(-1)
 
-    sar_grapher = SarGrapher(args.sar_files, args.starttime[0], args.endtime[0])
+    sar_grapher = SarGrapher(args.sar_files, args.starttime, args.endtime)
     print()
 
     try:
