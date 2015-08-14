@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # sarstats - sar(1) report graphing utility
 # Copyright (C) 2014  Michele Baldessari
 #

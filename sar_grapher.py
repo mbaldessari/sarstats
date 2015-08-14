@@ -43,7 +43,7 @@ class SarGrapher(object):
         temp = temp.replace('%', '_')
         temp = temp.replace('/', '_')
         digest = hashlib.sha1()
-        digest.update(temp)
+        digest.update(temp.encode('utf-8'))
         fname = os.path.join(self._tempdir, digest.hexdigest() + extension)
         return fname
 

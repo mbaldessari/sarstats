@@ -112,7 +112,6 @@ class SarParser(object):
         self.kernel = None
         self.version = None
         self.hostname = None
-        self._date = None
         self.sample_frequency = None
         # Date of the report
         self._date = None
@@ -187,9 +186,13 @@ class SarParser(object):
                     self._data[t][i] = None
 
         # We need to prune self._categories as well
+        keys_to_prune = {}
         for i in self._categories.keys():
             if i not in all_keys:
-                self._categories.pop(i)
+                keys_to_prune[i] = True
+
+        for i in keys_to_prune.keys():
+            self._categories.pop(i)
 
     def _parse_first_line(self, line):
         """Parse the line as a first line of a SAR report"""
@@ -217,7 +220,7 @@ class SarParser(object):
                 yyyy = '20' + yyyy
             tmpdate = yyyy + '-' + mm + '-' + dd
 
-        self._date = map(int, tmpdate.split('-'))
+        self._date = list(map(int, tmpdate.split('-')))
 
     def _column_headers(self, line):
         """Parse the line as a set of column headings"""
@@ -495,7 +498,7 @@ class SarParser(object):
 
     def match_datasets(self, regex):
         """Returns all datasets that match a certain regex"""
-        first_timestamp = self._data.keys()[0]
+        first_timestamp = list(self._data.keys())[0]
         expression = re.compile(regex)
         ret = []
         for i in sorted(self._data[first_timestamp].keys()):
@@ -505,7 +508,7 @@ class SarParser(object):
 
     def available_timestamps(self):
         """Returns all available timestamps"""
-        return self._data.keys()
+        return list(self._data.keys())
 
     def close(self):
         """Explicitly removes the main ._data structure from memory"""
@@ -514,7 +517,7 @@ class SarParser(object):
     def available_types(self, category):
         """Given a category string returns all the graphs starting
         with it"""
-        t = self._data.keys()[0]
+        t = list(self._data.keys())[0]
         l = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
         return l
 
@@ -581,7 +584,7 @@ class SarParser(object):
 
     def find_max(self, timestamp, datanames):
         """Finds the max Y value given an approx timestamp and a list of datanames"""
-        timestamps = self._data.keys()
+        timestamps = list(self._data.keys())
         time_key = min(timestamps, key=lambda date: abs(timestamp - date))
         ymax = -1
         for i in datanames:

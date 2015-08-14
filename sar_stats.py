@@ -91,7 +91,7 @@ class MyDocTemplate(BaseDocTemplate):
     for certain type of text"""
     def __init__(self, filename, **kw):
         self.allowSplitting = 0
-        apply(BaseDocTemplate.__init__, (self, filename), kw)
+        BaseDocTemplate.__init__(self, filename, **kw)
         template = PageTemplate('normal', [Frame(0.1 * inch, 0.1 * inch,
                                 11 * inch, 8 * inch, id='F1')])
         self.addPageTemplates(template)
@@ -179,8 +179,9 @@ class MyDocTemplate(BaseDocTemplate):
             self.canv.addOutlineEntry(text, bookmark_name, level, True)
 
 
-def graph_wrapper((sar_stats_obj, sar_obj, dataname)):
+def graph_wrapper(arg):
     """This is a wrapper due to pool.map() single argument limit"""
+    sar_stats_obj, sar_obj, dataname = arg
     sar_grapher = sar_stats_obj.sar_grapher
     fname = sar_grapher._graph_filename(dataname[1][0])
     sar_obj.plot_datasets(dataname, fname, sar_stats_obj.extra_labels,
@@ -259,7 +260,7 @@ class SarStats(object):
 
     def do_heading(self, text, sty):
         # create bookmarkname
-        bn = sha1(text + sty.name).hexdigest()
+        bn = sha1(text.encode('utf-8') + sty.name.encode('utf-8')).hexdigest()
         # modify paragraph text to include an anchor point with name bn
         h = Paragraph(text + '<a name="%s"/>' % bn, sty)
         # store the bookmark name on the flowable so afterFlowable can see this
