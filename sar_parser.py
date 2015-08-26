@@ -129,6 +129,8 @@ class SarParser(object):
 
         # Current line number (for use in reporting parse errors)
         self._linecount = 0
+        # Hash containing all the line numbers with duplicate entries
+        self._duplicate_timestamps = {}
 
         absdir = os.path.abspath(fnames[0])
 
@@ -330,7 +332,9 @@ class SarParser(object):
                 if i == 'retrans/s' and previous == 'estres/s':
                     i = 'retrant/s'
                 if i in self._data[timestamp]:
-                    raise Exception("Odd timestamp %s and column %s already exist?" % (timestamp, i))
+                    # We do not bail out anymore on duplicate timestamps but simply report
+                    # it to the user
+                    self._duplicate_timestamps[self._linecount] = True
 
                 try:
                     v = float(matches.group(counter + 2))
@@ -364,9 +368,11 @@ class SarParser(object):
             s = '{0}#{1}#{2}'.format(indexcol, indexval, i)
             if s in self._data[timestamp]:
                 # LOVELY: Filesystem can have multiple entries with the same FILESYSTEM and timestamp
-                # Let's just overwrite those
-                if indexcol != 'FILESYSTEM':
-                    raise Exception("Odd timestamp %s and column %s already exist?" % (timestamp, s))
+                # We used to raise an exception here but apparently sometimes there are sar files with
+                # same timestamp and different values. Let's just ignore that
+                # We do not bail out anymore on duplicate timestamps but simply report
+                # it to the user
+                self._duplicate_timestamps[self._linecount] = True
 
             try:
                 v = float(matches.group(counter + 2))
