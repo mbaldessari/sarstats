@@ -43,7 +43,7 @@ class DiscoverTest(test):
 
 config = {
     'name': 'sarstats',
-    'version': '0.2',
+    'version': '0.3',
     'author': 'Michele Baldessari',
     'author_email': 'michele@acksyn.org',
     'url': 'http://acksyn.org',
