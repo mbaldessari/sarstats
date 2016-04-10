@@ -47,9 +47,6 @@ from sar_parser import natural_sort_key
 import sar_metadata
 
 
-# If we should try and create the graphs in parallel
-# brings a nice speedup on multi-core/smp machines
-THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
@@ -267,7 +264,7 @@ class SarStats(object):
         self.story.append(h)
 
     def graph(self, sar_files, skip_list, output_file='out.pdf', labels=None,
-              show_reboots=False, custom_graphs=''):
+              show_reboots=False, custom_graphs='', threaded=True):
         """ Parse sar data and produce graphs of the parsed data. """
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
@@ -304,7 +301,7 @@ class SarStats(object):
         used_cat = {}
         count = 0
         # Let's create all the images either via multiple threads or in sequence
-        if THREADED:
+        if threaded:
             pool = multiprocessing.Pool(NR_CPUS)
             l = self.graphs_order(category_order, skip_list)
             f = zip(repeat(self), repeat(sar_grapher), l)

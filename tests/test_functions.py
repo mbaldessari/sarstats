@@ -19,7 +19,7 @@ if USE_MELIAE:
     import objgraph
 
 # To profile speed
-USE_PROFILER = True
+USE_PROFILER = False
 TOP_PROFILED_FUNCTIONS = 15
 
 from sar_grapher import SarGrapher
@@ -89,7 +89,7 @@ class TestSarParsing(unittest.TestCase):
                 self.profile.enable()
 
             out = "{0}.pdf".format(example)
-            stats.graph(example, [], out)
+            stats.graph(example, [], out, threaded=True)
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
@@ -102,8 +102,6 @@ class TestSarParsing(unittest.TestCase):
             print("Wrote: {0}".format(out))
             os.remove(out)
             grapher.close()
-            del grapher
-            del stats
             usage = resource.getrusage(resource.RUSAGE_SELF)
             print("SAR graphing: {0} usertime={1} systime={2} mem={3} MB"
                 .format(end_of_path(example), usage[0], usage[1],

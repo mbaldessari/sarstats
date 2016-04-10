@@ -100,14 +100,14 @@ class SarParser(object):
     '%commit', '%memused', '%swpcad', '%swpused', '%vmeff'
     'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
     'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',..."""
-    _data = {}
-
-    # This dict holds the relationship graph->category
-    _categories = {}
 
     def __init__(self, fnames, starttime=None, endtime=None):
         """Constructor: takes a list of files to be parsed. The parsing
         itself is done in the .parse() method"""
+        self._data = {}
+
+        # This dict holds the relationship graph->category
+        self._categories = {}
         self._files = fnames
         self.kernel = None
         self.version = None
