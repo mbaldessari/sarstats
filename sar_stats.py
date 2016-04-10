@@ -49,7 +49,7 @@ import sar_metadata
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
-THREADED = False
+THREADED = True
 # None means nr of available CPUs
 NR_CPUS = None
 
