@@ -80,4 +80,4 @@ Q&A
 
 Thanks
 ======
-Luca Miccini, Pablo Iranzo Gomez, Ali Sogukpinar
+Luca Miccini, Pablo Iranzo Gomez, Ali Sogukpinar, Freddy Wissinger
