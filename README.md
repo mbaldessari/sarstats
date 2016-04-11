@@ -67,7 +67,7 @@ Q&A
    be parsed on a current (F20) Fedora box.
 
 * Q: I found a bug, where do I report it?
-* A: Drop me an email: michele@acksyn.org
+* A: Drop me an email or open an issue in github
 
 * Q: Shouldn't you move to PCP or something more capable anyway?
 * A: Yes, as soon as PCP is more widespread
