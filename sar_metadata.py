@@ -234,12 +234,12 @@ BASE_GRAPHS = {
     'kbanonpg':   {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
-                  'desc': """Amount of non-file backed pages in 
+                  'desc': """Amount of non-file backed pages in
                   kilobytes mapped into userspace page tables."""},
     'kbslab':   {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
-                  'desc': """Amount of memory in kilobytes 
+                  'desc': """Amount of memory in kilobytes
                   used by the kernel for internal objects."""},
     'kbkstack':   {'cat': 'Memory',
                   'unit': 'kilobytes',
@@ -249,7 +249,7 @@ BASE_GRAPHS = {
     'kbpgtbl':   {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
-                  'desc': """Amount of memory in kilobytes dedicated 
+                  'desc': """Amount of memory in kilobytes dedicated
                   to the lowest level of page tables."""},
     'kbvmused':   {'cat': 'Memory',
                   'unit': 'kilobytes',
@@ -657,7 +657,7 @@ BASE_GRAPHS = {
     '%ifutil':  {'cat': 'Network',
                   'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """utilization percentage of 
+                  'desc': """utilization percentage of
                   the network interface."""},
     'rxerr/s':   {'cat': 'Network',
                   'unit': 'packets per second',
@@ -942,7 +942,7 @@ BASE_GRAPHS = {
                   made a direct transition to the CLOSED state from either the
                   ESTABLISHED state or the CLOSE-WAIT state
                   [tcpEstabResets]"""},
-    # original s ar name is retrans/s which is duplicate (NFS value). 
+    # original s ar name is retrans/s which is duplicate (NFS value).
     # we renamed it to retrant/s internally
     'retrant/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
