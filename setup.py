@@ -5,6 +5,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from setuptools.command.test import test
+
 
 def discover_and_run_tests():
     import os
@@ -29,8 +31,6 @@ def discover_and_run_tests():
     # run the test suite
     test_runner.run(test_suite)
 
-from setuptools.command.test import test
-
 
 class DiscoverTest(test):
     def finalize_options(self):
@@ -49,7 +49,8 @@ config = {
     'url': 'http://acksyn.org',
     'license': 'GPLv2',
     'cmdclass': {'test': DiscoverTest},
-    'py_modules': ['sar_parser', 'sar_stats', 'sar_metadata', 'sar_grapher', 'sos_report'],
+    'py_modules': ['sar_parser', 'sar_stats', 'sar_metadata',
+                   'sar_grapher', 'sos_report'],
     'scripts': ['sarstats'],
     'classifiers': [
         "Development Status :: 3 - Alpha",

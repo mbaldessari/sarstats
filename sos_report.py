@@ -67,7 +67,8 @@ class SosReport:
             if nr_fields > self.nr_cpus:
                 d['type'] = fields[self.nr_cpus]
                 if nr_fields > self.nr_cpus + 1:
-                    d['users'] = [a.strip() for a in line[line.index(fields[self.nr_cpus + 1]):].split(',')]
+                    field = line.index(fields[self.nr_cpus + 1])
+                    d['users'] = [a.strip() for a in line[field:].split(',')]
                 else:
                     d['users'] = []
         return d
@@ -86,10 +87,6 @@ class SosReport:
             irq = fields[0].strip(":")
             self.interrupts[irq] = {}
             self.interrupts[irq] = self._parse_int_entry(fields[1:], line)
-            try:
-                nirq = int(irq)  # FIXME: nirq defined but never used
-            except:
-                continue
         return
 
     def _parse_disks(self):
@@ -100,14 +97,16 @@ class SosReport:
     def _parse_reboots(self):
         """Parse /var/log/messages and find out when the machine rebooted.
         Returns an array of datetimes containing the times of reboot. First
-        uncompress /var/log/messages*, go through them and search for lines like
-        'Dec  4 11:02:05 illins04 kernel: Linux version 2.6.32-279.5.2.el6.x86_64'.
-        We parse messages* files because 'LINUX RESTART' in sar files is not precise"""
+        uncompress /var/log/messages*, go through them and search for lines
+        like 'Dec  4 11:02:05 illins04 kernel: Linux version
+        2.6.32-279.5.2.el6.x86_64'.  We parse messages* files because 'LINUX
+        RESTART' in sar files is not precise"""
         # FIXME: uncompress any compressed messages files
         # FIXME: This is still potentially *very* fragile
         messages_dir = os.path.join(self.path, 'var/log')
         reboot_re = r'.*kernel: Linux version.*$'
-        files = [f for f in os.listdir(messages_dir) if f.startswith('messages')]
+        files = [f for f in os.listdir(messages_dir)
+                 if f.startswith('messages')]
         for i in sorted(files, key=natural_sort_key, reverse=True):
             prev_month = None
             counter = 0
@@ -120,15 +119,18 @@ class SosReport:
                 tokens = line.split()[0:3]
                 d = parser.parse(" ".join(tokens))
                 if d.month == 1 and prev_month == 12:
-                    # We crossed a year. This means that all the dates read until now
-                    # should belong to the previous year and not the current one
-                    # FIXME: this breaks if we investigate sosreports older than one
-                    # year :/
+                    # We crossed a year. This means that all the dates read
+                    # until now should belong to the previous year and not the
+                    # current one FIXME: this breaks if we investigate
+                    # sosreports older than one year :/
                     for i in self.reboots:
                         t = self.reboots[i]['date']
-                        # Remember which dates were decremented and only do it once
-                        if i <= counter and 'decremented' not in self.reboots[i]:
-                            self.reboots[i]['date'] = t - relativedelta(years=1)
+                        # Remember which dates were decremented and only do it
+                        # once
+                        if i <= counter and \
+                                'decremented' not in self.reboots[i]:
+                            d = t - relativedelta(years=1)
+                            self.reboots[i]['date'] = d
                             self.reboots[i]['decremented'] = True
                 prev_month = d.month
                 self.reboots[counter] = {}
