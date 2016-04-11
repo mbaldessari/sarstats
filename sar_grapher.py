@@ -33,6 +33,10 @@ class SarGrapher(object):
 
         self.sar_parser = SarParser(filenames, starttime, endtime)
         self.sar_parser.parse()
+        duplicate_timestamps = self.sar_parser._duplicate_timestamps
+        if duplicate_timestamps:
+            print("There are {0} lines with duplicate timestamps. First 10 line numbers at {1}".format(
+                len(duplicate_timestamps.keys()), sorted(list(duplicate_timestamps.keys()))[:10]))
 
     def _graph_filename(self, graph, extension='.png'):
         """Creates a unique constant file name given a graph or graph list"""

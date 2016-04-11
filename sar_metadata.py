@@ -231,6 +231,30 @@ BASE_GRAPHS = {
                   'regexp': INTEGER_RE,
                   'desc': """Amount of memory in kilobytes waiting to get
                   written back to the disk."""},
+    'kbanonpg':   {'cat': 'Memory',
+                  'unit': 'kilobytes',
+                  'regexp': INTEGER_RE,
+                  'desc': """Amount of non-file backed pages in 
+                  kilobytes mapped into userspace page tables."""},
+    'kbslab':   {'cat': 'Memory',
+                  'unit': 'kilobytes',
+                  'regexp': INTEGER_RE,
+                  'desc': """Amount of memory in kilobytes 
+                  used by the kernel for internal objects."""},
+    'kbkstack':   {'cat': 'Memory',
+                  'unit': 'kilobytes',
+                  'regexp': INTEGER_RE,
+                  'desc': """Amount of kstack memory
+                  used for kernel stack space."""},
+    'kbpgtbl':   {'cat': 'Memory',
+                  'unit': 'kilobytes',
+                  'regexp': INTEGER_RE,
+                  'desc': """Amount of memory in kilobytes dedicated 
+                  to the lowest level of page tables."""},
+    'kbvmused':   {'cat': 'Memory',
+                  'unit': 'kilobytes',
+                  'regexp': INTEGER_RE,
+                  'desc': """KB of kernel vm space."""},
     'kbhugfree': {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
@@ -630,6 +654,11 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of multicast packets received per
                   second"""},
+    '%ifutil':  {'cat': 'Network',
+                  'unit': 'packets per second',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """utilization percentage of 
+                  the network interface."""},
     'rxerr/s':   {'cat': 'Network',
                   'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
