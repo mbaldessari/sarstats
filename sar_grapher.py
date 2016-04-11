@@ -35,8 +35,10 @@ class SarGrapher(object):
         self.sar_parser.parse()
         duplicate_timestamps = self.sar_parser._duplicate_timestamps
         if duplicate_timestamps:
-            print("There are {0} lines with duplicate timestamps. First 10 line numbers at {1}".format(
-                len(duplicate_timestamps.keys()), sorted(list(duplicate_timestamps.keys()))[:10]))
+            print("There are {0} lines with duplicate timestamps. First 10"
+                  "line numbers at {1}".format(
+                      len(duplicate_timestamps.keys()),
+                      sorted(list(duplicate_timestamps.keys()))[:10]))
 
     def _graph_filename(self, graph, extension='.png'):
         """Creates a unique constant file name given a graph or graph list"""
@@ -61,12 +63,11 @@ class SarGrapher(object):
 
     def plot_datasets(self, data, fname, extra_labels, showreboots=False,
                       output='pdf'):
-        """ Plot timeseries data (of type dataname).
-        The data can be either simple (one or no datapoint at any point in time,
-        or indexed (by indextype). dataname is assumed to be in the form of
-        [title, [label1, label2, ...], [data1, data2, ...]]
-        extra_labels is a list of tuples [(datetime, 'label'), ...]
-        """
+        """ Plot timeseries data (of type dataname).  The data can be either
+        simple (one or no datapoint at any point in time, or indexed (by
+        indextype). dataname is assumed to be in the form of [title, [label1,
+        label2, ...], [data1, data2, ...]] extra_labels is a list of tuples
+        [(datetime, 'label'), ...] """
         sar_parser = self.sar_parser
         title = data[0][0]
         unit = data[0][1]
@@ -74,7 +75,8 @@ class SarGrapher(object):
         datanames = data[1]
 
         if not isinstance(datanames, list):
-            raise Exception("plottimeseries expects a list of datanames: %s" % data)
+            raise Exception("plottimeseries expects a list of datanames: %s" %
+                            data)
 
         fig = plt.figure(figsize=(10.5, 6.5))
         axes = fig.add_subplot(111)
@@ -94,7 +96,8 @@ class SarGrapher(object):
         axes.yaxis.get_major_formatter().set_scientific(False)
 
         color_norm = colors.Normalize(vmin=0, vmax=len(datanames) - 1)
-        scalar_map = cm.ScalarMappable(norm=color_norm, cmap=plt.get_cmap('Set1'))
+        scalar_map = cm.ScalarMappable(norm=color_norm,
+                                       cmap=plt.get_cmap('Set1'))
 
         timestamps = self.timestamps()
         counter = 0
@@ -104,19 +107,23 @@ class SarGrapher(object):
             except:
                 print("Key {0} does not exist in this graph".format(i))
                 raise
-            axes.plot(timestamps, dataset, 'o:', label=axis_labels[counter], color=scalar_map.to_rgba(counter))
+            axes.plot(timestamps, dataset, 'o:', label=axis_labels[counter],
+                      color=scalar_map.to_rgba(counter))
             counter += 1
 
         # Draw extra_labels
         if extra_labels:
             for extra in extra_labels:
                 axes.annotate(extra[1], xy=(mdates.date2num(extra[0]),
-                              sar_parser.find_max(extra[0], datanames)), xycoords='data',
-                              xytext=(30, 30), textcoords='offset points',
-                              arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
+                              sar_parser.find_max(extra[0], datanames)),
+                              xycoords='data', xytext=(30, 30),
+                              textcoords='offset points',
+                              arrowprops=dict(arrowstyle="->",
+                              connectionstyle="arc3,rad=.2"))
 
         # If we have a sosreport draw the reboots
-        if showreboots and sar_parser.sosreport is not None and sar_parser.sosreport.reboots is not None:
+        if showreboots and sar_parser.sosreport is not None and \
+           sar_parser.sosreport.reboots is not None:
             reboots = sar_parser.sosreport.reboots
             for reboot in reboots.keys():
                 reboot_date = reboots[reboot]['date']
@@ -127,7 +134,8 @@ class SarGrapher(object):
                     continue
 
                 axes.annotate('', xy=(mdates.date2num(reboot_date), ymin),
-                              xycoords='data', xytext=(-30, -30), textcoords='offset points',
+                              xycoords='data', xytext=(-30, -30),
+                              textcoords='offset points',
                               arrowprops=dict(arrowstyle="->", color='blue',
                               connectionstyle="arc3,rad=-0.1"))
 
@@ -139,30 +147,35 @@ class SarGrapher(object):
                 x1 = mdates.date2num(g1)
                 x2 = mdates.date2num(g2)
                 (ymin, ymax) = plt.ylim()
-                axes.add_patch(Rectangle((x1, ymin), x2 - x1, ymax - ymin, facecolor="lightgrey"))
+                axes.add_patch(Rectangle((x1, ymin), x2 - x1,
+                                         ymax - ymin, facecolor="lightgrey"))
 
         # Add a grid to the graph to ease visualization
         axes.grid(True)
 
         lgd = None
         # Draw the legend only when needed
-        if len(datanames) > 1 or (len(datanames) == 1 and len(datanames[0].split('#')) > 1):
+        if len(datanames) > 1 or \
+           (len(datanames) == 1 and len(datanames[0].split('#')) > 1):
             # We want the legends box roughly square shaped
             # and not take up too much room
-            fontproperties = matplotlib.font_manager.FontProperties(size='xx-small')
+            props = matplotlib.font_manager.FontProperties(size='xx-small')
             if len(datanames) < LEGEND_THRESHOLD:
                 cols = int((len(datanames) ** 0.5))
-                lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=fontproperties)
+                lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=props)
             else:
                 cols = int(len(datanames) ** 0.6)
-                lgd = axes.legend(loc=9, ncol=cols, bbox_to_anchor=(0.5, -0.29), shadow=True, prop=fontproperties)
+                lgd = axes.legend(loc=9, ncol=cols,
+                                  bbox_to_anchor=(0.5, -0.29),
+                                  shadow=True, prop=props)
 
         if len(datanames) == 0:
             return None
 
         try:
             if lgd:
-                plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches='tight')
+                plt.savefig(fname, bbox_extra_artists=(lgd,),
+                            bbox_inches='tight')
             else:
                 plt.savefig(fname, bbox_inches='tight')
         except:
@@ -187,8 +200,10 @@ class SarGrapher(object):
             subgraphs = i.split(',')
             fname = self._graph_filename(subgraphs, '.svg')
             fnames.append(fname)
-            self.plot_datasets((['', None, subgraphs], subgraphs), fname, labels)
-            dest = os.path.join(os.getcwd(), "{0}{1}.svg".format(output, counter))
+            self.plot_datasets((['', None, subgraphs], subgraphs), fname,
+                               labels)
+            dest = os.path.join(os.getcwd(), "{0}{1}.svg".format(
+                                output, counter))
             shutil.move(fname, dest)
             print("Created: {0}".format(dest))
             counter += 1
@@ -211,20 +226,24 @@ class SarGrapher(object):
 
         for graph in graphs:
             try:
-                gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
+                gnuplot = subprocess.Popen(["/usr/bin/gnuplot"],
+                                           stdin=subprocess.PIPE)
             except Exception as e:
                 raise("Error launching gnuplot: {0}".format(e))
 
-            gnuplot.stdin.write("set term dumb {0} {1}\n".format(columns, rows))
+            gnuplot.stdin.write("set term dumb {0} {1}\n".format(
+                                columns, rows))
             gnuplot.stdin.write("set xdata time\n")
             gnuplot.stdin.write('set xlabel "Time"\n')
             gnuplot.stdin.write('set timefmt \"%Y-%m-%d %H:%M\"\n')
-            gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' % (ascii_date(timestamps[0]),
-                                                                  ascii_date(timestamps[-1])))
+            gnuplot.stdin.write('set xrange [\"%s\":\"%s\"]\n' %
+                                (ascii_date(timestamps[0]),
+                                 ascii_date(timestamps[-1])))
             gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
             gnuplot.stdin.write('set datafile separator ","\n')
             gnuplot.stdin.write('set autoscale y\n')
-            gnuplot.stdin.write('set title "%s - %s"\n' % (graph, " ".join(sar_parser._files)))
+            gnuplot.stdin.write('set title "%s - %s"\n' %
+                                (graph, " ".join(sar_parser._files)))
             # FIXME: do it through a method
             try:
                 dataset = [sar_parser._data[d][graph] for d in timestamps]
@@ -232,7 +251,9 @@ class SarGrapher(object):
                 print("Key '{0}' could not be found")
                 return
 
-            gnuplot.stdin.write("plot '-' using 1:2 title '{0}' with linespoints \n".format(graph))
+            txt = "plot '-' using 1:2 title '{0}' with linespoints \n".format(
+                graph)
+            gnuplot.stdin.write(txt)
             for i, j in zip(timestamps, dataset):
                 s = '\"%s\",%f\n' % (ascii_date(i), j)
                 gnuplot.stdin.write(s)
