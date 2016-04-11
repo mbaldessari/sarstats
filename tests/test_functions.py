@@ -6,7 +6,10 @@ import os
 import os.path
 import pstats
 import resource
-import StringIO
+try:
+    import StringIO
+except ImportError:
+    from io import StringIO
 import sys
 import tempfile
 import time
