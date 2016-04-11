@@ -152,7 +152,7 @@ BASE_GRAPHS = {
                   See <link href="http://goo.gl/5EsCsT">
                   <i>kernel/sched.c:calc_load()</i></link> for more details
                   on the implementation on RHEL 5 and 6. More recent kernels
-                  moved it to <i>kernel/sched/proc.c:calc_load()</i></link>""",
+                  moved it to <i>kernel/sched/proc.c:calc_load()</i>""",
                   'detail': 'ldavg-1 [/proc/loadavg(1)]'},
     'ldavg-5':   {'cat': 'Load',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -1294,7 +1294,7 @@ def get_regexp(name):
     raise Exception("regexp for %s could not be found" % name)
 
 
-def get_title_unit_labels(names, sar_obj=None):
+def graph_info(names, sar_obj=None):
     """Given a list of graph names it returns a list of tuples of title,
     unit, labels. title is the title of the whole graph, unit represents
     the unit of the graph(s) if one exists and if it is the same among all

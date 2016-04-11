@@ -44,7 +44,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4, landscape
 
 from sar_parser import natural_sort_key
-import sar_metadata
+import sar_metadata as metadata
 
 
 # None means nr of available CPUs
@@ -63,7 +63,8 @@ GRAPH_HEIGHT = 6.5
 
 def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
-    return [list_to_split[i:i + chunksize] for i in range(0, len(list_to_split), chunksize)]
+    return [list_to_split[i:i + chunksize]
+            for i in range(0, len(list_to_split), chunksize)]
 
 
 def parse_labels(labels):
@@ -204,19 +205,20 @@ class SarStats(object):
         sar_parser = sar_grapher.sar_parser
         # First we add all the simple graphs sorted by chosen category list
         for i in cat:
-            for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
+            for j in sorted(sar_parser.available_data_types(),
+                            key=natural_sort_key):
                 # We cannot graph a column with device names
                 if j.endswith('DEVICE'):
                     continue
-                if sar_metadata.get_category(j) == i:
+                if metadata.get_category(j) == i:
                     l.append([j])
 
         # Here we add the combined graphs always per category
         c = {}
-        for i in sar_metadata.INDEX_COLUMN:
+        for i in metadata.INDEX_COLUMN:
             s = sar_parser.datanames_per_arg(i, False)
             try:
-                key = sar_metadata.get_category(s[0][0])
+                key = metadata.get_category(s[0][0])
             except:
                 continue
             if key not in c:
@@ -224,33 +226,38 @@ class SarStats(object):
             else:
                 c[key] += s
 
-        # We merge the two in a single list: for each category
-        # simple graphs and then combined graphs
+        # We merge the two in a single list: for each category simple graphs
+        # and then combined graphs
         l = []
         for i in cat:
-            for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
-                if j in sar_metadata.BASE_GRAPHS and \
-                        sar_metadata.BASE_GRAPHS[j]['cat'] == i and \
+            for j in sorted(sar_parser.available_data_types(),
+                            key=natural_sort_key):
+                if j in metadata.BASE_GRAPHS and \
+                        metadata.BASE_GRAPHS[j]['cat'] == i and \
                         j not in skiplist:
-                    entry = sar_metadata.get_title_unit_labels([j], sar_obj=sar_parser)
+                    entry = metadata.graph_info([j], sar_obj=sar_parser)
                     l.append([entry, [j]])
             if i in c:
                 for j in range(len(c[i])):
-                    # Only add the graph if none of it's components is in the skip_list
-                    b = sorted([x for x in c[i][j] if len(set(skiplist).intersection(x.split('#'))) == 0],
-                               key=natural_sort_key)
+                    # Only add the graph if none of it's components is in the
+                    # skip_list
+                    b = sorted([x for x in c[i][j]
+                               if len(set(skiplist).intersection(
+                                   x.split('#'))) == 0], key=natural_sort_key)
                     # If the graph has more than X columns we split it
                     if len(b) > self.maxgraphs:
                         chunks = split_chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
-                            entry = sar_metadata.get_title_unit_labels(chunk, sar_obj=sar_parser)
-                            s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
+                            entry = metadata.graph_info(chunk,
+                                                        sar_obj=sar_parser)
+                            s = "{0} {1}/{2}".format(entry[0],
+                                                     counter, len(chunks))
                             newentry = (s, entry[1], entry[2])
                             l.append([newentry, chunk])
                             counter += 1
                     else:
-                        entry = sar_metadata.get_title_unit_labels(b, sar_obj=sar_parser)
+                        entry = metadata.graph_info(b, sar_obj=sar_parser)
                         l.append([entry, b])
 
         return l
@@ -282,10 +289,12 @@ class SarStats(object):
                 sys.exit(-1)
 
         self.story.append(Paragraph('%s' % sar_parser.hostname, doc.centered))
-        self.story.append(Paragraph('%s %s' % (sar_parser.kernel, sar_parser.version),
+        self.story.append(Paragraph('%s %s' % (sar_parser.kernel,
+                                               sar_parser.version),
                           doc.small_centered))
         self.story.append(Spacer(1, 0.05 * inch))
-        self.story.append(Paragraph('%s' % (" ".join(sar_files)), doc.small_centered))
+        self.story.append(Paragraph('%s' % (" ".join(sar_files)),
+                          doc.small_centered))
         mins = int(sar_parser.sample_frequency / 60)
         secs = int(sar_parser.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
@@ -297,11 +306,12 @@ class SarStats(object):
         self.story.append(doc.toc)
         self.story.append(PageBreak())
 
-        category_order = sar_metadata.list_all_categories()
+        category_order = metadata.list_all_categories()
 
         used_cat = {}
         count = 0
-        # Let's create all the images either via multiple threads or in sequence
+        # Let's create all the images either via multiple threads or in
+        # sequence
         if threaded:
             pool = multiprocessing.Pool(NR_CPUS)
             l = self.graphs_order(category_order, skip_list)
@@ -310,12 +320,13 @@ class SarStats(object):
         else:
             for dataname in self.graphs_order(category_order, skip_list):
                 fname = sar_grapher._graph_filename(dataname[1][0])
-                sar_grapher.plot_datasets(dataname, fname, self.extra_labels, show_reboots)
+                sar_grapher.plot_datasets(dataname, fname, self.extra_labels,
+                                          show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
-        # Custom graphs are always created in non threaded mode as their number is
-        # typically quite low. Graph descriptions are in the form:
+        # Custom graphs are always created in non threaded mode as their number
+        # is typically quite low. Graph descriptions are in the form:
         # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
         custom_graph_list = {}
         if custom_graphs is not None:
@@ -325,7 +336,8 @@ class SarStats(object):
                     values = i.split(':')[1].split(',')
                     custom_graph_list[label] = values
             except:
-                raise Exception("Error in parsing custom graphs: {0}".format(custom_graphs))
+                raise Exception("Error in parsing custom graphs: {0}".format(
+                                custom_graphs))
 
             for graph in custom_graph_list.keys():
                 matched_graphs = set()
@@ -343,7 +355,8 @@ class SarStats(object):
                 if len(graphs) == 0:
                     continue
                 fname = sar_grapher._graph_filename(graphs)
-                sar_grapher.plot_datasets(([graph, None, graphs], graphs), fname, self.extra_labels,
+                sar_grapher.plot_datasets(([graph, None, graphs], graphs),
+                                          fname, self.extra_labels,
                                           show_reboots)
                 sys.stdout.write(".")
                 sys.stdout.flush()
@@ -355,10 +368,12 @@ class SarStats(object):
                     self.story.append(Paragraph(cat, doc.normal))
 
                 self.do_heading(graph, doc.h2_invisible)
-                self.story.append(Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch))
+                self.story.append(Image(fname, width=GRAPH_WIDTH * inch,
+                                        height=GRAPH_HEIGHT * inch))
                 self.story.append(Spacer(1, 0.2 * inch))
 
-        # All the image files are created let's go through the files and create the pdf
+        # All the image files are created let's go through the files and create
+        # the pdf
         for dataname in self.graphs_order(category_order, skip_list):
             fname = sar_grapher._graph_filename(dataname[1][0])
             cat = sar_parser._categories[dataname[1][0]]
@@ -370,13 +385,16 @@ class SarStats(object):
             else:
                 self.story.append(Paragraph(cat, doc.normal))
             self.do_heading(title, doc.h2_invisible)
-            self.story.append(Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch))
+            self.story.append(Image(fname, width=GRAPH_WIDTH * inch,
+                                    height=GRAPH_HEIGHT * inch))
             self.story.append(Spacer(1, 0.2 * inch))
-            desc = sar_metadata.get_desc(dataname[1])
+            desc = metadata.get_desc(dataname[1])
             for (name, desc, detail) in desc:
-                self.story.append(Paragraph("<strong>%s</strong> - %s" % (name, desc), doc.normal))
+                self.story.append(Paragraph("<strong>%s</strong> - %s" %
+                                  (name, desc), doc.normal))
                 if detail:
-                    self.story.append(Paragraph("Counter: <i>%s</i>" % (detail), doc.mono))
+                    self.story.append(Paragraph("Counter: <i>%s</i>" %
+                                      (detail), doc.mono))
 
             self.story.append(PageBreak())
             count += 1
