@@ -33,7 +33,6 @@ import dateutil
 import os
 import numpy
 import re
-import sys  # FIXME imported but never used
 
 import sar_metadata
 from sos_report import SosReport
@@ -85,7 +84,8 @@ def canonicalise_timestamp(date, ts):
                 hours += 12
         if hours == 24:
             hours = 0
-        dt = datetime.datetime(date[0], date[1], date[2], hours, minutes, seconds)
+        dt = datetime.datetime(date[0], date[1], date[2], hours,
+                               minutes, seconds)
     else:
         raise Exception("canonicalise_timestamp error %s" % ts)
     return dt
@@ -115,7 +115,8 @@ class SarParser(object):
         self.sample_frequency = None
         # Date of the report
         self._date = None
-        # If this one was set it means that we crossed the day during one SAR file
+        # If this one was set it means that we crossed the day during one SAR
+        # file
         self._olddate = None
         self._prev_timestamp = None
         self.starttime = None
@@ -210,9 +211,11 @@ class SarParser(object):
 
         matches = re.search(pattern, line)
         if matches:
-            (self.kernel, self.version, self.hostname, tmpdate) = matches.groups()
+            (self.kernel, self.version, self.hostname,
+             tmpdate) = matches.groups()
         else:
-            raise Exception('Line {0}: "{1}" failed to parse as a first line'.format(self._linecount, line))
+            raise Exception('Line {0}: "{1}" failed to parse as a'
+                            ' first line'.format(self._linecount, line))
 
         pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
         matches = re.search(pattern, tmpdate)
@@ -285,7 +288,8 @@ class SarParser(object):
         for hdr in headers:
             hre = self._column_type_regexp(hdr)
             if hre is None:
-                raise Exception('Line {0}: column header "{1}" unknown {2}'.format(self._linecount, hdr))
+                raise Exception('Line {0}: column header "{1}"'
+                                'unknown {2}'.format(self._linecount, hdr))
             regexp = regexp + r'\s+(' + str(hre) + r')'
         regexp += r'\s*$'
         return regexp
@@ -305,10 +309,13 @@ class SarParser(object):
                 nextday = timestamp + datetime.timedelta(days=1)
                 self._olddate = self._date
                 self._date = (nextday.year, nextday.month, nextday.day)
-                timestamp = canonicalise_timestamp(self._date, matches.group(1))
+                timestamp = canonicalise_timestamp(self._date,
+                                                   matches.group(1))
             elif timestamp < self._prev_timestamp:
-                raise Exception("Time going backwards: {0} - Prev timestamp: {1} -> {2}".
-                                format(timestamp, self._prev_timestamp, self._linecount))
+                raise Exception("Time going backwards: {0} "
+                                "- Prev timestamp: {1} -> {2}".
+                                format(timestamp, self._prev_timestamp,
+                                       self._linecount))
         self._prev_timestamp = timestamp
 
         # We never had this timestamp let's start with a new dictionary
@@ -330,13 +337,13 @@ class SarParser(object):
             previous = ""
             for header in headers:
                 i = header
-                # HACK due to sysstat idiocy (retrans/s can appear in ETCP and NFS)
-                # Rename ETCP retrans/s to retrant/s
+                # HACK due to sysstat idiocy (retrans/s can appear in ETCP and
+                # NFS) Rename ETCP retrans/s to retrant/s
                 if i == 'retrans/s' and previous == 'estres/s':
                     i = 'retrant/s'
                 if i in self._data[timestamp]:
-                    # We do not bail out anymore on duplicate timestamps but simply report
-                    # it to the user
+                    # We do not bail out anymore on duplicate timestamps but
+                    # simply report it to the user
                     self._duplicate_timestamps[self._linecount] = True
 
                 try:
@@ -370,11 +377,12 @@ class SarParser(object):
 
             s = '{0}#{1}#{2}'.format(indexcol, indexval, i)
             if s in self._data[timestamp]:
-                # LOVELY: Filesystem can have multiple entries with the same FILESYSTEM and timestamp
-                # We used to raise an exception here but apparently sometimes there are sar files with
-                # same timestamp and different values. Let's just ignore that
-                # We do not bail out anymore on duplicate timestamps but simply report
-                # it to the user
+                # LOVELY: Filesystem can have multiple entries with the same
+                # FILESYSTEM and timestamp We used to raise an exception here
+                # but apparently sometimes there are sar files with same
+                # timestamp and different values. Let's just ignore that We do
+                # not bail out anymore on duplicate timestamps but simply
+                # report it to the user
                 self._duplicate_timestamps[self._linecount] = True
 
             try:
@@ -408,7 +416,9 @@ class SarParser(object):
 
                 if state == 'after_first_line':
                     if not _empty_line(line):
-                        raise Exception('Line {0}: expected empty line but got "{1}" instead'.format(self._linecount, line))
+                        raise Exception('Line {0}: expected empty line but got'
+                                        '"{1}" instead'.format(self._linecount,
+                                                               line))
                     state = 'after_empty_line'
                     continue
 
@@ -431,28 +441,34 @@ class SarParser(object):
 
                 if state == 'table_start':
                     (timestamp, headers) = self._column_headers(line)
-                    # If in previous tables we crossed the day, we start again from the previous date
+                    # If in previous tables we crossed the day, we start again
+                    # from the previous date
                     if self._olddate:
                         self._date = self._olddate
                     if timestamp is None:
-                        raise Exception('Line {0}: expected column header line but'
-                                        'got "{1}" instead'.format(self._linecount, line))
+                        raise Exception('Line {0}: expected column header'
+                                        ' line but got "{1}" instead'.format(
+                                            self._linecount, line))
                     if headers == ['LINUX', 'RESTART']:
-                        # FIXME: restarts should really be recorded, in a smart way
+                        # FIXME: restarts should really be recorded, in a smart
+                        # way
                         state = 'table_end'
                         continue
-                    # FIXME: we might want to skip even if it is present in other columns
+                    # FIXME: we might want to skip even if it is present in
+                    # other columns
                     elif headers[0] in skip_tables:
                         state = 'skip_until_eot'
                         print("Skipping: {0}".format(headers))
                         continue
 
                     try:
-                        pattern = re.compile(self._build_data_line_regexp(headers))
+                        pattern = re.compile(
+                            self._build_data_line_regexp(headers))
                     except AssertionError:
-                        raise Exception('Line {0}: exceeding python interpreter'
-                                        'limit with regexp for this line "{1}"'.
-                                        format(self._linecount, line))
+                        raise Exception('Line {0}: exceeding python '
+                                        'interpreter limit with regexp for '
+                                        'this line "{1}"'.format(
+                                            self._linecount, line))
 
                     self._prev_timestamp = False
                     state = 'table_row'
@@ -469,9 +485,12 @@ class SarParser(object):
 
                     matches = re.search(pattern, line)
                     if matches is None:
-                        raise Exception("File: {0} - Line {1}: headers: '{2}', line: '{3}'"
-                                        "regexp '{4}': failed to parse".format(self.cur_file,
-                                                                               self._linecount, str(headers), line, pattern.pattern))
+                        raise Exception("File: {0} - Line {1}: headers: '{2}'"
+                                        ", line: '{3}' regexp '{4}': failed"
+                                        " to parse".format(
+                                            self.cur_file, self._linecount,
+                                            str(headers), line,
+                                            pattern.pattern))
 
                     self._record_data(headers, matches)
                     continue
@@ -485,7 +504,8 @@ class SarParser(object):
                         # Remain in 'table_end' state
                         continue
 
-                    raise Exception('Line {0}: "{1}" expecting end of table'.format(self._linecount, line))
+                    raise Exception('Line {0}: "{1}" expecting end of '
+                                    'table'.format(self._linecount, line))
             fd.close()
 
         # Remove unneeded columns
@@ -493,7 +513,8 @@ class SarParser(object):
 
         # Calculate sampling frequency
         k = sorted(self._data.keys())
-        diff = [(x - k[i - 1]).total_seconds() for i, x in enumerate(k) if i > 0]
+        diff = [(x - k[i - 1]).total_seconds()
+                for i, x in enumerate(k) if i > 0]
         self.sample_frequency = numpy.mean(diff)
 
     def available_datasets(self):
@@ -545,7 +566,9 @@ class SarParser(object):
                 try:
                     (cat, k, p) = i.split("#")
                 except:
-                    raise Exception("Error datanames_per_arg per_key={0}: {1}".format(per_key, i))
+                    raise Exception("Error datanames_per_arg "
+                                    "per_key={0}: {1}".format(
+                                        per_key, i))
                 keys[k] = True
 
             for i in sorted(keys.keys(), key=natural_sort_key):
@@ -554,7 +577,9 @@ class SarParser(object):
                     try:
                         (cat, k, p) = j.split("#")
                     except:
-                        raise Exception("Error datanames_per_arg per_key={0}: {1}".format(per_key, j))
+                        raise Exception("Error datanames_per_arg "
+                                        "per_key={0}: {1}".format(
+                                            per_key, j))
                     if k == i and not p.endswith('DEVICE'):
                         tmp.append(j)
                 if len(tmp) == 0:
@@ -569,7 +594,9 @@ class SarParser(object):
                 try:
                     (cat, k, p) = i.split("#")
                 except:
-                    raise Exception("Error datanames_per_arg per_key={0}: {1}".format(per_key, i))
+                    raise Exception("Error datanames_per_arg "
+                                    "per_key={0}: {1}".format(
+                                        per_key, i))
                 keys2[p] = True
 
             for i in sorted(keys2.keys(), key=natural_sort_key):
@@ -586,10 +613,12 @@ class SarParser(object):
 
     def available_data_types(self):
         """ What types of data are available. """
-        return set([item for date in self._data.keys() for item in self._data[date].keys()])
+        return set([item for date in self._data.keys()
+                   for item in self._data[date].keys()])
 
     def find_max(self, timestamp, datanames):
-        """Finds the max Y value given an approx timestamp and a list of datanames"""
+        """Finds the max Y value given an approx timestamp and a list of
+        datanames"""
         timestamps = list(self._data.keys())
         time_key = min(timestamps, key=lambda date: abs(timestamp - date))
         ymax = -1
@@ -600,12 +629,12 @@ class SarParser(object):
         return ymax
 
     def find_data_gaps(self):
-        """Returns a list of tuples containing the data gaps. A data gap is an interval
-        of time longer than the collecting frequency that does not contain any data.
-        NOTE: The algorithm is not super-smart, but covers the most blatant cases.
-        This is because the sampling frequency calculation is skewed a bit when the
-        sysstat is not running.
-        Returns: [(gap1start, gap1end), (.., ..), ...] or []"""
+        """Returns a list of tuples containing the data gaps. A data gap is an
+        interval of time longer than the collecting frequency that does not
+        contain any data.  NOTE: The algorithm is not super-smart, but covers
+        the most blatant cases.  This is because the sampling frequency
+        calculation is skewed a bit when the sysstat is not running.  Returns:
+        [(gap1start, gap1end), (.., ..), ...] or []"""
 
         # in seconds
         freq = self.sample_frequency
