@@ -145,15 +145,14 @@ BASE_GRAPHS = {
                   interval. The exact formula is:
                   <i>load(t) = n+((load(t-1)-n)/e^(interval/(min*60)))</i><br/>
                   &bull;<i>load(t)</i>: load average at a time of t<br/>
-                  &bull;<i>n</i>: number of threads in running or uninterruptible state<br/>
-                  &bull;<i>interval</i>: calculate interval (seconds). 5 seconds in RHEL<br/>
-                  &bull;<i>min</i>: average time (minute)<br/>
-                  It is a moving average function. See
-                  <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
-                  <i>kernel/sched.c:calc_load()</i></link> for more details on the implementation on RHEL 5 and 6.
-                  More recent kernels moved it to
-                  <link href="http://lxr.free-electrons.com/source/kernel/sched.c?v=2.6.32#L3138">
-                  <i>kernel/sched/proc.c:calc_load()</i></link>""",
+                  &bull;<i>n</i>: number of threads in running or
+                  uninterruptible state<br/> &bull;<i>interval</i>: calculate
+                  interval (seconds).  5 seconds in RHEL<br/>&bull;<i>min</i>:
+                  average time (minute)<br/> It is a moving average function.
+                  See <link href="http://goo.gl/5EsCsT">
+                  <i>kernel/sched.c:calc_load()</i></link> for more details
+                  on the implementation on RHEL 5 and 6. More recent kernels
+                  moved it to <i>kernel/sched/proc.c:calc_load()</i></link>""",
                   'detail': 'ldavg-1 [/proc/loadavg(1)]'},
     'ldavg-5':   {'cat': 'Load',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -211,8 +210,8 @@ BASE_GRAPHS = {
                   'unit': '%',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of memory needed for current workload in
-                  relation to the total amount of memory (RAM+swap). This number
-                  may be greater than 100% because the kernel usually
+                  relation to the total amount of memory (RAM+swap). This
+                  number may be greater than 100% because the kernel usually
                   overcommits memory"""},
     'kbactive':  {'cat': 'Memory',
                   'regexp': INTEGER_RE,
@@ -232,29 +231,29 @@ BASE_GRAPHS = {
                   'desc': """Amount of memory in kilobytes waiting to get
                   written back to the disk."""},
     'kbanonpg':   {'cat': 'Memory',
-                  'unit': 'kilobytes',
-                  'regexp': INTEGER_RE,
-                  'desc': """Amount of non-file backed pages in
-                  kilobytes mapped into userspace page tables."""},
+                   'unit': 'kilobytes',
+                   'regexp': INTEGER_RE,
+                   'desc': """Amount of non-file backed pages in
+                   kilobytes mapped into userspace page tables."""},
     'kbslab':   {'cat': 'Memory',
-                  'unit': 'kilobytes',
-                  'regexp': INTEGER_RE,
-                  'desc': """Amount of memory in kilobytes
-                  used by the kernel for internal objects."""},
+                 'unit': 'kilobytes',
+                 'regexp': INTEGER_RE,
+                 'desc': """Amount of memory in kilobytes
+                 used by the kernel for internal objects."""},
     'kbkstack':   {'cat': 'Memory',
-                  'unit': 'kilobytes',
-                  'regexp': INTEGER_RE,
-                  'desc': """Amount of kstack memory
-                  used for kernel stack space."""},
+                   'unit': 'kilobytes',
+                   'regexp': INTEGER_RE,
+                   'desc': """Amount of kstack memory
+                   used for kernel stack space."""},
     'kbpgtbl':   {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
                   'desc': """Amount of memory in kilobytes dedicated
                   to the lowest level of page tables."""},
     'kbvmused':   {'cat': 'Memory',
-                  'unit': 'kilobytes',
-                  'regexp': INTEGER_RE,
-                  'desc': """KB of kernel vm space."""},
+                   'unit': 'kilobytes',
+                   'regexp': INTEGER_RE,
+                   'desc': """KB of kernel vm space."""},
     'kbhugfree': {'cat': 'Memory',
                   'unit': 'kilobytes',
                   'regexp': INTEGER_RE,
@@ -308,10 +307,10 @@ BASE_GRAPHS = {
     'kbswpcad':  {'cat': 'Swap',
                   'regexp': INTEGER_RE,
                   'desc': """Amount of cached swap memory in kilobytes. This is
-                  memory that once was swapped out, is swapped back in but still
-                  also is in the swap area (if memory is needed it doesn\'t need
-                  to be swapped out again because it is already in the swap
-                  area. This saves I/O)"""},
+                  memory that once was swapped out, is swapped back in but
+                  still also is in the swap area (if memory is needed it
+                  doesn\'t need to be swapped out again because it is already
+                  in the swap area. This saves I/O)"""},
     '%swpcad':   {'cat': 'Swap',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of cached swap memory in relation to the
@@ -333,8 +332,8 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total amount of data read from the devices in
                   blocks per second. Blocks are equivalent to sectors with 2.4
-                  kernels and newer and therefore have a size of 512 bytes. With
-                  older kernels, a block is of indeterminate size"""},
+                  kernels and newer and therefore have a size of 512 bytes.
+                  With older kernels, a block is of indeterminate size"""},
     'bwrtn/s':   {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total amount of data written to devices in blocks
@@ -377,15 +376,15 @@ BASE_GRAPHS = {
     'svctm':     {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The average service time (in milliseconds) for I/O
-                  requests that were issued to the device. Warning! Do not trust
-                  this field any more.  This field will be removed in a future
-                  sysstat version."""},
+                  requests that were issued to the device. Warning! Do not
+                  trust this field any more. This field will be removed in a
+                  future sysstat version."""},
     '%util':     {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of CPU time during which I/O requests
                   were issued to the device (bandwidth utilization for the
-                  device). Device saturation occurs when this value is close to
-                  100%"""},
+                  device). Device saturation occurs when this value is close
+                  to 100%"""},
     'maxpower':  {'cat': 'Power',
                   'regexp': INTEGER_RE,
                   'desc': """Maxpower"""},
@@ -415,19 +414,19 @@ BASE_GRAPHS = {
     'pgpgout/s': {'cat': 'Paging',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of kilobytes the system paged out to
-                  disk per second.  Note: With old kernels (2.2.x) this value is
-                  a number of blocks per second (and not kilobytes)"""},
+                  disk per second.  Note: With old kernels (2.2.x) this value
+                  is a number of blocks per second (and not kilobytes)"""},
     'fault/s':   {'cat': 'Paging',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of page faults (major + minor) made by the
                   system per second.  This is not a count of page faults that
-                  generate I/O, because some page faults can be resolved without
-                  I/O"""},
+                  generate I/O, because some page faults can be resolved
+                  without I/O"""},
     'majflt/s':  {'cat': 'Paging',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of major faults the system has made per
-                  second, those which have required loading a memory page from
-                  disk"""},
+                  second, those which have required loading a memory page
+                  from disk"""},
     'minflt/s':  {'cat': 'Paging',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of minor faults the task has made per
@@ -452,10 +451,10 @@ BASE_GRAPHS = {
     '%vmeff':    {'cat': 'Paging',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Calculated as pgsteal / pgscan, this is a metric of
-                  the efficiency of page reclaim. If it is near 100% then almost
-                  every page coming off the tail of the inactive list is being
-                  reaped. If it gets too low (e.g. less than 30%) then the
-                  virtual memory is having some difficulty. This field is
+                  the efficiency of page reclaim. If it is near 100% then
+                  almost every page coming off the tail of the inactive list is
+                  being reaped. If it gets too low (e.g. less than 30%) then
+                  the virtual memory is having some difficulty. This field is
                   displayed as zero if no pages have been scanned during the
                   interval of time"""},
     'file-nr':   {'cat': 'Files',
@@ -477,16 +476,16 @@ BASE_GRAPHS = {
     '%super-sz': {'cat': 'Files',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of allocated super block handlers with
-                  regard to the maximum number of super block handlers that Linux
-                  can allocate"""},
+                  regard to the maximum number of super block handlers that
+                  Linux can allocate"""},
     'dquot-sz':  {'cat': 'Files',
                   'regexp': INTEGER_RE,
                   'desc': """Number of allocated disk quota entries"""},
     '%dquot-sz': {'cat': 'Files',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Percentage of allocated disk quota entries with
-                  regard to the maximum number of cached disk quota entries that
-                  can be allocated"""},
+                  regard to the maximum number of cached disk quota entries
+                  that can be allocated"""},
     'dentunusd': {'cat': 'Files',
                   'regexp': INTEGER_RE,
                   'desc': """Number of unused cache entries in the directory
@@ -566,7 +565,8 @@ BASE_GRAPHS = {
                   'desc': """Number of reply cache misses per second"""},
     'sread/s':   {'cat': 'NFSD',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """Number of "read" RPC calls received per second"""},
+                  'desc': """Number of "read" RPC calls received per
+                  second"""},
     'swrite/s':  {'cat': 'NFSD',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of "write" RPC calls received per
@@ -581,9 +581,9 @@ BASE_GRAPHS = {
                   second"""},
     'rcvin/s':   {'cat': 'TTY',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """Number of receive interrupts per second for current
-                  serial line. Serial line number is given in the TTY
-                  column"""},
+                  'desc': """Number of receive interrupts per second for
+                  current serial line. Serial line number is given in the
+                  TTY column"""},
     'xmtin/s':   {'cat': 'TTY',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of transmit interrupts per second for
@@ -630,7 +630,8 @@ BASE_GRAPHS = {
     'txpck/s':   {'cat': 'Network',
                   'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """Total number of packets transmitted per second"""},
+                  'desc': """Total number of packets transmitted per
+                  second"""},
     'rxbyt/s':   {'cat': 'Network',
                   'unit': 'bytes per second',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -655,10 +656,10 @@ BASE_GRAPHS = {
                   'desc': """Number of multicast packets received per
                   second"""},
     '%ifutil':  {'cat': 'Network',
-                  'unit': 'packets per second',
-                  'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """utilization percentage of
-                  the network interface."""},
+                 'unit': 'packets per second',
+                 'regexp': NUMBER_WITH_DEC_RE,
+                 'desc': """utilization percentage of
+                 the network interface."""},
     'rxerr/s':   {'cat': 'Network',
                   'unit': 'packets per second',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -705,10 +706,10 @@ BASE_GRAPHS = {
                   [ipInReceives]."""},
     'fwddgm/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """The number of input datagrams per second, for which
-                  this entity was not their final IP destination, as a result of
-                  which an attempt was made to find a route to forward them to
-                  that final destination [ipForwDatagrams]"""},
+                  'desc': """The number of input datagrams per second, for
+                  which this entity was not their final IP destination, as a
+                  result of which an attempt was made to find a route to
+                  forward them to that final destination [ipForwDatagrams]"""},
     'idel/s':    {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The total number of input datagrams successfully
@@ -752,53 +753,57 @@ BASE_GRAPHS = {
                   'desc': """The number of input datagrams discarded per second
                   because the IP address in their IP header's destination field
                   was not a valid address to be received at this entity. This
-                  count includes invalid addresses (e.g., 0.0.0.0) and addresses
-                  of unsupported Classes (e.g., Class E). For entities which are
-                  not IP routers and therefore do not forward datagrams, this
-                  counter includes datagrams discarded because the destination
-                  address was not a local address [ipInAddrErrors]."""},
+                  count includes invalid addresses (e.g., 0.0.0.0) and
+                  addresses of unsupported Classes (e.g., Class E). For
+                  entities which are not IP routers and therefore do not
+                  forward datagrams, this counter includes datagrams discarded
+                  because the destination address was not a local address
+                  [ipInAddrErrors]."""},
     'iukwnpr/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of locally-addressed datagrams received
-                  successfully but discarded per second because of an unknown or
-                  unsupported protocol [ipInUnknownProtos]."""},
+                  successfully but discarded per second because of an unknown
+                  or unsupported protocol [ipInUnknownProtos]."""},
     'idisc/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of input IP datagrams per second for
                   which no problems were encountered to prevent their continued
-                  processing, but which were discarded (e.g., for lack of buffer
-                  space) [ipInDiscards]. Note that this counter does not include
-                  any datagrams discarded while awaiting re-assembly"""},
+                  processing, but which were discarded (e.g., for lack of
+                  buffer space) [ipInDiscards]. Note that this counter does
+                  not include any datagrams discarded while awaiting
+                  re-assembly"""},
     'odisc/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of output IP datagrams per second for
-                  which no problem was encountered to prevent their transmission
-                  to their destination, but which were discarded (e.g., for lack
-                  of buffer space) [ipOutDiscards]. Note that this counter would
-                  include datagrams counted in fwddgm/s if any such packets met
-                  this (discretionary) discard criterion"""},
+                  which no problem was encountered to prevent their
+                  transmission to their destination, but which were discarded
+                  (e.g., for lack of buffer space) [ipOutDiscards]. Note that
+                  this counter would include datagrams counted in fwddgm/s if
+                  any such packets met this (discretionary) discard
+                  criterion"""},
     'onort/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of IP datagrams discarded per second
                   because no route could be found to transmit them to their
-                  destination [ipOutNoRoutes]. Note that this counter includes
-                  any packets counted in fwddgm/s which meet this 'no-route'
-                  criterion. Note that this includes any datagrams which a host
-                  cannot route because all of its default routers are down"""},
+                  destination [ipOutNoRoutes]. Note that this counter
+                  includes any packets counted in fwddgm/s which meet this
+                  'no-route' criterion. Note that this includes any datagrams
+                  which a host cannot route because all of its default
+                  routers are down"""},
     'asmf/s':    {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of failures detected per second by the
                   IP re-assembly algorithm (for whatever reason: timed out,
-                  errors, etc) [ipReasmFails]. Note that this is not necessarily
-                  a count of discarded IP fragments since some algorithms can
-                  lose track of the number of fragments by combining them as
-                  they are received"""},
+                  errors, etc) [ipReasmFails]. Note that this is not
+                  necessarily a count of discarded IP fragments since some
+                  algorithms can lose track of the number of fragments by
+                  combining them as they are received"""},
     'fragf/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
-                  'desc': """The number of IP datagrams that have been discarded
-                  per second because they needed to be fragmented at this entity
-                  but could not be, e.g., because their Don't Fragment flag was
-                  set [ipFragFails]"""},
+                  'desc': """The number of IP datagrams that have been
+                  discarded per second because they needed to be fragmented at
+                  this entity but could not be, e.g., because their Don't
+                  Fragment flag was set [ipFragFails]"""},
     'imsg/s':    {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The total number of ICMP messages which the entity
@@ -932,9 +937,9 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of times per second TCP connections have
                   made a direct transition to the CLOSED state from either the
-                  SYN-SENT state or the SYN-RCVD state, plus the number of times
-                  per second TCP connections have made a direct transition to
-                  the LISTEN state from the SYN-RCVD state
+                  SYN-SENT state or the SYN-RCVD state, plus the number of
+                  times per second TCP connections have made a direct
+                  transition to the LISTEN state from the SYN-RCVD state
                   [tcpAttemptFails]"""},
     'estres/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -974,8 +979,8 @@ BASE_GRAPHS = {
     'idgmerr/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of received UDP datagrams per second
-                  that could not be delivered for reasons other than the lack of
-                  an application at the destination port [udpInErrors]"""},
+                  that could not be delivered for reasons other than the lack
+                  of an application at the destination port [udpInErrors]"""},
     'tcp6sck':   {'cat': 'Network',
                   'regexp': INTEGER_RE,
                   'desc': """Number of TCPv6 sockets currently in use"""},
@@ -996,8 +1001,8 @@ BASE_GRAPHS = {
     'fwddgm6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of output datagrams per second which
-                  this entity received and forwarded to their final destinations
-                  [ipv6IfStatsOutForwDatagrams]"""},
+                  this entity received and forwarded to their final
+                  destinations [ipv6IfStatsOutForwDatagrams]"""},
     'idel6/s':   {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The total number of datagrams successfully
@@ -1006,9 +1011,9 @@ BASE_GRAPHS = {
     'orq6/s':    {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The total number of IPv6 datagrams which local IPv6
-                  user-protocols (including ICMP) supplied per second to IPv6 in
-                  requests for transmission [ipv6IfStatsOutRequests]. Note that
-                  this counter does not include any datagrams counted in
+                  user-protocols (including ICMP) supplied per second to IPv6
+                  in requests for transmission [ipv6IfStatsOutRequests]. Note
+                  that this counter does not include any datagrams counted in
                   fwddgm6/s"""},
     'asmrq6/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -1035,8 +1040,8 @@ BASE_GRAPHS = {
     'fragcr6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of output datagram fragments that have
-                  been generated per second as a result of fragmentation at this
-                  output interface [ipv6IfStatsOutFragCreates] """},
+                  been generated per second as a result of fragmentation at
+                  this output interface [ipv6IfStatsOutFragCreates] """},
     'ihdrer6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of input datagrams discarded per second
@@ -1058,8 +1063,8 @@ BASE_GRAPHS = {
     'iukwnp6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of locally-addressed datagrams received
-                  successfully but discarded per second because of an unknown or
-                  unsupported protocol [ipv6IfStatsInUnknownProtos]"""},
+                  successfully but discarded per second because of an unknown
+                  or unsupported protocol [ipv6IfStatsInUnknownProtos]"""},
     'i2big6/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of input datagrams that could not be
@@ -1069,18 +1074,19 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of input IPv6 datagrams per second for
                   which no problems were encountered to prevent their continued
-                  processing, but which were discarded (e.g., for lack of buffer
-                  space) [ipv6IfStatsInDiscards]. Note that this counter does
-                  not include any datagrams discarded while awaiting
+                  processing, but which were discarded (e.g., for lack of
+                  buffer space) [ipv6IfStatsInDiscards]. Note that this counter
+                  does not include any datagrams discarded while awaiting
                   re-assembly"""},
     'odisc6/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of output IPv6 datagrams per second for
-                  which no problem was encountered to prevent their transmission
-                  to their destination, but which were discarded (e.g., for lack
-                  of buffer space) [ipv6IfStatsOutDiscards]. Note that this
-                  counter would include datagrams counted in fwddgm6/s if any
-                  such packets met this (discretionary) discard criterion."""},
+                  which no problem was encountered to prevent their
+                  transmission to their destination, but which were discarded
+                  (e.g., for lack of buffer space) [ipv6IfStatsOutDiscards].
+                  Note that this counter would include datagrams counted in
+                  fwddgm6/s if any such packets met this (discretionary)
+                  discard criterion."""},
     'inort6/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of input datagrams discarded per second
@@ -1096,9 +1102,9 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of failures detected per second by the
                    IPv6 re-assembly algorithm (for whatever reason: timed out,
-                       errors, etc.) [ipv6IfStatsReasmFails]. Note that this is
-                   not necessarily a count of discarded IPv6 fragments since
-                   some algorithms can lose track of the number of fragments by
+                   errors, etc.) [ipv6IfStatsReasmFails]. Note that this is not
+                   necessarily a count of discarded IPv6 fragments since some
+                   algorithms can lose track of the number of fragments by
                    combining them as they are received"""},
     'fragf6/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
@@ -1161,7 +1167,8 @@ BASE_GRAPHS = {
     'irtsol6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of ICMP Router Solicit messages received
-                  by the interface per second [ipv6IfIcmpInRouterSolicits]."""},
+                  by the interface per second
+                  [ipv6IfIcmpInRouterSolicits]."""},
     'ortsol6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of ICMP Router Solicitation messages
@@ -1257,8 +1264,8 @@ BASE_GRAPHS = {
     'idgmer6/s': {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of received UDP datagrams per second
-                  that could not be delivered for reasons other than the lack of
-                  an application at the destination port [udpInErrors]"""},
+                  that could not be delivered for reasons other than the lack
+                  of an application at the destination port [udpInErrors]"""},
     'intr/s':    {'cat': 'Interrupts',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """ """},
@@ -1272,8 +1279,8 @@ def get_regexp(name):
          'INTR': INT_RE, 'iNNN/s': INTERRUPTS_RE, 'BUS': INTEGER_RE,
          'FAN': INTEGER_RE, 'DEVICE': INTERFACE_NAME_RE, 'TEMP': INTEGER_RE,
          'TTY': INTEGER_RE, 'idvendor': HEX_RE, 'idprod': HEX_RE,
-         'manufact': USB_NAME_RE, 'product': USB_NAME_RE, 'MHz': NUMBER_WITH_DEC_RE,
-         'FILESYSTEM': FS_NAME_RE}
+         'manufact': USB_NAME_RE, 'product': USB_NAME_RE,
+         'MHz': NUMBER_WITH_DEC_RE, 'FILESYSTEM': FS_NAME_RE}
 
     if name in k:
         return k[name]
@@ -1321,10 +1328,12 @@ def get_title_unit_labels(names, sar_obj=None):
         key[k] = True
         perf[p] = True
 
-    # We can raise an error here because in case of a custom graph with different
-    # datasets the label is set by the user and this function is never called
+    # We can raise an error here because in case of a custom graph with
+    # different datasets the label is set by the user and this function is
+    # never called
     if len(cat.keys()) > 1:
-        raise Exception("Error. We do not contemplate graphing data from different categories: %s" % names)
+        raise Exception("Error. We do not contemplate graphing data from"
+                        " different categories: %s" % names)
 
     # ['CPU#0#%idle', 'CPU#1#%idle', 'CPU#3#%idle', ...]
     # title = '%idle'
@@ -1336,22 +1345,25 @@ def get_title_unit_labels(names, sar_obj=None):
         # It is an interrupt and sosreport exists and has interrupts dictionary
         # hence we print the device that generated it in the title
         if re.match('i[0-9]*/s', title) and sar_obj is not None and \
-                sar_obj.sosreport is not None and sar_obj.sosreport.interrupts is not None:
+                sar_obj.sosreport is not None and \
+                sar_obj.sosreport.interrupts is not None:
             try:
                 nr_int = str(int(title[1:4]))
                 interrupts = sar_obj.sosreport.interrupts
-                title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]['users']))
+                title = "{0} [{1}]".format(
+                        title, " ".join(interrupts[nr_int]['users']))
             # Just leave the original title in case of errors
             except:
                 pass
         # This takes the CPU number (in case of a CPU#1#%idle series
         labels = ["".join(i.split('#')[1:2]) for i in names]
         unit = None
-        if perf_key in BASE_GRAPHS and  'unit' in BASE_GRAPHS[perf_key]:
+        if perf_key in BASE_GRAPHS and 'unit' in BASE_GRAPHS[perf_key]:
             unit = BASE_GRAPHS[perf_key]['unit']
         return title, unit, labels
 
     raise Exception("get_labels_title() error on %s" % names)
+
 
 def list_all_categories():
     l = {'Load', 'Files', 'I/O', 'TTY', 'Network', 'Power', 'Intr'}
@@ -1359,6 +1371,7 @@ def list_all_categories():
         cat = BASE_GRAPHS[i]['cat']
         l.update([cat])
     return l
+
 
 def get_category(name):
     """Given a graph name, return the corresponding Category"""
@@ -1388,9 +1401,11 @@ def get_category(name):
     # not-yet accounted for graph. Drop me a line in such cases
     return 'Interrupts'
 
+
 def get_desc(names):
-    """Given a list of graph names it returns a list of [(name, description, detail), ...]
-    list of three-element tuples. description or detail may be None"""
+    """Given a list of graph names it returns a list of [(name, description,
+    detail), ...] list of three-element tuples. description or detail may be
+    None"""
     if not isinstance(names, list):
         raise Exception("get_desc mandates a list: %s" % names)
 
