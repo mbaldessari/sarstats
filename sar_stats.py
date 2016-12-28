@@ -443,7 +443,7 @@ class SarStats(object):
         print("List of graphs available:")
         inv_map = {}
         # FIXME: expose _categories through a method
-        for k, v in sar_parser._categories.iteritems():
+        for k, v in sar_parser._categories.items():
             inv_map[v] = inv_map.get(v, [])
             inv_map[v].append(k)
 
