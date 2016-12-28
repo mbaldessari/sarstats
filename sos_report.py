@@ -145,6 +145,7 @@ class SosReport:
         self._parse_network()
         self._parse_reboots()
 
+
 if __name__ == '__main__':
     sosreport = SosReport('./demosos')
     sosreport.parse()

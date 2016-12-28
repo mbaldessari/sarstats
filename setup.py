@@ -41,6 +41,7 @@ class DiscoverTest(test):
     def run_tests(self):
         discover_and_run_tests()
 
+
 config = {
     'name': 'sarstats',
     'version': '0.3',

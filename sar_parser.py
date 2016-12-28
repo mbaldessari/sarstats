@@ -654,6 +654,7 @@ class SarParser(object):
 
         return ret
 
+
 if __name__ == '__main__':
     raise Exception('No self-test code implemented')
 
