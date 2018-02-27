@@ -44,7 +44,7 @@ class DiscoverTest(test):
 
 config = {
     'name': 'sarstats',
-    'version': '0.3',
+    'version': '0.4',
     'author': 'Michele Baldessari',
     'author_email': 'michele@acksyn.org',
     'url': 'http://acksyn.org',
@@ -53,6 +53,7 @@ config = {
     'py_modules': ['sar_parser', 'sar_stats', 'sar_metadata',
                    'sar_grapher', 'sos_report'],
     'scripts': ['sarstats'],
+    'install_requires': ['dateutils', 'matplotlib', 'reportlab' ],
     'classifiers': [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
