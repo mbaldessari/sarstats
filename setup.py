@@ -53,7 +53,7 @@ config = {
     'py_modules': ['sar_parser', 'sar_stats', 'sar_metadata',
                    'sar_grapher', 'sos_report'],
     'scripts': ['sarstats'],
-    'install_requires': ['dateutils', 'matplotlib', 'reportlab' ],
+    'install_requires': ['dateutils', 'matplotlib', 'reportlab'],
     'classifiers': [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
