@@ -1,3 +1,9 @@
+[![License](https://img.shields.io/github/license/mbaldessari/sarstats.svg)](LICENSE)
+[![Build Status](https://travis-ci.org/mbaldessari/sarstats.svg?branch=master)](https://travis-ci.org/mbaldessari/sarstats)
+[![Coverage Status](https://coveralls.io/repos/github/mbaldessari/sarstats/badge.svg?branch=master)](https://coveralls.io/github/mbaldessari/sarstats?branch=master)
+[![Release status](https://img.shields.io/github/release/mbaldessari/sarstats.svg)](https://github.com/mbaldessari/sarstats/releases)
+
+
 sarstats
 ========
 
