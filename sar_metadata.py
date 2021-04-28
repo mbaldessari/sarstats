@@ -240,6 +240,11 @@ BASE_GRAPHS = {
                  'regexp': INTEGER_RE,
                  'desc': """Amount of memory in kilobytes
                  used by the kernel for internal objects."""},
+    'kbavail':  {'cat': 'Memory',
+                 'unit': 'kilobytes',
+                 'regexp': INTEGER_RE,
+                 'desc': """Estimate of how much memory in kilobytes is available
+                 for starting new applications, without swapping."""},
     'kbkstack':   {'cat': 'Memory',
                    'unit': 'kilobytes',
                    'regexp': INTEGER_RE,
@@ -584,6 +589,11 @@ BASE_GRAPHS = {
                   'desc': """Number of receive interrupts per second for
                   current serial line. Serial line number is given in the
                   TTY column"""},
+    'txmtin/s':  {'cat': 'TTY',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Number of transmit interrupts per second for
+                  current serial line""",
+                  'detail': 'Taken from /proc/net/dev'},
     'xmtin/s':   {'cat': 'TTY',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Number of transmit interrupts per second for
@@ -1266,9 +1276,51 @@ BASE_GRAPHS = {
                   'desc': """The number of received UDP datagrams per second
                   that could not be delivered for reasons other than the lack
                   of an application at the destination port [udpInErrors]"""},
+    'total/s':   {'cat': 'Network',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The total number of network frames processed per
+                  second"""},
+    'dropd/s':   {'cat': 'Network',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The total number of network frames dropped per
+                  second because there was no room on the processing queue"""},
+    'squeezd/s': {'cat': 'Network',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The number of times the softirq handler function
+                  terminated per second because its budget was consumed or the
+                  time limit was reached, but more work could have been
+                  done"""},
+    'rx_rps/s':  {'cat': 'Network',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The number of times the CPU has been woken up per
+                  second to process packets via an inter-processor interrupt
+                  """},
+    'flw_lim/s': {'cat': 'Network',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The number of times the flow limit has been
+                  reached per second.  Flow limiting is an optional RPS feature
+                  that can be used to limit the number of packets queued to the
+                  backlog for each flow to a certain amount """},
     'intr/s':    {'cat': 'Interrupts',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """ """},
+    'rkB/s':     {'cat': 'Disk',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Number of kilobytes read from the device per second"""},
+    'wkB/s':     {'cat': 'Disk',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Number of kilobytes written from the device per second"""},
+    'dkB/s':     {'cat': 'Disk',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Number of kilobytes discarded from the device per second"""},
+    'areq-sz':   {'cat': 'Disk',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The average size (in kilobytes) of the I/O requests that were
+                  issued to the device"""},
+    'aqu-sz':   {'cat': 'Disk',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """The average queue length of the requests that were issued
+                  to the device"""},
 }
 
 
