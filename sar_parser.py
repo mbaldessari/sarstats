@@ -440,6 +440,8 @@ class SarParser(object):
                         state = 'after_empty_line'
 
                 if state == 'table_start':
+                    if 'LINUX RESTART' in line or line == '':
+                        continue
                     (timestamp, headers) = self._column_headers(line)
                     # If in previous tables we crossed the day, we start again
                     # from the previous date
