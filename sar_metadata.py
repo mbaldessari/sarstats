@@ -269,6 +269,14 @@ BASE_GRAPHS = {
                   'unit': 'kilobytes',
                   'desc': """Amount of hugepages memory in kilobytes that has
                   been allocated"""},
+    'kbhugrsvd':   {'cat': 'Memory',
+                   'unit': 'kilobytes',
+                   'regexp': INTEGER_RE,
+                   'desc': """Amount of reserved hugepages memory in kilobytes."""},
+    'kbhugsurp':   {'cat': 'Memory',
+                   'unit': 'kilobytes',
+                   'regexp': INTEGER_RE,
+                   'desc': """Amount of surplus hugepages memory in kilobytes."""},
     '%hugused':  {'cat': 'Memory',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'unit': '%',
@@ -333,6 +341,10 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total number of write requests per second issued to
                   physical devices"""},
+    'dtps':      {'cat': 'I/O',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Total number of discard requests per second issued to
+                  physical devices"""},
     'bread/s':   {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total amount of data read from the devices in
@@ -342,6 +354,10 @@ BASE_GRAPHS = {
     'bwrtn/s':   {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """Total amount of data written to devices in blocks
+                  per second"""},
+    'bdscd/s':   {'cat': 'I/O',
+                  'regexp': NUMBER_WITH_DEC_RE,
+                  'desc': """Total amount of data discarded for devices in blocks
                   per second"""},
     'rxkB/s':    {'cat': 'I/O',
                   'regexp': NUMBER_WITH_DEC_RE,
