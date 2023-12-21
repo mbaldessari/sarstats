@@ -938,6 +938,9 @@ BASE_GRAPHS = {
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of ICMP Redirect messages sent per
                   second [icmpOutRedirects]"""},
+    'blg_len':   {'cat': 'Network',
+                  'regexp': INTEGER_RE,
+                  'desc': """The length of the network backlog."""},
     'active/s':  {'cat': 'Network',
                   'regexp': NUMBER_WITH_DEC_RE,
                   'desc': """The number of times TCP connections have made a
