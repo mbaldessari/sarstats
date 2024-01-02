@@ -20,8 +20,11 @@ from sar_grapher import SarGrapher
 from sar_stats import SarStats
 
 # To debug memory leaks
-# from meliae import scanner
-# import objgraph
+USE_MELIAE = bool(os.getenv("USE_MELIAE", False))
+
+if USE_MELIAE:
+    from meliae import scanner
+    import objgraph
 
 # To profile speed
 USE_PROFILER = False
