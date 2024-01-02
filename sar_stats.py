@@ -289,9 +289,8 @@ class SarStats(object):
             try:
                 self.extra_labels = parse_labels(labels)
             except Exception:
-                raise
                 print("Unable to parse extra labels: {0}".format(labels))
-                sys.exit(-1)
+                raise
 
         self.story.append(Paragraph("%s" % sar_parser.hostname, doc.centered))
         self.story.append(
