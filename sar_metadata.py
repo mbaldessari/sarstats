@@ -583,6 +583,30 @@ BASE_GRAPHS = {
                   device). Device saturation occurs when this value is close
                   to 100%""",
     },
+    "%sio-10": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some tasks lost waiting
+                  for I/O, over the last 10 second window.""",
+    },
+    "%sio-60": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some tasks lost waiting
+                  for I/O, over the last 30 second window.""",
+    },
+    "%sio-300": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some tasks lost waiting
+                  for I/O, over the last 600 second window.""",
+    },
+    "%sio": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some tasks lost waiting
+                  for I/O, over the last time interval.""",
+    },
     "maxpower": {"cat": "Power", "regexp": INTEGER_RE, "desc": """Maxpower"""},
     "MHz": {"cat": "Power", "regexp": INTEGER_RE, "desc": """MegaHertz"""},
     "FAN": {"cat": "Power", "regexp": INTEGER_RE, "desc": """FAN"""},
