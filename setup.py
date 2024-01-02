@@ -14,7 +14,7 @@ def discover_and_run_tests():
     import unittest
 
     # get setup.py directory
-    setup_file = sys.modules['__main__'].__file__
+    setup_file = sys.modules["__main__"].__file__
     setup_dir = os.path.abspath(os.path.dirname(setup_file))
 
     # use the default shared TestLoader instance
@@ -43,18 +43,23 @@ class DiscoverTest(test):
 
 
 config = {
-    'name': 'sarstats',
-    'version': '0.4',
-    'author': 'Michele Baldessari',
-    'author_email': 'michele@acksyn.org',
-    'url': 'http://acksyn.org',
-    'license': 'GPLv2',
-    'cmdclass': {'test': DiscoverTest},
-    'py_modules': ['sar_parser', 'sar_stats', 'sar_metadata',
-                   'sar_grapher', 'sos_report'],
-    'scripts': ['sarstats'],
-    'install_requires': ['dateutils', 'matplotlib', 'reportlab' ],
-    'classifiers': [
+    "name": "sarstats",
+    "version": "0.4",
+    "author": "Michele Baldessari",
+    "author_email": "michele@acksyn.org",
+    "url": "http://acksyn.org",
+    "license": "GPLv2",
+    "cmdclass": {"test": DiscoverTest},
+    "py_modules": [
+        "sar_parser",
+        "sar_stats",
+        "sar_metadata",
+        "sar_grapher",
+        "sos_report",
+    ],
+    "scripts": ["sarstats"],
+    "install_requires": ["dateutils", "matplotlib", "reportlab"],
+    "classifiers": [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",

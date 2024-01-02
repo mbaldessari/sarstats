@@ -6,6 +6,7 @@ import os
 import os.path
 import pstats
 import resource
+
 try:
     import StringIO
 except ImportError:
@@ -27,7 +28,7 @@ if USE_MELIAE:
 # To profile speed
 USE_PROFILER = False
 TOP_PROFILED_FUNCTIONS = 15
-SAR_FILES = 'sar-files'
+SAR_FILES = "sar-files"
 
 
 def end_of_path(path):
@@ -39,11 +40,13 @@ def end_of_path(path):
 
 class TestSarParsing(unittest.TestCase):
     """Main UnitTest class"""
+
     def setUp(self):
         """Sets the test cases up"""
-        sar_base = os.path.join(sys.modules['tests'].__file__)
-        self.sar_dir = os.path.join(os.path.abspath(os.path.dirname(sar_base)),
-                                    SAR_FILES)
+        sar_base = os.path.join(sys.modules["tests"].__file__)
+        self.sar_dir = os.path.join(
+            os.path.abspath(os.path.dirname(sar_base)), SAR_FILES
+        )
         tmp = []
         for root, dirs, files in os.walk(self.sar_dir):
             for fname in files:
@@ -70,19 +73,21 @@ class TestSarParsing(unittest.TestCase):
             usage = resource.getrusage(resource.RUSAGE_SELF)
             if USE_MELIAE:
                 objgraph.show_growth()
-                tmp = tempfile.mkstemp(prefix='sar-test')[1]
+                tmp = tempfile.mkstemp(prefix="sar-test")[1]
                 scanner.dump_all_objects(tmp)
                 # leakreporter = loader.load(tmp)
                 # summary = leakreporter.summarize()
 
-            print("SAR parsing: {0} usertime={1} systime={2} mem={3} MB"
-                  .format(end_of_path(example), usage[0], usage[1],
-                          (usage[2] / 1024.0)))
+            print(
+                "SAR parsing: {0} usertime={1} systime={2} mem={3} MB".format(
+                    end_of_path(example), usage[0], usage[1], (usage[2] / 1024.0)
+                )
+            )
 
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
-                sortby = 'cumulative'
+                sortby = "cumulative"
                 stats = pstats.Stats(self.profile, stream=str_io)
                 pstat = stats.sort_stats(sortby)
                 pstat.print_stats(TOP_PROFILED_FUNCTIONS)
@@ -97,7 +102,7 @@ class TestSarParsing(unittest.TestCase):
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO.StringIO()
-                sortby = 'cumulative'
+                sortby = "cumulative"
                 stats = pstats.Stats(self.profile, stream=str_io)
                 pstat = stats.sort_stats(sortby)
                 pstat.print_stats(TOP_PROFILED_FUNCTIONS)
@@ -108,10 +113,12 @@ class TestSarParsing(unittest.TestCase):
             os.remove(out)
             grapher.close()
             usage = resource.getrusage(resource.RUSAGE_SELF)
-            print("SAR graphing: {0} usertime={1} systime={2} mem={3} MB"
-                  .format(end_of_path(example), usage[0], usage[1],
-                          (usage[2] / 1024.0)))
+            print(
+                "SAR graphing: {0} usertime={1} systime={2} mem={3} MB".format(
+                    end_of_path(example), usage[0], usage[1], (usage[2] / 1024.0)
+                )
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

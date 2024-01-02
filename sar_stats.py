@@ -63,8 +63,10 @@ GRAPH_HEIGHT = 6.5
 
 def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
-    return [list_to_split[i:i + chunksize]
-            for i in range(0, len(list_to_split), chunksize)]
+    return [
+        list_to_split[i : i + chunksize]
+        for i in range(0, len(list_to_split), chunksize)
+    ]
 
 
 def parse_labels(labels):
@@ -76,8 +78,8 @@ def parse_labels(labels):
     ret_labels = []
     for i in labels:
         # labels are in the form "foo:2014-01-01 13:45:03"
-        label = i.split(':')[0]
-        time = "".join(i.split(':')[1:])
+        label = i.split(":")[0]
+        time = "".join(i.split(":")[1:])
         time = dateutil.parser.parse(time)
         ret_labels.append((time, label))
 
@@ -87,93 +89,83 @@ def parse_labels(labels):
 class MyDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
     for certain type of text"""
+
     def __init__(self, filename, **kw):
         self.allowSplitting = 0
         BaseDocTemplate.__init__(self, filename, **kw)
-        template = PageTemplate('normal', [Frame(0.1 * inch, 0.1 * inch,
-                                11 * inch, 8 * inch, id='F1')])
+        template = PageTemplate(
+            "normal", [Frame(0.1 * inch, 0.1 * inch, 11 * inch, 8 * inch, id="F1")]
+        )
         self.addPageTemplates(template)
 
         self.centered = PS(
-            name='centered',
-            fontSize=30,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
+            name="centered", fontSize=30, leading=16, alignment=1, spaceAfter=20
+        )
 
         self.centered_index = PS(
-            name='centered_index',
-            fontSize=24,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
+            name="centered_index", fontSize=24, leading=16, alignment=1, spaceAfter=20
+        )
 
         self.small_centered = PS(
-            name='small_centered',
-            fontSize=14,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
+            name="small_centered", fontSize=14, leading=16, alignment=1, spaceAfter=20
+        )
 
-        self.h1 = PS(
-            name='Heading1',
-            fontSize=16,
-            leading=16)
+        self.h1 = PS(name="Heading1", fontSize=16, leading=16)
 
-        self.h2 = PS(
-            name='Heading2',
-            fontSize=14,
-            leading=14)
+        self.h2 = PS(name="Heading2", fontSize=14, leading=14)
 
-        self.h2_center = PS(
-            name='Heading2Center',
-            alignment=1,
-            fontSize=14,
-            leading=14)
+        self.h2_center = PS(name="Heading2Center", alignment=1, fontSize=14, leading=14)
 
         self.h2_invisible = PS(
-            name='Heading2Invisible',
+            name="Heading2Invisible",
             alignment=1,
-            textColor='#FFFFFF',
+            textColor="#FFFFFF",
             fontSize=14,
-            leading=14)
+            leading=14,
+        )
 
-        self.mono = PS(
-            name='Mono',
-            fontName='Courier',
-            fontSize=16,
-            leading=16)
+        self.mono = PS(name="Mono", fontName="Courier", fontSize=16, leading=16)
 
-        self.normal = PS(
-            name='Normal',
-            fontSize=16,
-            leading=16)
+        self.normal = PS(name="Normal", fontSize=16, leading=16)
 
         self.toc = TableOfContents()
         self.toc.levelStyles = [
-            PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
-                leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
-            PS(fontSize=10, name='TOCHeading2', leftIndent=40,
-                firstLineIndent=-20, spaceBefore=0, leading=8),
+            PS(
+                fontName="Times-Bold",
+                fontSize=14,
+                name="TOCHeading1",
+                leftIndent=20,
+                firstLineIndent=-20,
+                spaceBefore=2,
+                leading=16,
+            ),
+            PS(
+                fontSize=10,
+                name="TOCHeading2",
+                leftIndent=40,
+                firstLineIndent=-20,
+                spaceBefore=0,
+                leading=8,
+            ),
         ]
 
     def afterFlowable(self, flowable):
         """Registers TOC entries."""
-        if flowable.__class__.__name__ == 'Paragraph':
+        if flowable.__class__.__name__ == "Paragraph":
             text = flowable.getPlainText()
             style = flowable.style.name
-            if style in ['Heading1', 'centered_index']:
+            if style in ["Heading1", "centered_index"]:
                 level = 0
-            elif style in ['Heading2', 'Heading2Center', 'Heading2Invisible']:
+            elif style in ["Heading2", "Heading2Center", "Heading2Invisible"]:
                 level = 1
             else:
                 return
             entry = [level, text, self.page]
             # if we have a bookmark name append that to our notify data
-            bookmark_name = getattr(flowable, '_bookmarkName', None)
+            bookmark_name = getattr(flowable, "_bookmarkName", None)
             if bookmark_name is not None:
                 entry.append(bookmark_name)
-            self.notify('TOCEntry', tuple(entry))
+            self.notify("TOCEntry", tuple(entry))
             self.canv.addOutlineEntry(text, bookmark_name, level, True)
 
 
@@ -182,14 +174,16 @@ def graph_wrapper(arg):
     sar_stats_obj, sar_obj, dataname = arg
     sar_grapher = sar_stats_obj.sar_grapher
     fname = sar_grapher._graph_filename(dataname[1][0])
-    sar_obj.plot_datasets(dataname, fname, sar_stats_obj.extra_labels,
-                          sar_stats_obj.showreboots)
+    sar_obj.plot_datasets(
+        dataname, fname, sar_stats_obj.extra_labels, sar_stats_obj.showreboots
+    )
     sys.stdout.write(".")
     sys.stdout.flush()
 
 
 class SarStats(object):
     """Creates a pdf file given a parsed SAR object"""
+
     def __init__(self, sar_grapher, maxgraphs=MAXGRAPHS_IN_PAGE):
         """Initialize class"""
         self.story = []
@@ -197,18 +191,17 @@ class SarStats(object):
         self.sar_grapher = sar_grapher
 
     def graphs_order(self, cat, skip_list=None):
-        """ Order in which to present all graphs.
-        Data is grouped loosely by type. """
+        """Order in which to present all graphs.
+        Data is grouped loosely by type."""
         skiplist = skip_list or []
         l = []
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
         # First we add all the simple graphs sorted by chosen category list
         for i in cat:
-            for j in sorted(sar_parser.available_data_types(),
-                            key=natural_sort_key):
+            for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
                 # We cannot graph a column with device names
-                if j.endswith('DEVICE'):
+                if j.endswith("DEVICE"):
                     continue
                 if metadata.get_category(j) == i:
                     l.append([j])
@@ -230,29 +223,33 @@ class SarStats(object):
         # and then combined graphs
         l = []
         for i in cat:
-            for j in sorted(sar_parser.available_data_types(),
-                            key=natural_sort_key):
-                if j in metadata.BASE_GRAPHS and \
-                        metadata.BASE_GRAPHS[j]['cat'] == i and \
-                        j not in skiplist:
+            for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
+                if (
+                    j in metadata.BASE_GRAPHS
+                    and metadata.BASE_GRAPHS[j]["cat"] == i
+                    and j not in skiplist
+                ):
                     entry = metadata.graph_info([j], sar_obj=sar_parser)
                     l.append([entry, [j]])
             if i in c:
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the
                     # skip_list
-                    b = sorted([x for x in c[i][j]
-                               if len(set(skiplist).intersection(
-                                   x.split('#'))) == 0], key=natural_sort_key)
+                    b = sorted(
+                        [
+                            x
+                            for x in c[i][j]
+                            if len(set(skiplist).intersection(x.split("#"))) == 0
+                        ],
+                        key=natural_sort_key,
+                    )
                     # If the graph has more than X columns we split it
                     if len(b) > self.maxgraphs:
                         chunks = split_chunks(b, self.maxgraphs)
                         counter = 1
                         for chunk in chunks:
-                            entry = metadata.graph_info(chunk,
-                                                        sar_obj=sar_parser)
-                            s = "{0} {1}/{2}".format(entry[0],
-                                                     counter, len(chunks))
+                            entry = metadata.graph_info(chunk, sar_obj=sar_parser)
+                            s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
                             newentry = (s, entry[1], entry[2])
                             l.append([newentry, chunk])
                             counter += 1
@@ -264,16 +261,24 @@ class SarStats(object):
 
     def do_heading(self, text, sty):
         # create bookmarkname
-        bn = sha1(text.encode('utf-8') + sty.name.encode('utf-8')).hexdigest()
+        bn = sha1(text.encode("utf-8") + sty.name.encode("utf-8")).hexdigest()
         # modify paragraph text to include an anchor point with name bn
         h = Paragraph(text + '<a name="%s"/>' % bn, sty)
         # store the bookmark name on the flowable so afterFlowable can see this
         h._bookmarkName = bn
         self.story.append(h)
 
-    def graph(self, sar_files, skip_list, output_file='out.pdf', labels=None,
-              show_reboots=False, custom_graphs='', threaded=True):
-        """ Parse sar data and produce graphs of the parsed data. """
+    def graph(
+        self,
+        sar_files,
+        skip_list,
+        output_file="out.pdf",
+        labels=None,
+        show_reboots=False,
+        custom_graphs="",
+        threaded=True,
+    ):
+        """Parse sar data and produce graphs of the parsed data."""
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
         self.extra_labels = None
@@ -288,13 +293,14 @@ class SarStats(object):
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
 
-        self.story.append(Paragraph('%s' % sar_parser.hostname, doc.centered))
-        self.story.append(Paragraph('%s %s' % (sar_parser.kernel,
-                                               sar_parser.version),
-                          doc.small_centered))
+        self.story.append(Paragraph("%s" % sar_parser.hostname, doc.centered))
+        self.story.append(
+            Paragraph(
+                "%s %s" % (sar_parser.kernel, sar_parser.version), doc.small_centered
+            )
+        )
         self.story.append(Spacer(1, 0.05 * inch))
-        self.story.append(Paragraph('%s' % (" ".join(sar_files)),
-                          doc.small_centered))
+        self.story.append(Paragraph("%s" % (" ".join(sar_files)), doc.small_centered))
         mins = int(sar_parser.sample_frequency / 60)
         secs = int(sar_parser.sample_frequency % 60)
         s = "Sampling Frequency: %s minutes" % mins
@@ -302,7 +308,7 @@ class SarStats(object):
             s += " %s seconds" % secs
         self.story.append(Paragraph(s, doc.small_centered))
 
-        self.do_heading('Table of contents', doc.centered_index)
+        self.do_heading("Table of contents", doc.centered_index)
         self.story.append(doc.toc)
         self.story.append(PageBreak())
 
@@ -320,8 +326,9 @@ class SarStats(object):
         else:
             for dataname in self.graphs_order(category_order, skip_list):
                 fname = sar_grapher._graph_filename(dataname[1][0])
-                sar_grapher.plot_datasets(dataname, fname, self.extra_labels,
-                                          show_reboots)
+                sar_grapher.plot_datasets(
+                    dataname, fname, self.extra_labels, show_reboots
+                )
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
@@ -332,12 +339,13 @@ class SarStats(object):
         if custom_graphs is not None:
             try:
                 for i in custom_graphs:
-                    label = i.split(':')[0]
-                    values = i.split(':')[1].split(',')
+                    label = i.split(":")[0]
+                    values = i.split(":")[1].split(",")
                     custom_graph_list[label] = values
             except:
-                raise Exception("Error in parsing custom graphs: {0}".format(
-                                custom_graphs))
+                raise Exception(
+                    "Error in parsing custom graphs: {0}".format(custom_graphs)
+                )
 
             for graph in custom_graph_list.keys():
                 matched_graphs = set()
@@ -355,12 +363,15 @@ class SarStats(object):
                 if len(graphs) == 0:
                     continue
                 fname = sar_grapher._graph_filename(graphs)
-                sar_grapher.plot_datasets(([graph, None, graphs], graphs),
-                                          fname, self.extra_labels,
-                                          show_reboots)
+                sar_grapher.plot_datasets(
+                    ([graph, None, graphs], graphs),
+                    fname,
+                    self.extra_labels,
+                    show_reboots,
+                )
                 sys.stdout.write(".")
                 sys.stdout.flush()
-                cat = 'Custom'
+                cat = "Custom"
                 if cat not in used_cat:  # We've not seen the category before
                     self.do_heading(cat, doc.h1)
                     used_cat[cat] = True
@@ -368,8 +379,9 @@ class SarStats(object):
                     self.story.append(Paragraph(cat, doc.normal))
 
                 self.do_heading(graph, doc.h2_invisible)
-                self.story.append(Image(fname, width=GRAPH_WIDTH * inch,
-                                        height=GRAPH_HEIGHT * inch))
+                self.story.append(
+                    Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch)
+                )
                 self.story.append(Spacer(1, 0.2 * inch))
 
         # All the image files are created let's go through the files and create
@@ -385,16 +397,19 @@ class SarStats(object):
             else:
                 self.story.append(Paragraph(cat, doc.normal))
             self.do_heading(title, doc.h2_invisible)
-            self.story.append(Image(fname, width=GRAPH_WIDTH * inch,
-                                    height=GRAPH_HEIGHT * inch))
+            self.story.append(
+                Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch)
+            )
             self.story.append(Spacer(1, 0.2 * inch))
             desc = metadata.get_desc(dataname[1])
-            for (name, desc, detail) in desc:
-                self.story.append(Paragraph("<strong>%s</strong> - %s" %
-                                  (name, desc), doc.normal))
+            for name, desc, detail in desc:
+                self.story.append(
+                    Paragraph("<strong>%s</strong> - %s" % (name, desc), doc.normal)
+                )
                 if detail:
-                    self.story.append(Paragraph("Counter: <i>%s</i>" %
-                                      (detail), doc.mono))
+                    self.story.append(
+                        Paragraph("Counter: <i>%s</i>" % (detail), doc.mono)
+                    )
 
             self.story.append(PageBreak())
             count += 1
@@ -404,8 +419,8 @@ class SarStats(object):
     def export_csv(self, output_file):
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
-        f = open(output_file, 'wb')
-        writer = csv.writer(f, delimiter=',')
+        f = open(output_file, "wb")
+        writer = csv.writer(f, delimiter=",")
         all_keys = list(sar_parser.available_data_types())
         writer.writerow(all_keys)
         for timestamps in sar_parser._data:
@@ -418,7 +433,7 @@ class SarStats(object):
     def plot_ascii(self, graphs):
         self.sar_grapher.plot_ascii(graphs)
 
-    def plot_svg(self, graphs, output, labels=''):
+    def plot_svg(self, graphs, output, labels=""):
         extra_labels = parse_labels(labels)
         self.sar_grapher.plot_svg(graphs, output, extra_labels)
 
@@ -429,10 +444,10 @@ class SarStats(object):
         print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
         if sar_parser.sosreport and sar_parser.sosreport.reboots:
             reboots = sar_parser.sosreport.reboots
-            print("Reboots: ", end='')
+            print("Reboots: ", end="")
             for i in reboots:
-                print("{0} ".format(reboots[i]['date']), end='')
-            print('')
+                print("{0} ".format(reboots[i]["date"]), end="")
+            print("")
 
         gaps = sar_parser.find_data_gaps()
         if len(gaps) > 0:
@@ -448,17 +463,20 @@ class SarStats(object):
             inv_map[v].append(k)
 
         try:
-            rows, columns = os.popen('stty size', 'r').read().split()
+            rows, columns = os.popen("stty size", "r").read().split()
         except:
             columns = 80
         columns = int(columns) - 10
 
         import textwrap
+
         for i in sorted(inv_map):
             line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
-            indent = ' ' * (len(i) + 2)
-            text = textwrap.fill(line, width=columns, initial_indent='',
-                                 subsequent_indent=indent)
+            indent = " " * (len(i) + 2)
+            text = textwrap.fill(
+                line, width=columns, initial_indent="", subsequent_indent=indent
+            )
             print("{0}: {1}".format(i, text))
+
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

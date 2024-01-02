@@ -12,9 +12,10 @@ import re
 
 
 def natural_sort_key(s):
-    _nsre = re.compile('([0-9]+)')
-    return [int(text) if text.isdigit() else text.lower()
-            for text in re.split(_nsre, s)]
+    _nsre = re.compile("([0-9]+)")
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
+    ]
 
 
 class SosReport:
@@ -22,7 +23,7 @@ class SosReport:
         if not os.path.isdir(path):
             raise Exception("{0} does not exist".format(path))
 
-        sospath = os.path.join(path, 'sos_reports')
+        sospath = os.path.join(path, "sos_reports")
         if not os.path.exists(sospath):
             raise Exception("{0} does not exist".format(sospath))
 
@@ -34,19 +35,19 @@ class SosReport:
         self.reboots = {}
 
     def _parse_network_ethtool(self):
-        sos_networking = os.path.join(self.path, 'sos_commands/networking')
+        sos_networking = os.path.join(self.path, "sos_commands/networking")
         for i in os.listdir(sos_networking):
-            if not i.startswith('ethtool_-i_'):
+            if not i.startswith("ethtool_-i_"):
                 continue
 
-            dev = i.split('_')[2]
+            dev = i.split("_")[2]
             self.networking[dev] = {}
             f = open(os.path.join(sos_networking, i))
             for line in f.readlines():
                 line = line.strip()
                 if len(line) <= 1:
                     continue
-                (label, value) = line.split(': ')
+                (label, value) = line.split(": ")
                 self.networking[dev][label] = value
 
     def _parse_network(self):
@@ -59,29 +60,29 @@ class SosReport:
 
     def _parse_int_entry(self, fields, line):
         d = {}
-        d['cpu'] = []
-        d['cpu'].append(int(fields[0]))
+        d["cpu"] = []
+        d["cpu"].append(int(fields[0]))
         nr_fields = len(fields)
         if nr_fields >= self.nr_cpus:
-            d['cpu'] += [int(i) for i in fields[1:self.nr_cpus]]
+            d["cpu"] += [int(i) for i in fields[1 : self.nr_cpus]]
             if nr_fields > self.nr_cpus:
-                d['type'] = fields[self.nr_cpus]
+                d["type"] = fields[self.nr_cpus]
                 if nr_fields > self.nr_cpus + 1:
                     field = line.index(fields[self.nr_cpus + 1])
-                    d['users'] = [a.strip() for a in line[field:].split(',')]
+                    d["users"] = [a.strip() for a in line[field:].split(",")]
                 else:
-                    d['users'] = []
+                    d["users"] = []
         return d
 
     def _parse_interrupts(self):
         """Parse /proc/interrupts in order to associate the interrupt number
         to the proper device"""
-        intr_file = os.path.join(self.path, 'proc/interrupts')
+        intr_file = os.path.join(self.path, "proc/interrupts")
         f = open(intr_file)
         for line in f.readlines():
             line = line.strip()
             fields = line.split()
-            if fields[0][:3] == 'CPU':
+            if fields[0][:3] == "CPU":
                 self.nr_cpus = len(fields)
                 continue
             irq = fields[0].strip(":")
@@ -103,10 +104,9 @@ class SosReport:
         RESTART' in sar files is not precise"""
         # FIXME: uncompress any compressed messages files
         # FIXME: This is still potentially *very* fragile
-        messages_dir = os.path.join(self.path, 'var/log')
-        reboot_re = r'.*kernel: Linux version.*$'
-        files = [f for f in os.listdir(messages_dir)
-                 if f.startswith('messages')]
+        messages_dir = os.path.join(self.path, "var/log")
+        reboot_re = r".*kernel: Linux version.*$"
+        files = [f for f in os.listdir(messages_dir) if f.startswith("messages")]
         for i in sorted(files, key=natural_sort_key, reverse=True):
             prev_month = None
             counter = 0
@@ -124,30 +124,30 @@ class SosReport:
                     # current one FIXME: this breaks if we investigate
                     # sosreports older than one year :/
                     for i in self.reboots:
-                        t = self.reboots[i]['date']
+                        t = self.reboots[i]["date"]
                         # Remember which dates were decremented and only do it
                         # once
-                        if i <= counter and \
-                                'decremented' not in self.reboots[i]:
+                        if i <= counter and "decremented" not in self.reboots[i]:
                             d = t - relativedelta(years=1)
-                            self.reboots[i]['date'] = d
-                            self.reboots[i]['decremented'] = True
+                            self.reboots[i]["date"] = d
+                            self.reboots[i]["decremented"] = True
                 prev_month = d.month
                 self.reboots[counter] = {}
-                self.reboots[counter]['date'] = d
-                self.reboots[counter]['file'] = f
+                self.reboots[counter]["date"] = d
+                self.reboots[counter]["file"] = f
                 counter += 1
 
     def parse(self):
-        self.redhatrelease = open(os.path.join(self.path,
-                                  'etc/redhat-release')).read().strip()
+        self.redhatrelease = (
+            open(os.path.join(self.path, "etc/redhat-release")).read().strip()
+        )
         self._parse_interrupts()
         self._parse_network()
         self._parse_reboots()
 
 
-if __name__ == '__main__':
-    sosreport = SosReport('./demosos')
+if __name__ == "__main__":
+    sosreport = SosReport("./demosos")
     sosreport.parse()
     for i in sosreport.reboots:
         print("{0} - {1}".format(i, sosreport.reboots[i]))
