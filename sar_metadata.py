@@ -160,6 +160,38 @@ BASE_GRAPHS = {
                   a virtual processor""",
         "detail": "%guest [/proc/stat(9)]",
     },
+    "%scpu-10": {
+        "cat": "Utilization",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some runnable tasks
+                  were delayed because the CPU was unavailable to them, over
+                  the last 10 second window.""",
+    },
+    "%scpu-60": {
+        "cat": "Utilization",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some runnable tasks
+                  were delayed because the CPU was unavailable to them, over
+                  the last 60 second window.""",
+    },
+    "%scpu-300": {
+        "cat": "Utilization",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some runnable tasks
+                  were delayed because the CPU was unavailable to them, over
+                  the last 300 second window.""",
+    },
+    "%scpu": {
+        "cat": "Utilization",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time that at least some runnable tasks
+                  were delayed because the CPU was unavailable to them, over
+                  the last time interval.""",
+    },
     "runq-sz": {
         "cat": "Load",
         "regexp": INTEGER_RE,

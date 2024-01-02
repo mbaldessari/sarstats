@@ -244,7 +244,7 @@ class SarParser(object):
                 # Any field that has numbers inside of it needs
                 # to be explicitely ORed
                 (?:
-                    (?:[a-zA-Z6%/_-]+       # No numbers (except for IPv6)
+                    (?:[a-zA-Z1360%/_-]+    # No numbers (except for IPv6 and the %scpu-{10,60,300})
                     |                       # and except...
                     i\d{3}/s
                     |
