@@ -607,6 +607,30 @@ BASE_GRAPHS = {
         "desc": """Percentage of the time that at least some tasks lost waiting
                   for I/O, over the last time interval.""",
     },
+    "%fio-10": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks were
+                  stalled waiting for I/O, over the last 10 second window.""",
+    },
+    "%fio-60": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks were
+                  stalled waiting for I/O, over the last 60 second window.""",
+    },
+    "%fio-300": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks were
+                  stalled waiting for I/O, over the last 300 second window.""",
+    },
+    "%fio": {
+        "cat": "I/O",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks were
+                  stalled waiting for I/O, over the last time interval.""",
+    },
     "maxpower": {"cat": "Power", "regexp": INTEGER_RE, "desc": """Maxpower"""},
     "MHz": {"cat": "Power", "regexp": INTEGER_RE, "desc": """MegaHertz"""},
     "FAN": {"cat": "Power", "regexp": INTEGER_RE, "desc": """FAN"""},
