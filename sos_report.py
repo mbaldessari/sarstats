@@ -78,16 +78,16 @@ class SosReport:
         """Parse /proc/interrupts in order to associate the interrupt number
         to the proper device"""
         intr_file = os.path.join(self.path, "proc/interrupts")
-        f = open(intr_file)
-        for line in f.readlines():
-            line = line.strip()
-            fields = line.split()
-            if fields[0][:3] == "CPU":
-                self.nr_cpus = len(fields)
-                continue
-            irq = fields[0].strip(":")
-            self.interrupts[irq] = {}
-            self.interrupts[irq] = self._parse_int_entry(fields[1:], line)
+        with open(intr_file) as f:
+            for line in f.readlines():
+                line = line.strip()
+                fields = line.split()
+                if fields[0][:3] == "CPU":
+                    self.nr_cpus = len(fields)
+                    continue
+                irq = fields[0].strip(":")
+                self.interrupts[irq] = {}
+                self.interrupts[irq] = self._parse_int_entry(fields[1:], line)
         return
 
     def _parse_disks(self):
@@ -110,37 +110,36 @@ class SosReport:
         for i in sorted(files, key=natural_sort_key, reverse=True):
             prev_month = None
             counter = 0
-            f = open(os.path.join(messages_dir, i))
-            for line in f.readlines():
-                line = line.strip()
-                if not re.match(reboot_re, line):
-                    continue
+            with open(os.path.join(messages_dir, i)) as f:
+                for line in f.readlines():
+                    line = line.strip()
+                    if not re.match(reboot_re, line):
+                        continue
 
-                tokens = line.split()[0:3]
-                d = parser.parse(" ".join(tokens))
-                if d.month == 1 and prev_month == 12:
-                    # We crossed a year. This means that all the dates read
-                    # until now should belong to the previous year and not the
-                    # current one FIXME: this breaks if we investigate
-                    # sosreports older than one year :/
-                    for j in self.reboots:
-                        t = self.reboots[j]["date"]
-                        # Remember which dates were decremented and only do it
-                        # once
-                        if i <= counter and "decremented" not in self.reboots[j]:
-                            d = t - relativedelta(years=1)
-                            self.reboots[j]["date"] = d
-                            self.reboots[j]["decremented"] = True
-                prev_month = d.month
-                self.reboots[counter] = {}
-                self.reboots[counter]["date"] = d
-                self.reboots[counter]["file"] = f
-                counter += 1
+                    tokens = line.split()[0:3]
+                    d = parser.parse(" ".join(tokens))
+                    if d.month == 1 and prev_month == 12:
+                        # We crossed a year. This means that all the dates read
+                        # until now should belong to the previous year and not the
+                        # current one FIXME: this breaks if we investigate
+                        # sosreports older than one year :/
+                        for j in self.reboots:
+                            t = self.reboots[j]["date"]
+                            # Remember which dates were decremented and only do it
+                            # once
+                            if i <= counter and "decremented" not in self.reboots[j]:
+                                d = t - relativedelta(years=1)
+                                self.reboots[j]["date"] = d
+                                self.reboots[j]["decremented"] = True
+                    prev_month = d.month
+                    self.reboots[counter] = {}
+                    self.reboots[counter]["date"] = d
+                    self.reboots[counter]["file"] = f
+                    counter += 1
 
     def parse(self):
-        self.redhatrelease = (
-            open(os.path.join(self.path, "etc/redhat-release")).read().strip()
-        )
+        with open(os.path.join(self.path, "etc/redhat-release")) as releasefile:
+            self.redhatrelease = releasefile.read().strip()
         self._parse_interrupts()
         self._parse_network()
         self._parse_reboots()
