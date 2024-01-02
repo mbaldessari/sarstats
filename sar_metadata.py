@@ -429,6 +429,70 @@ BASE_GRAPHS = {
                   system per second. A negative value means fewer pages in the
                   cache""",
     },
+    "%smem-10": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which at least some tasks
+                  were waiting for memory resources, over the last 10 second
+                  window.""",
+    },
+    "%smem-60": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which at least some tasks
+                  were waiting for memory resources, over the last 60 second
+                  window.""",
+    },
+    "%smem-300": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which at least some tasks
+                  were waiting for memory resources, over the last 300 second
+                  window.""",
+    },
+    "%smem": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which at least some tasks
+                  were waiting for memory resources, over the last time
+                  interval.""",
+    },
+    "%fmem-10": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks
+                  were stalled waiting for memory resources, over the last
+                  10 second window.""",
+    },
+    "%fmem-60": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks
+                  were stalled waiting for memory resources, over the last
+                  60 second window.""",
+    },
+    "%fmem-300": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks
+                  were stalled waiting for memory resources, over the last
+                  300 second window.""",
+    },
+    "%fmem": {
+        "cat": "Memory",
+        "unit": "%",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Percentage of the time during which all non-idle tasks
+                  were stalled waiting for memory resources, over the last
+                  time interval.""",
+    },
     "pswpin/s": {
         "cat": "Swap",
         "regexp": NUMBER_WITH_DEC_RE,
@@ -585,48 +649,56 @@ BASE_GRAPHS = {
     },
     "%sio-10": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time that at least some tasks lost waiting
                   for I/O, over the last 10 second window.""",
     },
     "%sio-60": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time that at least some tasks lost waiting
                   for I/O, over the last 30 second window.""",
     },
     "%sio-300": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time that at least some tasks lost waiting
                   for I/O, over the last 600 second window.""",
     },
     "%sio": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time that at least some tasks lost waiting
                   for I/O, over the last time interval.""",
     },
     "%fio-10": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time during which all non-idle tasks were
                   stalled waiting for I/O, over the last 10 second window.""",
     },
     "%fio-60": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time during which all non-idle tasks were
                   stalled waiting for I/O, over the last 60 second window.""",
     },
     "%fio-300": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time during which all non-idle tasks were
                   stalled waiting for I/O, over the last 300 second window.""",
     },
     "%fio": {
         "cat": "I/O",
+        "unit": "%",
         "regexp": NUMBER_WITH_DEC_RE,
         "desc": """Percentage of the time during which all non-idle tasks were
                   stalled waiting for I/O, over the last time interval.""",
