@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     try:
         maxgraphs = int(args.maxgraphs)
-    except:
+    except Exception:
         print("Error parsing --maxgraphs: {0}".format(args.maxgraphs))
         sys.exit(-1)
 
