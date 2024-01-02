@@ -80,7 +80,7 @@ class SarGrapher(object):
         datanames = data[1]
 
         if not isinstance(datanames, list):
-            raise Exception("plottimeseries expects a list of datanames: %s" % data)
+            raise Exception(f"plottimeseries expects a list of datanames: {0}", data)
 
         fig = plt.figure(figsize=(10.5, 6.5))
         axes = fig.add_subplot(111)
