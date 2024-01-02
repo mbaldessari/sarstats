@@ -107,7 +107,7 @@ class SarGrapher(object):
         for i in datanames:
             try:
                 dataset = [sar_parser._data[d][i] for d in timestamps]
-            except:
+            except Exception:
                 print("Key {0} does not exist in this graph".format(i))
                 raise
             axes.plot(
@@ -204,7 +204,7 @@ class SarGrapher(object):
                 plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches="tight")
             else:
                 plt.savefig(fname, bbox_inches="tight")
-        except:
+        except Exception:
             import traceback
 
             print(traceback.format_exc())
@@ -245,7 +245,7 @@ class SarGrapher(object):
         timestamps = self.timestamps()
         try:
             rows, columns = os.popen("stty size", "r").read().split()
-        except:
+        except Exception:
             columns = def_columns
         rows = def_rows
         if columns > def_columns:

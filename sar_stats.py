@@ -64,7 +64,7 @@ GRAPH_HEIGHT = 6.5
 def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size"""
     return [
-        list_to_split[i : i + chunksize]
+        list_to_split[i: i + chunksize]
         for i in range(0, len(list_to_split), chunksize)
     ]
 
@@ -194,7 +194,7 @@ class SarStats(object):
         """Order in which to present all graphs.
         Data is grouped loosely by type."""
         skiplist = skip_list or []
-        l = []
+        my_list = []
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
         # First we add all the simple graphs sorted by chosen category list
@@ -204,7 +204,7 @@ class SarStats(object):
                 if j.endswith("DEVICE"):
                     continue
                 if metadata.get_category(j) == i:
-                    l.append([j])
+                    my_list.append([j])
 
         # Here we add the combined graphs always per category
         c = {}
@@ -212,7 +212,7 @@ class SarStats(object):
             s = sar_parser.datanames_per_arg(i, False)
             try:
                 key = metadata.get_category(s[0][0])
-            except:
+            except Exception:
                 continue
             if key not in c:
                 c[key] = s
@@ -221,7 +221,7 @@ class SarStats(object):
 
         # We merge the two in a single list: for each category simple graphs
         # and then combined graphs
-        l = []
+        my_list = []
         for i in cat:
             for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
                 if (
@@ -230,7 +230,7 @@ class SarStats(object):
                     and j not in skiplist
                 ):
                     entry = metadata.graph_info([j], sar_obj=sar_parser)
-                    l.append([entry, [j]])
+                    my_list.append([entry, [j]])
             if i in c:
                 for j in range(len(c[i])):
                     # Only add the graph if none of it's components is in the
@@ -251,13 +251,13 @@ class SarStats(object):
                             entry = metadata.graph_info(chunk, sar_obj=sar_parser)
                             s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
                             newentry = (s, entry[1], entry[2])
-                            l.append([newentry, chunk])
+                            my_list.append([newentry, chunk])
                             counter += 1
                     else:
                         entry = metadata.graph_info(b, sar_obj=sar_parser)
-                        l.append([entry, b])
+                        my_list.append([entry, b])
 
-        return l
+        return my_list
 
     def do_heading(self, text, sty):
         # create bookmarkname
@@ -288,7 +288,7 @@ class SarStats(object):
         if labels is not None:
             try:
                 self.extra_labels = parse_labels(labels)
-            except:
+            except Exception:
                 raise
                 print("Unable to parse extra labels: {0}".format(labels))
                 sys.exit(-1)
@@ -320,8 +320,8 @@ class SarStats(object):
         # sequence
         if threaded:
             pool = multiprocessing.Pool(NR_CPUS)
-            l = self.graphs_order(category_order, skip_list)
-            f = zip(repeat(self), repeat(sar_grapher), l)
+            graph_list = self.graphs_order(category_order, skip_list)
+            f = zip(repeat(self), repeat(sar_grapher), graph_list)
             pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(category_order, skip_list):
@@ -342,7 +342,7 @@ class SarStats(object):
                     label = i.split(":")[0]
                     values = i.split(":")[1].split(",")
                     custom_graph_list[label] = values
-            except:
+            except Exception:
                 raise Exception(
                     "Error in parsing custom graphs: {0}".format(custom_graphs)
                 )
@@ -354,7 +354,7 @@ class SarStats(object):
                     # For each match add it to the set
                     try:
                         ret = sar_parser.match_datasets(i)
-                    except:
+                    except Exception:
                         raise Exception("Error in regex for: {0}".format(i))
                     for j in ret:
                         matched_graphs.add(j)
@@ -464,7 +464,7 @@ class SarStats(object):
 
         try:
             rows, columns = os.popen("stty size", "r").read().split()
-        except:
+        except Exception:
             columns = 80
         columns = int(columns) - 10
 

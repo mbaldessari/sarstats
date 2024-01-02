@@ -64,7 +64,7 @@ class SosReport:
         d["cpu"].append(int(fields[0]))
         nr_fields = len(fields)
         if nr_fields >= self.nr_cpus:
-            d["cpu"] += [int(i) for i in fields[1 : self.nr_cpus]]
+            d["cpu"] += [int(i) for i in fields[1: self.nr_cpus]]
             if nr_fields > self.nr_cpus:
                 d["type"] = fields[self.nr_cpus]
                 if nr_fields > self.nr_cpus + 1:

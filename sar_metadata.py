@@ -2049,7 +2049,7 @@ def graph_info(names, sar_obj=None):
         try:
             (c, k, p) = i.split("#")
         # It is not in the "CPU#0#%idle" form
-        except:
+        except Exception:
             # If the name does not exist in the BASE_GRAPHS dict we just
             # use the name itself for title and label
             if not names[0] in BASE_GRAPHS:
@@ -2089,17 +2089,17 @@ def graph_info(names, sar_obj=None):
         # It is an interrupt and sosreport exists and has interrupts dictionary
         # hence we print the device that generated it in the title
         if (
-            re.match("i[0-9]*/s", title)
-            and sar_obj is not None
-            and sar_obj.sosreport is not None
-            and sar_obj.sosreport.interrupts is not None
+            re.match("i[0-9]*/s", title) and
+            sar_obj is not None and
+            sar_obj.sosreport is not None and
+            sar_obj.sosreport.interrupts is not None
         ):
             try:
                 nr_int = str(int(title[1:4]))
                 interrupts = sar_obj.sosreport.interrupts
                 title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]["users"]))
             # Just leave the original title in case of errors
-            except:
+            except Exception:
                 pass
         # This takes the CPU number (in case of a CPU#1#%idle series
         labels = ["".join(i.split("#")[1:2]) for i in names]
@@ -2112,11 +2112,11 @@ def graph_info(names, sar_obj=None):
 
 
 def list_all_categories():
-    l = {"Load", "Files", "I/O", "TTY", "Network", "Power", "Intr"}
+    categories = {"Load", "Files", "I/O", "TTY", "Network", "Power", "Intr"}
     for i in BASE_GRAPHS.keys():
         cat = BASE_GRAPHS[i]["cat"]
-        l.update([cat])
-    return l
+        categories.update([cat])
+    return categories
 
 
 def get_category(name):
@@ -2173,7 +2173,7 @@ def get_desc(names):
             if "detail" in BASE_GRAPHS[perf]:
                 detail = BASE_GRAPHS[perf]["detail"]
             return [[perf, regex.sub(" ", desc), detail]]
-        except:
+        except Exception:
             pass
         if re.match(".*i[0-9]*/s", name):
             return [["int/s", "Interrupts per second", None]]
@@ -2196,7 +2196,7 @@ def get_desc(names):
                 if previous != perf:
                     ret.append([perf, regex.sub(" ", desc), detail])
                     previous = perf
-            except:
+            except Exception:
                 # It is a combination of simple graphs (like ldavg-{1,5,15})
                 desc = BASE_GRAPHS[i]["desc"]
                 ret.append([i, regex.sub(" ", desc), None])

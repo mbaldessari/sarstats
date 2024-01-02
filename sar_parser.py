@@ -144,7 +144,7 @@ class SarParser(object):
         try:
             self.sosreport = SosReport(absdir)
             self.sosreport.parse()
-        except:
+        except Exception:
             pass
 
     def _prune_data(self):
@@ -172,7 +172,7 @@ class SarParser(object):
             for i in keys_to_remove.keys():
                 try:
                     self._data[t].pop(i)
-                except:
+                except Exception:
                     pass
 
         # Store all possible keys
@@ -297,7 +297,7 @@ class SarParser(object):
             if hre is None:
                 raise Exception(
                     'Line {0}: column header "{1}"'
-                    "unknown {2}".format(self._linecount, hdr)
+                    "unknown".format(self._linecount, hdr)
                 )
             regexp = regexp + r"\s+(" + str(hre) + r")"
         regexp += r"\s*$"
@@ -565,8 +565,8 @@ class SarParser(object):
         """Given a category string returns all the graphs starting
         with it"""
         t = list(self._data.keys())[0]
-        l = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
-        return l
+        graph_list = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
+        return graph_list
 
     def datanames_per_arg(self, category, per_key=True):
         """Returns a list of all combined graphs per category. If per_key is
@@ -577,15 +577,15 @@ class SarParser(object):
         'DEV#dev8-0#avgqu-sz', ...]] datanames_per_arg('DEV', False) will give:
         [['DEV#dev253-1#%util', 'DEV#dev8-0#%util', 'DEV#dev8-3#%util'],
         ['DEV#dev253-1#avgqu-sz'...]]"""
-        l = self.available_types(category)
+        graph_list = self.available_types(category)
         ret = []
 
         if per_key:
             keys = {}
-            for i in l:
+            for i in graph_list:
                 try:
                     (cat, k, p) = i.split("#")
-                except:
+                except Exception:
                     raise Exception(
                         "Error datanames_per_arg " "per_key={0}: {1}".format(per_key, i)
                     )
@@ -593,10 +593,10 @@ class SarParser(object):
 
             for i in sorted(keys.keys(), key=natural_sort_key):
                 tmp = []
-                for j in l:
+                for j in graph_list:
                     try:
                         (cat, k, p) = j.split("#")
-                    except:
+                    except Exception:
                         raise Exception(
                             "Error datanames_per_arg "
                             "per_key={0}: {1}".format(per_key, j)
@@ -611,10 +611,10 @@ class SarParser(object):
 
         if not per_key:
             keys2 = {}
-            for i in l:
+            for i in graph_list:
                 try:
                     (cat, k, p) = i.split("#")
-                except:
+                except Exception:
                     raise Exception(
                         "Error datanames_per_arg " "per_key={0}: {1}".format(per_key, i)
                     )
@@ -622,7 +622,7 @@ class SarParser(object):
 
             for i in sorted(keys2.keys(), key=natural_sort_key):
                 tmp = []
-                for j in l:
+                for j in graph_list:
                     (cat, k, p) = j.split("#")
                     if p == i and not p.endswith("DEVICE"):
                         tmp.append(j)
