@@ -42,3 +42,4 @@ nosetests.xml
 # sarstat output files
 *.pdf
 *.svg
+.eggs
