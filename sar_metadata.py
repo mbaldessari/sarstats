@@ -2083,7 +2083,6 @@ def graph_info(names, sar_obj=None):
     # title = '%idle'
     # labels = ['CPU0', 'CPU1', 'CPU2', ...]
     if len(perf.keys()) == 1:
-        c = list(cat.keys())[0]
         perf_key = list(perf.keys())[0]
         title = "%s" % (perf_key)
         # It is an interrupt and sosreport exists and has interrupts dictionary
