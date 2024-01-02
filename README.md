@@ -6,6 +6,14 @@ Creates a PDF report out of sar files
 Written originally by Ray, I cleaned it up to make it more user-friendly, use
 less memory and make it multi-processor capable.
 
+converting sa files
+===================
+
+To obtain the plain-text sar files given a sysstat sa file you can run:
+```
+# LC_TIME=POSIX sar -A -t -f /var/log/sa02 > /tmp/sar02
+```
+
 demo
 ====
 Here you can see how such a pdf looks like: http://acksyn.org/software/sarstats/sar19.pdf
