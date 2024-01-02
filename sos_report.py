@@ -123,14 +123,14 @@ class SosReport:
                     # until now should belong to the previous year and not the
                     # current one FIXME: this breaks if we investigate
                     # sosreports older than one year :/
-                    for i in self.reboots:
-                        t = self.reboots[i]["date"]
+                    for j in self.reboots:
+                        t = self.reboots[j]["date"]
                         # Remember which dates were decremented and only do it
                         # once
-                        if i <= counter and "decremented" not in self.reboots[i]:
+                        if i <= counter and "decremented" not in self.reboots[j]:
                             d = t - relativedelta(years=1)
-                            self.reboots[i]["date"] = d
-                            self.reboots[i]["decremented"] = True
+                            self.reboots[j]["date"] = d
+                            self.reboots[j]["decremented"] = True
                 prev_month = d.month
                 self.reboots[counter] = {}
                 self.reboots[counter]["date"] = d
