@@ -22,13 +22,7 @@ def discover_and_run_tests():
 
     # use the basic test runner that outputs to sys.stderr
     test_runner = unittest.TextTestRunner()
-
-    # automatically discover all tests
-    if sys.version_info < (2, 7):
-        raise "Must use python 2.7 or later"
     test_suite = test_loader.discover(setup_dir)
-
-    # run the test suite
     test_runner.run(test_suite)
 
 
