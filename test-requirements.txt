@@ -1,3 +1,4 @@
+pytest
 matplotlib
 reportlab
 flake8
