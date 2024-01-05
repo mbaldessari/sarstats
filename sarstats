@@ -28,7 +28,7 @@ import sys
 from sar_grapher import SarGrapher
 from sar_stats import SarStats
 
-VERSION = '0.4'
+VERSION = '0.5'
 
 
 def parse_sar_date(fname):
