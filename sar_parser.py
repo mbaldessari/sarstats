@@ -236,7 +236,7 @@ class SarParser(object):
             r"""(?x)
             ^("""
             + sar_metadata.TIMESTAMP_RE
-            + """)\s+
+            + r""")\s+
             (
                 # Time to be strict - we don't want to
                 # accidentally end up recognising lines of
