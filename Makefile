@@ -17,6 +17,4 @@ test: ## Run unit tests
 
 .PHONY: clean
 clean: ## Clean artifacts
-	rm -rf $(VENV)
-	
-
+	rm -rf $(VENV) .tox __pycache__ *.egg-info
