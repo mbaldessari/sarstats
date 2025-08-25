@@ -12,7 +12,7 @@ test: ## Run unit tests
 	python3 -m pip install --upgrade pip && \
 	pip install -r requirements.txt -r test-requirements.txt && \
 	pip install tox && \
-	tox -e py$(PYVER)
+	tox
 
 
 .PHONY: clean
