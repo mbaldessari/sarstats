@@ -1,5 +1,4 @@
 VENV ?= .venv
-PYVER ?= 312
 
 .PHONY: help
 help: ## Display this help.
