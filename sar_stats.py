@@ -25,7 +25,6 @@ data contained in one or more sar reports.
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-from __future__ import print_function
 from itertools import repeat
 from hashlib import sha1
 import csv

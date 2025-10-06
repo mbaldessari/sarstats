@@ -1,39 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
-from setuptools.command.test import test
-
-
-def discover_and_run_tests():
-    import os
-    import sys
-    import unittest
-
-    # get setup.py directory
-    setup_file = sys.modules["__main__"].__file__
-    setup_dir = os.path.abspath(os.path.dirname(setup_file))
-
-    # use the default shared TestLoader instance
-    test_loader = unittest.defaultTestLoader
-
-    # use the basic test runner that outputs to sys.stderr
-    test_runner = unittest.TextTestRunner()
-    test_suite = test_loader.discover(setup_dir)
-    test_runner.run(test_suite)
-
-
-class DiscoverTest(test):
-    def finalize_options(self):
-        test.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        discover_and_run_tests()
+# Test discovery is now handled by pytest in tox.ini
 
 
 config = {
@@ -43,7 +12,7 @@ config = {
     "author_email": "michele@acksyn.org",
     "url": "http://acksyn.org",
     "license": "GPLv2",
-    "cmdclass": {"test": DiscoverTest},
+    "python_requires": ">=3.8",
     "py_modules": [
         "sar_parser",
         "sar_stats",
@@ -52,12 +21,19 @@ config = {
         "sos_report",
     ],
     "scripts": ["sarstats"],
-    "install_requires": ["dateutils", "matplotlib", "reportlab"],
+    "install_requires": ["python-dateutil", "matplotlib", "reportlab"],
     "classifiers": [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
 }
 

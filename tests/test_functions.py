@@ -7,10 +7,7 @@ import os.path
 import pstats
 import resource
 
-try:
-    import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 import sys
 import tempfile
 import time
@@ -87,7 +84,7 @@ class TestSarParsing(unittest.TestCase):
 
             if USE_PROFILER:
                 self.profile.disable()
-                str_io = StringIO.StringIO()
+                str_io = StringIO()
                 sortby = "cumulative"
                 stats = pstats.Stats(self.profile, stream=str_io)
                 pstat = stats.sort_stats(sortby)
@@ -102,7 +99,7 @@ class TestSarParsing(unittest.TestCase):
             stats.graph(example, [], out, threaded=True)
             if USE_PROFILER:
                 self.profile.disable()
-                str_io = StringIO.StringIO()
+                str_io = StringIO()
                 sortby = "cumulative"
                 stats = pstats.Stats(self.profile, stream=str_io)
                 pstat = stats.sort_stats(sortby)

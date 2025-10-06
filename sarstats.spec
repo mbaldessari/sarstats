@@ -6,10 +6,12 @@ License:        GPLv2
 URL:            https://github.com/mbaldessari/sarstats
 Source0:        sarstats-0.1.tar.gz
 BuildArch:	noarch
-BuildRequires:  python
-Requires:       python-matplotlib
-Requires:	python-reportlab
-Requires:	python-numpy
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
+Requires:       python3-matplotlib
+Requires:	python3-reportlab
+Requires:	python3-numpy
+Requires:	python3-dateutil
 
 %description
 Generate a PDF report of one or more sar files
@@ -19,18 +21,18 @@ Generate a PDF report of one or more sar files
 
 
 %build
-%{__python} setup.py build
+%{__python3} setup.py build
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+%{__python3} setup.py install --skip-build --root $RPM_BUILD_ROOT
 
 %files
 %doc README LICENSE
 %{_bindir}/sarstats
-%{python_sitelib}/*.egg-info
-%{python_sitelib}/*.py
-%{python_sitelib}/*.py[oc]
+%{python3_sitelib}/*.egg-info
+%{python3_sitelib}/*.py
+%{python3_sitelib}/*.py[oc]
 
 %changelog
 * Fri Dec 27 2013 Michele Baldessari <michele@acksyn.org> - 0.1-1
