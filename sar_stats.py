@@ -65,7 +65,7 @@ GRAPH_HEIGHT = 6.5
 
 def split_chunks(lst: list, chunksize: int) -> list[list]:
     """Split a list into chunks of at most chunksize elements."""
-    return [lst[i : i + chunksize] for i in range(0, len(lst), chunksize)]
+    return [lst[i: i + chunksize] for i in range(0, len(lst), chunksize)]
 
 
 def parse_labels(labels: Optional[list[str]]) -> list[tuple]:
