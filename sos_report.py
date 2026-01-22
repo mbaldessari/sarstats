@@ -1,145 +1,147 @@
 # Note: This is just a temporary class
 # I am working on a more complete sosreport parsing class
 # which will supersede this one
-from dateutil import parser
-from dateutil.relativedelta import relativedelta
-import os
-import os.path
+
+from pathlib import Path
+from typing import Any, Optional
 import re
 
-# Interrupt parsing routines taken from python-linux-procfs (GPLv2)
-#
+from dateutil import parser as dateparser
+from dateutil.relativedelta import relativedelta
 
-
-def natural_sort_key(s):
-    _nsre = re.compile("([0-9]+)")
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
-    ]
+from utils import natural_sort_key
 
 
 class SosReport:
-    def __init__(self, path):
-        if not os.path.isdir(path):
-            raise Exception("{0} does not exist".format(path))
+    """Parser for sosreport data."""
 
-        sospath = os.path.join(path, "sos_reports")
-        if not os.path.exists(sospath):
-            raise Exception("{0} does not exist".format(sospath))
+    def __init__(self, path: str) -> None:
+        """Initialize SosReport.
 
-        self.path = path
-        self.redhatrelease = None
-        self.packages = []
-        self.interrupts = {}
-        self.networking = {}
-        self.reboots = {}
+        Args:
+            path: Path to the sosreport directory.
 
-    def _parse_network_ethtool(self):
-        sos_networking = os.path.join(self.path, "sos_commands/networking")
-        for i in os.listdir(sos_networking):
-            if not i.startswith("ethtool_-i_"):
+        Raises:
+            FileNotFoundError: If the path doesn't exist or isn't a valid sosreport.
+        """
+        self.path = Path(path)
+        if not self.path.is_dir():
+            raise FileNotFoundError(f"{path} does not exist")
+
+        sospath = self.path / "sos_reports"
+        if not sospath.exists():
+            raise FileNotFoundError(f"{sospath} does not exist")
+
+        self.redhatrelease: Optional[str] = None
+        self.packages: list[str] = []
+        self.interrupts: dict[str, dict[str, Any]] = {}
+        self.networking: dict[str, dict[str, str]] = {}
+        self.reboots: dict[int, dict[str, Any]] = {}
+        self.nr_cpus: int = 0
+
+    def _parse_network_ethtool(self) -> None:
+        """Parse ethtool output files for network interface info."""
+        sos_networking = self.path / "sos_commands" / "networking"
+        if not sos_networking.exists():
+            return
+
+        for filepath in sos_networking.iterdir():
+            if not filepath.name.startswith("ethtool_-i_"):
                 continue
 
-            dev = i.split("_")[2]
+            dev = filepath.name.split("_")[2]
             self.networking[dev] = {}
-            f = open(os.path.join(sos_networking, i))
-            for line in f.readlines():
-                line = line.strip()
-                if len(line) <= 1:
-                    continue
-                (label, value) = line.split(": ")
-                self.networking[dev][label] = value
+            with filepath.open() as f:
+                for line in f:
+                    line = line.strip()
+                    if len(line) <= 1 or ": " not in line:
+                        continue
+                    label, value = line.split(": ", 1)
+                    self.networking[dev][label] = value
 
-    def _parse_network(self):
-        """Parse network configuration and create a hash like the following:
-        self.network['eth0'] = {'module': 'igb', ipv4: ['10.0.0.1/24'],
-        ipv6: ['fe80::2e41:38ff:feab:99e2/64'], 'firmware': '1.20',
-        'bus-info': '0000:01:00.0', 'version': '3.133'"""
+    def _parse_network(self) -> None:
+        """Parse network configuration."""
         self._parse_network_ethtool()
-        return
 
-    def _parse_int_entry(self, fields, line):
-        d = {}
-        d["cpu"] = []
-        d["cpu"].append(int(fields[0]))
+    def _parse_int_entry(
+        self, fields: list[str], line: str
+    ) -> dict[str, Any]:
+        """Parse a single interrupt entry."""
+        result: dict[str, Any] = {"cpu": [int(fields[0])]}
         nr_fields = len(fields)
-        if nr_fields >= self.nr_cpus:
-            d["cpu"] += [int(i) for i in fields[1: self.nr_cpus]]
-            if nr_fields > self.nr_cpus:
-                d["type"] = fields[self.nr_cpus]
-                if nr_fields > self.nr_cpus + 1:
-                    field = line.index(fields[self.nr_cpus + 1])
-                    d["users"] = [a.strip() for a in line[field:].split(",")]
-                else:
-                    d["users"] = []
-        return d
 
-    def _parse_interrupts(self):
-        """Parse /proc/interrupts in order to associate the interrupt number
-        to the proper device"""
-        intr_file = os.path.join(self.path, "proc/interrupts")
-        with open(intr_file) as f:
-            for line in f.readlines():
+        if nr_fields >= self.nr_cpus:
+            result["cpu"] += [int(i) for i in fields[1:self.nr_cpus]]
+            if nr_fields > self.nr_cpus:
+                result["type"] = fields[self.nr_cpus]
+                if nr_fields > self.nr_cpus + 1:
+                    field_idx = line.index(fields[self.nr_cpus + 1])
+                    result["users"] = [a.strip() for a in line[field_idx:].split(",")]
+                else:
+                    result["users"] = []
+        return result
+
+    def _parse_interrupts(self) -> None:
+        """Parse /proc/interrupts to associate interrupt numbers with devices."""
+        intr_file = self.path / "proc" / "interrupts"
+        if not intr_file.exists():
+            return
+
+        with intr_file.open() as f:
+            for line in f:
                 line = line.strip()
                 fields = line.split()
+                if not fields:
+                    continue
                 if fields[0][:3] == "CPU":
                     self.nr_cpus = len(fields)
                     continue
                 irq = fields[0].strip(":")
-                self.interrupts[irq] = {}
                 self.interrupts[irq] = self._parse_int_entry(fields[1:], line)
-        return
 
-    def _parse_disks(self):
-        """Parse disk output files so that labels dev123-40 can be correctly
-        mapped to an existing physical device"""
-        return
+    def _parse_reboots(self) -> None:
+        """Parse /var/log/messages to find machine reboot times.
 
-    def _parse_reboots(self):
-        """Parse /var/log/messages and find out when the machine rebooted.
-        Returns an array of datetimes containing the times of reboot. First
-        uncompress /var/log/messages*, go through them and search for lines
-        like 'Dec  4 11:02:05 illins04 kernel: Linux version
-        2.6.32-279.5.2.el6.x86_64'.  We parse messages* files because 'LINUX
-        RESTART' in sar files is not precise"""
-        # FIXME: uncompress any compressed messages files
-        # FIXME: This is still potentially *very* fragile
-        messages_dir = os.path.join(self.path, "var/log")
-        reboot_re = r".*kernel: Linux version.*$"
-        files = [f for f in os.listdir(messages_dir) if f.startswith("messages")]
-        for i in sorted(files, key=natural_sort_key, reverse=True):
-            prev_month = None
-            counter = 0
-            with open(os.path.join(messages_dir, i)) as f:
-                for line in f.readlines():
+        Parses messages* files to find lines like:
+        'Dec  4 11:02:05 hostname kernel: Linux version 2.6.32...'
+        """
+        messages_dir = self.path / "var" / "log"
+        if not messages_dir.exists():
+            return
+
+        reboot_re = re.compile(r".*kernel: Linux version.*$")
+        files = [f for f in messages_dir.iterdir() if f.name.startswith("messages")]
+
+        counter = 0
+        for filepath in sorted(files, key=lambda x: natural_sort_key(x.name), reverse=True):
+            prev_month: Optional[int] = None
+            with filepath.open(errors="replace") as f:
+                for line in f:
                     line = line.strip()
-                    if not re.match(reboot_re, line):
+                    if not reboot_re.match(line):
                         continue
 
                     tokens = line.split()[0:3]
-                    d = parser.parse(" ".join(tokens))
+                    d = dateparser.parse(" ".join(tokens))
                     if d.month == 1 and prev_month == 12:
-                        # We crossed a year. This means that all the dates read
-                        # until now should belong to the previous year and not the
-                        # current one FIXME: this breaks if we investigate
-                        # sosreports older than one year :/
+                        # Year crossover - adjust previous dates
                         for j in self.reboots:
-                            t = self.reboots[j]["date"]
-                            # Remember which dates were decremented and only do it
-                            # once
-                            if i <= counter and "decremented" not in self.reboots[j]:
-                                d = t - relativedelta(years=1)
-                                self.reboots[j]["date"] = d
+                            if "decremented" not in self.reboots[j]:
+                                t = self.reboots[j]["date"]
+                                self.reboots[j]["date"] = t - relativedelta(years=1)
                                 self.reboots[j]["decremented"] = True
                     prev_month = d.month
-                    self.reboots[counter] = {}
-                    self.reboots[counter]["date"] = d
-                    self.reboots[counter]["file"] = f
+                    self.reboots[counter] = {
+                        "date": d,
+                        "file": str(filepath),
+                    }
                     counter += 1
 
-    def parse(self):
-        with open(os.path.join(self.path, "etc/redhat-release")) as releasefile:
-            self.redhatrelease = releasefile.read().strip()
+    def parse(self) -> None:
+        """Parse all sosreport data."""
+        release_file = self.path / "etc" / "redhat-release"
+        if release_file.exists():
+            self.redhatrelease = release_file.read_text().strip()
         self._parse_interrupts()
         self._parse_network()
         self._parse_reboots()
@@ -149,4 +151,4 @@ if __name__ == "__main__":
     sosreport = SosReport("./demosos")
     sosreport.parse()
     for i in sosreport.reboots:
-        print("{0} - {1}".format(i, sosreport.reboots[i]))
+        print(f"{i} - {sosreport.reboots[i]}")

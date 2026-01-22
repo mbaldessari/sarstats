@@ -1,4 +1,4 @@
-# categories.py - sar(1) report graphing utility
+# sar_metadata.py - sar(1) report graphing utility
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
 #
@@ -16,6 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.
+
+"""SAR metadata definitions and utility functions."""
+
+from typing import Any, Optional
 import re
 
 # Column titles that represent another layer of indexing
@@ -2002,207 +2006,219 @@ BASE_GRAPHS = {
 }
 
 
-def get_regexp(name):
-    """Given a graph name return the correct regexp to identify the data in a
-    sar file"""
-    k = {
-        "IFACE": INTERFACE_NAME_RE,
-        "DEV": DEVICE_NAME_RE,
-        "CPU": CPU_RE,
-        "INTR": INT_RE,
-        "iNNN/s": INTERRUPTS_RE,
-        "BUS": INTEGER_RE,
-        "FAN": INTEGER_RE,
-        "DEVICE": INTERFACE_NAME_RE,
-        "TEMP": INTEGER_RE,
-        "TTY": INTEGER_RE,
-        "idvendor": HEX_RE,
-        "idprod": HEX_RE,
-        "manufact": USB_NAME_RE,
-        "product": USB_NAME_RE,
-        "MHz": NUMBER_WITH_DEC_RE,
-        "FILESYSTEM": FS_NAME_RE,
-    }
+_SPECIAL_REGEXPS: dict[str, str] = {
+    "IFACE": INTERFACE_NAME_RE,
+    "DEV": DEVICE_NAME_RE,
+    "CPU": CPU_RE,
+    "INTR": INT_RE,
+    "iNNN/s": INTERRUPTS_RE,
+    "BUS": INTEGER_RE,
+    "FAN": INTEGER_RE,
+    "DEVICE": INTERFACE_NAME_RE,
+    "TEMP": INTEGER_RE,
+    "TTY": INTEGER_RE,
+    "idvendor": HEX_RE,
+    "idprod": HEX_RE,
+    "manufact": USB_NAME_RE,
+    "product": USB_NAME_RE,
+    "MHz": NUMBER_WITH_DEC_RE,
+    "FILESYSTEM": FS_NAME_RE,
+}
 
-    if name in k:
-        return k[name]
+
+def get_regexp(name: str) -> str:
+    """Get the regex pattern to identify data for a graph name in a SAR file.
+
+    Args:
+        name: The graph/column name.
+
+    Returns:
+        The regex pattern string.
+
+    Raises:
+        ValueError: If no regex pattern is found for the name.
+    """
+    if name in _SPECIAL_REGEXPS:
+        return _SPECIAL_REGEXPS[name]
 
     if name in BASE_GRAPHS and "regexp" in BASE_GRAPHS[name]:
         return BASE_GRAPHS[name]["regexp"]
 
-    if re.match("i[0-9]*/s", name):
+    if re.match(r"i[0-9]*/s", name):
         return INTERRUPTS_RE
 
-    raise Exception("regexp for %s could not be found" % name)
+    raise ValueError(f"regexp for {name} could not be found")
 
 
-def graph_info(names, sar_obj=None):
-    """Given a list of graph names it returns a list of tuples of title,
-    unit, labels. title is the title of the whole graph, unit represents
-    the unit of the graph(s) if one exists and if it is the same among all
-    graphs. labels are the names of the plotted dataseries as seen in
-    the legend of the graph"""
-    cat = {}
-    key = {}
-    perf = {}
-    for i in names:
-        try:
-            (c, k, p) = i.split("#")
-        # It is not in the "CPU#0#%idle" form
-        except Exception:
-            # If the name does not exist in the BASE_GRAPHS dict we just
-            # use the name itself for title and label
-            if not names[0] in BASE_GRAPHS:
+def graph_info(
+    names: list[str], sar_obj: Any = None
+) -> tuple[str, Optional[str], str | list[str]]:
+    """Get graph metadata for a list of graph names.
+
+    Args:
+        names: List of graph names.
+        sar_obj: Optional SAR parser object for interrupt info lookup.
+
+    Returns:
+        Tuple of (title, unit, labels).
+    """
+    cat: dict[str, bool] = {}
+    key: dict[str, bool] = {}
+    perf: dict[str, bool] = {}
+
+    for name in names:
+        parts = name.split("#")
+        if len(parts) != 3:
+            # Not in "CPU#0#%idle" form
+            if names[0] not in BASE_GRAPHS:
                 return names[0], None, names[0]
 
-            # If a graph has the 'label' attribute we use that for
-            # Title and label
-            s = names[0]
-            if "label" in BASE_GRAPHS[names[0]]:
-                s = BASE_GRAPHS[names[0]]["label"]
+            graph_def = BASE_GRAPHS[names[0]]
+            label = graph_def.get("label", names[0])
+            unit = graph_def.get("unit")
+            return label, unit, label
 
-            unit = None
-            if "unit" in BASE_GRAPHS[names[0]]:
-                unit = BASE_GRAPHS[names[0]]["unit"]
+        cat[parts[0]] = True
+        key[parts[1]] = True
+        perf[parts[2]] = True
 
-            return s, unit, s
-        cat[c] = True
-        key[k] = True
-        perf[p] = True
-
-    # We can raise an error here because in case of a custom graph with
-    # different datasets the label is set by the user and this function is
-    # never called
-    if len(cat.keys()) > 1:
-        raise Exception(
-            "Error. We do not contemplate graphing data from"
-            " different categories: %s" % names
+    if len(cat) > 1:
+        raise ValueError(
+            f"Cannot graph data from different categories: {names}"
         )
 
-    # ['CPU#0#%idle', 'CPU#1#%idle', 'CPU#3#%idle', ...]
-    # title = '%idle'
-    # labels = ['CPU0', 'CPU1', 'CPU2', ...]
-    if len(perf.keys()) == 1:
-        perf_key = list(perf.keys())[0]
-        title = "%s" % (perf_key)
-        # It is an interrupt and sosreport exists and has interrupts dictionary
-        # hence we print the device that generated it in the title
+    # ['CPU#0#%idle', 'CPU#1#%idle', ...] -> title='%idle', labels=['0', '1', ...]
+    if len(perf) == 1:
+        perf_key = next(iter(perf))
+        title = perf_key
+
+        # Add interrupt device info if available
         if (
-            re.match("i[0-9]*/s", title) and
-            sar_obj is not None and
-            sar_obj.sosreport is not None and
-            sar_obj.sosreport.interrupts is not None
+            re.match(r"i[0-9]*/s", title)
+            and sar_obj is not None
+            and sar_obj.sosreport is not None
+            and sar_obj.sosreport.interrupts
         ):
             try:
                 nr_int = str(int(title[1:4]))
-                interrupts = sar_obj.sosreport.interrupts
-                title = "{0} [{1}]".format(title, " ".join(interrupts[nr_int]["users"]))
-            # Just leave the original title in case of errors
-            except Exception:
+                users = sar_obj.sosreport.interrupts[nr_int]["users"]
+                title = f"{title} [{' '.join(users)}]"
+            except (KeyError, ValueError):
                 pass
-        # This takes the CPU number (in case of a CPU#1#%idle series
-        labels = ["".join(i.split("#")[1:2]) for i in names]
-        unit = None
-        if perf_key in BASE_GRAPHS and "unit" in BASE_GRAPHS[perf_key]:
-            unit = BASE_GRAPHS[perf_key]["unit"]
+
+        labels = [name.split("#")[1] for name in names]
+        unit = BASE_GRAPHS.get(perf_key, {}).get("unit")
         return title, unit, labels
 
-    raise Exception("get_labels_title() error on %s" % names)
+    raise ValueError(f"graph_info error on {names}")
 
 
-def list_all_categories():
+def list_all_categories() -> set[str]:
+    """Return the set of all possible categories."""
     categories = {"Load", "Files", "I/O", "TTY", "Network", "Power", "Intr"}
-    for i in BASE_GRAPHS.keys():
-        cat = BASE_GRAPHS[i]["cat"]
-        categories.update([cat])
+    categories.update(graph["cat"] for graph in BASE_GRAPHS.values())
     return categories
 
 
-def get_category(name):
-    """Given a graph name, return the corresponding Category"""
-    if name.startswith("CPU#"):
-        return "Load"
-    elif name.startswith("FILESYSTEM#"):
-        return "Files"
-    elif name.startswith("DEV#"):
-        return "I/O"
-    elif name.startswith("TTY"):
-        return "TTY"
-    elif name.startswith("IFACE"):
-        return "Network"
-    elif name.startswith("TEMP#"):
-        return "Power"
-    elif name.startswith("FAN#"):
-        return "Power"
-    elif name.startswith("INTR#"):
-        return "Intr"
+# Prefix to category mapping for quick lookups
+_CATEGORY_PREFIXES: dict[str, str] = {
+    "CPU#": "Load",
+    "FILESYSTEM#": "Files",
+    "DEV#": "I/O",
+    "TTY": "TTY",
+    "IFACE": "Network",
+    "TEMP#": "Power",
+    "FAN#": "Power",
+    "INTR#": "Intr",
+}
+
+
+def get_category(name: str) -> str:
+    """Get the category for a graph name.
+
+    Args:
+        name: The graph name.
+
+    Returns:
+        The category string.
+    """
+    for prefix, category in _CATEGORY_PREFIXES.items():
+        if name.startswith(prefix):
+            return category
 
     if name in BASE_GRAPHS:
         return BASE_GRAPHS[name]["cat"]
 
-    # Everything else aka 'i[0-9]*/s' we match to 'Interrups'
-    # Not using a re here due to performance reason
-    # Worse that can happen is that we get wrong categories on new
-    # not-yet accounted for graph. Drop me a line in such cases
+    # Default to Interrupts for unrecognized patterns (e.g., 'i[0-9]*/s')
     return "Interrupts"
 
 
-def get_desc(names):
-    """Given a list of graph names it returns a list of [(name, description,
-    detail), ...] list of three-element tuples. description or detail may be
-    None"""
-    if not isinstance(names, list):
-        raise Exception("get_desc mandates a list: %s" % names)
+# Pre-compiled regex for whitespace normalization
+_WHITESPACE_RE = re.compile(r"[\n ]+")
 
-    regex = re.compile("[\n ]+")
+
+def get_desc(names: list[str]) -> list[list[Any]]:
+    """Get descriptions for a list of graph names.
+
+    Args:
+        names: List of graph names.
+
+    Returns:
+        List of [name, description, detail] lists.
+
+    Raises:
+        TypeError: If names is not a list.
+    """
+    if not isinstance(names, list):
+        raise TypeError(f"get_desc requires a list: {names}")
+
     if len(names) == 1:
         name = names[0]
         if name in BASE_GRAPHS:
-            desc = BASE_GRAPHS[name]["desc"]
-            detail = None
-            if "detail" in BASE_GRAPHS[name]:
-                detail = BASE_GRAPHS[name]["detail"]
-            return [[name, regex.sub(" ", desc), detail]]
+            desc = _WHITESPACE_RE.sub(" ", BASE_GRAPHS[name]["desc"])
+            detail = BASE_GRAPHS[name].get("detail")
+            return [[name, desc, detail]]
 
-        try:
-            # Graphs like: IFACE#eth2#rxkB/s
-            perf = name.split("#")[2]
-            desc = BASE_GRAPHS[perf]["desc"]
-            detail = None
-            if "detail" in BASE_GRAPHS[perf]:
-                detail = BASE_GRAPHS[perf]["detail"]
-            return [[perf, regex.sub(" ", desc), detail]]
-        except Exception:
-            pass
-        if re.match(".*i[0-9]*/s", name):
+        # Try extracting perf from compound name like IFACE#eth2#rxkB/s
+        parts = name.split("#")
+        if len(parts) == 3:
+            perf = parts[2]
+            if perf in BASE_GRAPHS:
+                desc = _WHITESPACE_RE.sub(" ", BASE_GRAPHS[perf]["desc"])
+                detail = BASE_GRAPHS[perf].get("detail")
+                return [[perf, desc, detail]]
+
+        if re.match(r".*i[0-9]*/s", name):
             return [["int/s", "Interrupts per second", None]]
-    else:
-        ret = []
-        previous = None
-        for i in names:
-            try:
-                perf = i.split("#")[2]
-                if re.match(".*i[0-9]*/s", perf):
-                    if previous != "int/s":
-                        ret.append(["int/s", "Interrupts per second", None])
-                        previous = "int/s"
-                    continue
 
-                desc = BASE_GRAPHS[perf]["desc"]
-                detail = None
-                if "detail" in BASE_GRAPHS[perf]:
-                    detail = BASE_GRAPHS[perf]["detail"]
+        return [[name, "", None]]
+
+    # Multiple names
+    result: list[list[Any]] = []
+    previous: Optional[str] = None
+
+    for name in names:
+        parts = name.split("#")
+        if len(parts) == 3:
+            perf = parts[2]
+            if re.match(r".*i[0-9]*/s", perf):
+                if previous != "int/s":
+                    result.append(["int/s", "Interrupts per second", None])
+                    previous = "int/s"
+                continue
+
+            if perf in BASE_GRAPHS:
+                desc = _WHITESPACE_RE.sub(" ", BASE_GRAPHS[perf]["desc"])
+                detail = BASE_GRAPHS[perf].get("detail")
                 if previous != perf:
-                    ret.append([perf, regex.sub(" ", desc), detail])
+                    result.append([perf, desc, detail])
                     previous = perf
-            except Exception:
-                # It is a combination of simple graphs (like ldavg-{1,5,15})
-                desc = BASE_GRAPHS[i]["desc"]
-                ret.append([i, regex.sub(" ", desc), None])
+        elif name in BASE_GRAPHS:
+            # Simple graph like ldavg-{1,5,15}
+            desc = _WHITESPACE_RE.sub(" ", BASE_GRAPHS[name]["desc"])
+            result.append([name, desc, None])
 
-        return ret
-
-    raise Exception("Unknown graph: %s" % names)
+    return result
 
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

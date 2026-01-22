@@ -25,64 +25,70 @@ data contained in one or more sar reports.
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-from itertools import repeat
 from hashlib import sha1
+from itertools import repeat
 import csv
-import dateutil
 import multiprocessing
 import os
 import sys
+import textwrap
 
-from reportlab.lib.styles import ParagraphStyle as PS
-from reportlab.platypus import PageBreak, Image, Spacer
-from reportlab.platypus.paragraph import Paragraph
-from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
-from reportlab.platypus.tableofcontents import TableOfContents
-from reportlab.platypus.frames import Frame
-from reportlab.lib.units import inch
+import dateutil
+
 from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle as PS
+from reportlab.lib.units import inch
+from reportlab.platypus import PageBreak, Image, Spacer
+from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
+from reportlab.platypus.frames import Frame
+from reportlab.platypus.paragraph import Paragraph
+from reportlab.platypus.tableofcontents import TableOfContents
 
-from sar_parser import natural_sort_key
 import sar_metadata as metadata
+from utils import natural_sort_key
 
 
-# None means nr of available CPUs
-NR_CPUS = None
+# None means use all available CPUs
+NR_CPUS: Optional[int] = None
 
-# No more than the following nr of graphs in a single page
-# per default
+# Maximum graphs per page by default
 MAXGRAPHS_IN_PAGE = 64
 
 DEFAULT_IMG_EXT = ".png"
 
-# Inch graph size
+# Graph dimensions in inches
 GRAPH_WIDTH = 10.5
 GRAPH_HEIGHT = 6.5
 
 
-def split_chunks(list_to_split, chunksize):
-    """Split the list l in chunks of at most n in size"""
-    return [
-        list_to_split[i: i + chunksize]
-        for i in range(0, len(list_to_split), chunksize)
-    ]
+def split_chunks(lst: list, chunksize: int) -> list[list]:
+    """Split a list into chunks of at most chunksize elements."""
+    return [lst[i : i + chunksize] for i in range(0, len(lst), chunksize)]
 
 
-def parse_labels(labels):
-    """Parses list of labels in the form of foo:2014-01-01 13:45:03
-    and returns a list of tuples [(datetime, 'label), ...]"""
+def parse_labels(labels: Optional[list[str]]) -> list[tuple]:
+    """Parse label strings into (datetime, label) tuples.
 
-    if labels is None:
+    Args:
+        labels: List of strings in format "label:YYYY-MM-DD HH:MM:SS".
+
+    Returns:
+        List of (datetime, label) tuples.
+    """
+    if not labels:
         return []
-    ret_labels = []
-    for i in labels:
-        # labels are in the form "foo:2014-01-01 13:45:03"
-        label = i.split(":")[0]
-        time = "".join(i.split(":")[1:])
-        time = dateutil.parser.parse(time)
-        ret_labels.append((time, label))
 
-    return ret_labels
+    result = []
+    for label_str in labels:
+        parts = label_str.split(":", 1)
+        if len(parts) != 2:
+            continue
+        label = parts[0]
+        time_str = parts[1]
+        parsed_time = dateutil.parser.parse(time_str)
+        result.append((parsed_time, label))
+
+    return result
 
 
 class MyDocTemplate(BaseDocTemplate):
@@ -168,8 +174,8 @@ class MyDocTemplate(BaseDocTemplate):
             self.canv.addOutlineEntry(text, bookmark_name, level, True)
 
 
-def graph_wrapper(arg):
-    """This is a wrapper due to pool.map() single argument limit"""
+def graph_wrapper(arg: tuple) -> None:
+    """Wrapper for pool.map() to plot a single graph."""
     sar_stats_obj, sar_obj, dataname = arg
     sar_grapher = sar_stats_obj.sar_grapher
     fname = sar_grapher._graph_filename(dataname[1][0])
@@ -180,18 +186,36 @@ def graph_wrapper(arg):
     sys.stdout.flush()
 
 
-class SarStats(object):
-    """Creates a pdf file given a parsed SAR object"""
+class SarStats:
+    """PDF report generator for SAR data."""
 
-    def __init__(self, sar_grapher, maxgraphs=MAXGRAPHS_IN_PAGE):
-        """Initialize class"""
-        self.story = []
+    def __init__(self, sar_grapher, maxgraphs: int = MAXGRAPHS_IN_PAGE) -> None:
+        """Initialize SarStats.
+
+        Args:
+            sar_grapher: SarGrapher instance with parsed data.
+            maxgraphs: Maximum graphs per page.
+        """
+        self.story: list = []
         self.maxgraphs = maxgraphs
         self.sar_grapher = sar_grapher
+        self.extra_labels: Optional[list[tuple]] = None
+        self.showreboots: bool = False
 
-    def graphs_order(self, cat, skip_list=None):
-        """Order in which to present all graphs.
-        Data is grouped loosely by type."""
+    def graphs_order(
+        self,
+        cat: set[str],
+        skip_list: Optional[list[str]] = None,
+    ) -> list[list]:
+        """Determine the order in which to present graphs.
+
+        Args:
+            cat: Set of categories to include.
+            skip_list: List of graph names to skip.
+
+        Returns:
+            Ordered list of graph specifications.
+        """
         skiplist = skip_list or []
         my_list = []
         sar_grapher = self.sar_grapher
@@ -258,26 +282,41 @@ class SarStats(object):
 
         return my_list
 
-    def do_heading(self, text, sty):
-        # create bookmarkname
-        bn = sha1(text.encode("utf-8") + sty.name.encode("utf-8")).hexdigest()
-        # modify paragraph text to include an anchor point with name bn
-        h = Paragraph(text + '<a name="%s"/>' % bn, sty)
-        # store the bookmark name on the flowable so afterFlowable can see this
-        h._bookmarkName = bn
-        self.story.append(h)
+    def do_heading(self, text: str, sty: PS) -> None:
+        """Add a heading with bookmark to the document.
+
+        Args:
+            text: Heading text.
+            sty: Paragraph style to apply.
+        """
+        bookmark_name = sha1(
+            text.encode("utf-8") + sty.name.encode("utf-8")
+        ).hexdigest()
+        heading = Paragraph(f'{text}<a name="{bookmark_name}"/>', sty)
+        heading._bookmarkName = bookmark_name
+        self.story.append(heading)
 
     def graph(
         self,
-        sar_files,
-        skip_list,
-        output_file="out.pdf",
-        labels=None,
-        show_reboots=False,
-        custom_graphs="",
-        threaded=True,
-    ):
-        """Parse sar data and produce graphs of the parsed data."""
+        sar_files: list[str],
+        skip_list: list[str],
+        output_file: str = "out.pdf",
+        labels: Optional[list[str]] = None,
+        show_reboots: bool = False,
+        custom_graphs: Optional[list[str]] = None,
+        threaded: bool = True,
+    ) -> None:
+        """Parse SAR data and produce graphs in a PDF.
+
+        Args:
+            sar_files: List of SAR files being processed.
+            skip_list: List of graph names to skip.
+            output_file: Output PDF filename.
+            labels: Extra labels for annotations.
+            show_reboots: Whether to show reboot markers.
+            custom_graphs: Custom graph specifications.
+            threaded: Whether to use multiprocessing.
+        """
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
         self.extra_labels = None
@@ -288,23 +327,22 @@ class SarStats(object):
             try:
                 self.extra_labels = parse_labels(labels)
             except Exception:
-                print("Unable to parse extra labels: {0}".format(labels))
+                print(f"Unable to parse extra labels: {labels}")
                 raise
 
-        self.story.append(Paragraph("%s" % sar_parser.hostname, doc.centered))
+        self.story.append(Paragraph(f"{sar_parser.hostname}", doc.centered))
         self.story.append(
-            Paragraph(
-                "%s %s" % (sar_parser.kernel, sar_parser.version), doc.small_centered
-            )
+            Paragraph(f"{sar_parser.kernel} {sar_parser.version}", doc.small_centered)
         )
         self.story.append(Spacer(1, 0.05 * inch))
-        self.story.append(Paragraph("%s" % (" ".join(sar_files)), doc.small_centered))
+        self.story.append(Paragraph(" ".join(sar_files), doc.small_centered))
+
         mins = int(sar_parser.sample_frequency / 60)
         secs = int(sar_parser.sample_frequency % 60)
-        s = "Sampling Frequency: %s minutes" % mins
+        freq_str = f"Sampling Frequency: {mins} minutes"
         if secs > 0:
-            s += " %s seconds" % secs
-        self.story.append(Paragraph(s, doc.small_centered))
+            freq_str += f" {secs} seconds"
+        self.story.append(Paragraph(freq_str, doc.small_centered))
 
         self.do_heading("Table of contents", doc.centered_index)
         self.story.append(doc.toc)
@@ -330,53 +368,51 @@ class SarStats(object):
                 sys.stdout.write(".")
                 sys.stdout.flush()
 
-        # Custom graphs are always created in non threaded mode as their number
-        # is typically quite low. Graph descriptions are in the form:
-        # 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
-        custom_graph_list = {}
-        if custom_graphs is not None:
+        # Custom graphs are created sequentially (typically few in number)
+        # Format: 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
+        custom_graph_list: dict[str, list[str]] = {}
+        if custom_graphs:
             try:
-                for i in custom_graphs:
-                    label = i.split(":")[0]
-                    values = i.split(":")[1].split(",")
-                    custom_graph_list[label] = values
-            except Exception:
-                raise Exception(
-                    "Error in parsing custom graphs: {0}".format(custom_graphs)
-                )
+                for spec in custom_graphs:
+                    parts = spec.split(":", 1)
+                    if len(parts) == 2:
+                        label = parts[0]
+                        values = parts[1].split(",")
+                        custom_graph_list[label] = values
+            except Exception as e:
+                raise ValueError(f"Error parsing custom graphs: {custom_graphs}") from e
 
-            for graph in custom_graph_list.keys():
-                matched_graphs = set()
-                # For each customer graph o through every dataset
-                for i in custom_graph_list[graph]:
-                    # For each match add it to the set
+            for graph_name, patterns in custom_graph_list.items():
+                matched_graphs: set[str] = set()
+                for pattern in patterns:
                     try:
-                        ret = sar_parser.match_datasets(i)
-                    except Exception:
-                        raise Exception("Error in regex for: {0}".format(i))
-                    for j in ret:
-                        matched_graphs.add(j)
+                        matches = sar_parser.match_datasets(pattern)
+                    except Exception as e:
+                        raise ValueError(f"Error in regex for: {pattern}") from e
+                    matched_graphs.update(matches)
 
                 graphs = list(matched_graphs)
-                if len(graphs) == 0:
+                if not graphs:
                     continue
+
                 fname = sar_grapher._graph_filename(graphs)
                 sar_grapher.plot_datasets(
-                    ([graph, None, graphs], graphs),
+                    ([graph_name, None, graphs], graphs),
                     fname,
                     self.extra_labels,
                     show_reboots,
                 )
                 sys.stdout.write(".")
                 sys.stdout.flush()
+
                 cat = "Custom"
-                if cat not in used_cat:  # We've not seen the category before
+                if cat not in used_cat:
                     self.do_heading(cat, doc.h1)
                     used_cat[cat] = True
                 else:
                     self.story.append(Paragraph(cat, doc.normal))
 
-                self.do_heading(graph, doc.h2_invisible)
+                self.do_heading(graph_name, doc.h2_invisible)
                 self.story.append(
                     Image(fname, width=GRAPH_WIDTH * inch, height=GRAPH_HEIGHT * inch)
                 )
@@ -414,67 +450,78 @@ class SarStats(object):
 
         doc.multiBuild(self.story)
 
-    def export_csv(self, output_file):
-        sar_grapher = self.sar_grapher
-        sar_parser = sar_grapher.sar_parser
-        f = open(output_file, "wb")
-        writer = csv.writer(f, delimiter=",")
-        all_keys = list(sar_parser.available_data_types())
-        writer.writerow(all_keys)
-        for timestamps in sar_parser._data:
-            s = []
-            for i in all_keys:
-                s.append(sar_parser._data[timestamps][i])
-            writer.writerow(s)
-        f.close()
+    def export_csv(self, output_file: str) -> None:
+        """Export SAR data to CSV format.
 
-    def plot_ascii(self, graphs):
+        Args:
+            output_file: Path to the output CSV file.
+        """
+        sar_parser = self.sar_grapher.sar_parser
+        all_keys = sorted(sar_parser.available_data_types())
+
+        with open(output_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp"] + all_keys)
+            for timestamp in sorted(sar_parser._data.keys()):
+                row = [timestamp.isoformat()]
+                row.extend(sar_parser._data[timestamp].get(key) for key in all_keys)
+                writer.writerow(row)
+
+    def plot_ascii(self, graphs: list[str]) -> None:
+        """Display graphs in ASCII format."""
         self.sar_grapher.plot_ascii(graphs)
 
-    def plot_svg(self, graphs, output, labels=""):
+    def plot_svg(
+        self,
+        graphs: list[str],
+        output: str,
+        labels: Optional[list[str]] = None,
+    ) -> None:
+        """Output graphs as SVG files."""
         extra_labels = parse_labels(labels)
         self.sar_grapher.plot_svg(graphs, output, extra_labels)
 
-    def list_graphs(self):
-        sar_grapher = self.sar_grapher
-        sar_parser = sar_grapher.sar_parser
-        timestamps = sar_grapher.timestamps()
-        print("\nTimespan: {0} - {1}".format(timestamps[0], timestamps[-1]))
+    def list_graphs(self) -> None:
+        """Print available graphs and metadata to stdout."""
+        sar_parser = self.sar_grapher.sar_parser
+        timestamps = self.sar_grapher.timestamps()
+
+        print(f"\nTimespan: {timestamps[0]} - {timestamps[-1]}")
+
         if sar_parser.sosreport and sar_parser.sosreport.reboots:
             reboots = sar_parser.sosreport.reboots
-            print("Reboots: ", end="")
-            for i in reboots:
-                print("{0} ".format(reboots[i]["date"]), end="")
-            print("")
+            reboot_dates = " ".join(str(reboots[i]["date"]) for i in reboots)
+            print(f"Reboots: {reboot_dates}")
 
         gaps = sar_parser.find_data_gaps()
-        if len(gaps) > 0:
+        if gaps:
             print("Data gaps:")
-            for i in gaps:
-                print("{0} - {1}".format(i[0], i[1]))
+            for start, end in gaps:
+                print(f"{start} - {end}")
 
         print("List of graphs available:")
-        inv_map = {}
-        # FIXME: expose _categories through a method
-        for k, v in sar_parser._categories.items():
-            inv_map[v] = inv_map.get(v, [])
-            inv_map[v].append(k)
+
+        # Build inverse map: category -> list of graph names
+        inv_map: dict[str, list[str]] = {}
+        for key, category in sar_parser._categories.items():
+            inv_map.setdefault(category, []).append(key)
 
         try:
-            rows, columns = os.popen("stty size", "r").read().split()
-        except Exception:
-            columns = 80
-        columns = int(columns) - 10
+            size_output = os.popen("stty size", "r").read().split()
+            columns = int(size_output[1]) - 10 if len(size_output) > 1 else 70
+        except (ValueError, IndexError):
+            columns = 70
 
-        import textwrap
-
-        for i in sorted(inv_map):
-            line = ", ".join(sorted(inv_map[i], key=natural_sort_key))
-            indent = " " * (len(i) + 2)
+        for category in sorted(inv_map):
+            graphs_list = ", ".join(sorted(inv_map[category], key=natural_sort_key))
+            indent = " " * (len(category) + 2)
             text = textwrap.fill(
-                line, width=columns, initial_indent="", subsequent_indent=indent
+                graphs_list,
+                width=columns,
+                initial_indent="",
+                subsequent_indent=indent,
             )
-            print("{0}: {1}".format(i, text))
+            print(f"{category}: {text}")
 
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

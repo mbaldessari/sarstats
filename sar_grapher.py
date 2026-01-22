@@ -1,4 +1,10 @@
+from pathlib import Path
 import hashlib
+import os
+import shutil
+import subprocess
+import tempfile
+
 import matplotlib
 
 # Force matplotlib to not use any Xwindows backend.
@@ -8,71 +14,84 @@ import matplotlib.dates as mdates
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 from matplotlib.patches import Rectangle
-import os
-import shutil
-import tempfile
 
 from sar_parser import SarParser
 
-# If the there are more than 50 plots in a graph we move the legend to the
-# bottom
+# If there are more than 50 plots in a graph we move the legend to the bottom
 LEGEND_THRESHOLD = 50
 
 
-def ascii_date(d):
-    return "%s" % (d.strftime("%Y-%m-%d %H:%M"))
+def ascii_date(d) -> str:
+    """Format datetime for ASCII output."""
+    return d.strftime("%Y-%m-%d %H:%M")
 
 
-class SarGrapher(object):
-    def __init__(self, filenames, starttime=None, endtime=None):
-        """Initializes the class, creates a SarParser class
-        given a list of files and also parsers the files"""
-        # Temporary dir where images are stored (one per graph)
-        # NB: This is done to keep the memory usage constant
-        # in spite of being a bit slower (before this change
-        # we could use > 12GB RAM for a simple sar file -
-        # matplotlib is simply inefficient in this area)
-        self._tempdir = tempfile.mkdtemp(prefix="sargrapher")
+class SarGrapher:
+    """Graph generator for SAR data."""
+
+    def __init__(
+        self,
+        filenames: list[str],
+        starttime: Optional[list[str]] = None,
+        endtime: Optional[list[str]] = None,
+    ) -> None:
+        """Initialize SarGrapher.
+
+        Creates a SarParser class given a list of files and parses them.
+        Images are stored in a temporary directory to keep memory usage constant.
+
+        Args:
+            filenames: List of SAR files to parse.
+            starttime: Optional start time filter.
+            endtime: Optional end time filter.
+        """
+        self._tempdir = Path(tempfile.mkdtemp(prefix="sargrapher"))
 
         self.sar_parser = SarParser(filenames, starttime, endtime)
         self.sar_parser.parse()
+
         duplicate_timestamps = self.sar_parser._duplicate_timestamps
         if duplicate_timestamps:
             print(
-                "There are {0} lines with duplicate timestamps. First 10"
-                "line numbers at {1}".format(
-                    len(duplicate_timestamps.keys()),
-                    sorted(list(duplicate_timestamps.keys()))[:10],
-                )
+                f"There are {len(duplicate_timestamps)} lines with duplicate timestamps. "
+                f"First 10 line numbers at {sorted(duplicate_timestamps.keys())[:10]}"
             )
 
-    def _graph_filename(self, graph, extension=".png"):
-        """Creates a unique constant file name given a graph or graph list"""
+    def _graph_filename(self, graph: str | list[str], extension: str = ".png") -> str:
+        """Create a unique constant file name given a graph or graph list."""
         if isinstance(graph, list):
             temp = "_".join(graph)
         else:
             temp = graph
-        temp = temp.replace("%", "_")
-        temp = temp.replace("/", "_")
-        digest = hashlib.sha1()
-        digest.update(temp.encode("utf-8"))
-        fname = os.path.join(self._tempdir, digest.hexdigest() + extension)
-        return fname
+        temp = temp.replace("%", "_").replace("/", "_")
+        digest = hashlib.sha1(temp.encode("utf-8")).hexdigest()
+        return str(self._tempdir / (digest + extension))
 
-    def datasets(self):
-        """Returns a list of all the available datasets"""
+    def datasets(self) -> set[str]:
+        """Return a set of all available datasets."""
         return self.sar_parser.available_data_types()
 
-    def timestamps(self):
-        """Returns a list of all the available datasets"""
+    def timestamps(self) -> list:
+        """Return a sorted list of all available timestamps."""
         return sorted(self.sar_parser.available_timestamps())
 
-    def plot_datasets(self, data, fname, extra_labels, showreboots=False, output="pdf"):
-        """Plot timeseries data (of type dataname).  The data can be either
-        simple (one or no datapoint at any point in time, or indexed (by
-        indextype). dataname is assumed to be in the form of [title, [label1,
-        label2, ...], [data1, data2, ...]] extra_labels is a list of tuples
-        [(datetime, 'label'), ...]"""
+    def plot_datasets(
+        self,
+        data: tuple[tuple[str, Optional[str], list[str]], list[str]],
+        fname: str,
+        extra_labels: Optional[list[tuple]],
+        showreboots: bool = False,
+        output: str = "pdf",
+    ) -> None:
+        """Plot timeseries data.
+
+        Args:
+            data: Tuple of ((title, unit, axis_labels), datanames).
+            fname: Output filename.
+            extra_labels: List of (datetime, 'label') tuples for annotations.
+            showreboots: Whether to show reboot markers.
+            output: Output format.
+        """
         sar_parser = self.sar_parser
         title = data[0][0]
         unit = data[0][1]
@@ -80,20 +99,17 @@ class SarGrapher(object):
         datanames = data[1]
 
         if not isinstance(datanames, list):
-            raise Exception(f"plottimeseries expects a list of datanames: {0}", data)
+            raise TypeError(f"plottimeseries expects a list of datanames: {data}")
 
         fig = plt.figure(figsize=(10.5, 6.5))
         axes = fig.add_subplot(111)
-        axes.set_title("{0} time series".format(title), fontsize=12)
+        axes.set_title(f"{title} time series", fontsize=12)
         axes.set_xlabel("Time")
         axes.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
-        # Twenty minutes. Could probably make it a parameter
         axes.xaxis.set_minor_locator(mdates.MinuteLocator(interval=20))
         fig.autofmt_xdate()
 
-        ylabel = title
-        if unit:
-            ylabel += " - " + unit
+        ylabel = f"{title} - {unit}" if unit else title
         axes.set_ylabel(ylabel)
         y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         axes.yaxis.set_major_formatter(y_formatter)
@@ -103,12 +119,11 @@ class SarGrapher(object):
         scalar_map = cm.ScalarMappable(norm=color_norm, cmap=plt.get_cmap("Set1"))
 
         timestamps = self.timestamps()
-        counter = 0
-        for i in datanames:
+        for counter, dataname in enumerate(datanames):
             try:
-                dataset = [sar_parser._data[d][i] for d in timestamps]
-            except Exception:
-                print("Key {0} does not exist in this graph".format(i))
+                dataset = [sar_parser._data[d][dataname] for d in timestamps]
+            except KeyError:
+                print(f"Key {dataname} does not exist in this graph")
                 raise
             axes.plot(
                 timestamps,
@@ -117,7 +132,6 @@ class SarGrapher(object):
                 label=axis_labels[counter],
                 color=scalar_map.to_rgba(counter),
             )
-            counter += 1
 
         # Draw extra_labels
         if extra_labels:
@@ -216,82 +230,90 @@ class SarGrapher(object):
         plt.clf()
         plt.close("all")
 
-    def plot_svg(self, graphs, output, labels):
-        """Given a list of graphs, output an svg file per graph.
-        Input is a list of strings. A graph with multiple datasets
-        is a string with datasets separated by comma"""
+    def plot_svg(
+        self,
+        graphs: list[str],
+        output: str,
+        labels: Optional[list[tuple]],
+    ) -> None:
+        """Output an SVG file per graph.
+
+        Args:
+            graphs: List of graph names (comma-separated for multiple datasets).
+            output: Output filename prefix.
+            labels: Optional labels for annotations.
+        """
         if output == "out.pdf":
             output = "graph"
-        counter = 1
-        fnames = []
-        for i in graphs:
-            subgraphs = i.split(",")
-            fname = self._graph_filename(subgraphs, ".svg")
-            fnames.append(fname)
-            self.plot_datasets((["", None, subgraphs], subgraphs), fname, labels)
-            dest = os.path.join(os.getcwd(), "{0}{1}.svg".format(output, counter))
-            shutil.move(fname, dest)
-            print("Created: {0}".format(dest))
-            counter += 1
 
-        # removes all temporary files and directories
+        for counter, graph in enumerate(graphs, 1):
+            subgraphs = graph.split(",")
+            fname = self._graph_filename(subgraphs, ".svg")
+            self.plot_datasets((["", None, subgraphs], subgraphs), fname, labels)
+            dest = Path.cwd() / f"{output}{counter}.svg"
+            shutil.move(fname, dest)
+            print(f"Created: {dest}")
+
         self.close()
 
-    def plot_ascii(self, graphs, def_columns=80, def_rows=25):
-        """Displays a single graph in ASCII form on the terminal"""
-        import subprocess
-
+    def plot_ascii(
+        self,
+        graphs: list[str],
+        def_columns: int = 80,
+        def_rows: int = 25,
+    ) -> None:
+        """Display graphs in ASCII form on the terminal using gnuplot."""
         sar_parser = self.sar_parser
         timestamps = self.timestamps()
+
         try:
-            rows, columns = os.popen("stty size", "r").read().split()
-        except Exception:
+            size_output = os.popen("stty size", "r").read().split()
+            columns = int(size_output[1]) if len(size_output) > 1 else def_columns
+        except (ValueError, IndexError):
             columns = def_columns
-        rows = def_rows
-        if columns > def_columns:
-            columns = def_columns
+        columns = min(columns, def_columns)
 
         for graph in graphs:
             try:
-                gnuplot = subprocess.Popen(["/usr/bin/gnuplot"], stdin=subprocess.PIPE)
-            except Exception as e:
-                raise ("Error launching gnuplot: {0}".format(e))
+                gnuplot = subprocess.Popen(
+                    ["/usr/bin/gnuplot"],
+                    stdin=subprocess.PIPE,
+                    text=True,
+                )
+            except OSError as e:
+                raise RuntimeError(f"Error launching gnuplot: {e}") from e
 
-            gnuplot.stdin.write("set term dumb {0} {1}\n".format(columns, rows))
-            gnuplot.stdin.write("set xdata time\n")
-            gnuplot.stdin.write('set xlabel "Time"\n')
-            gnuplot.stdin.write('set timefmt "%Y-%m-%d %H:%M"\n')
-            gnuplot.stdin.write(
-                'set xrange ["%s":"%s"]\n'
-                % (ascii_date(timestamps[0]), ascii_date(timestamps[-1]))
-            )
-            gnuplot.stdin.write('set ylabel "%s"\n' % (graph))
-            gnuplot.stdin.write('set datafile separator ","\n')
-            gnuplot.stdin.write("set autoscale y\n")
-            gnuplot.stdin.write(
-                'set title "%s - %s"\n' % (graph, " ".join(sar_parser._files))
-            )
-            # FIXME: do it through a method
+            commands = [
+                f"set term dumb {columns} {def_rows}",
+                "set xdata time",
+                'set xlabel "Time"',
+                'set timefmt "%Y-%m-%d %H:%M"',
+                f'set xrange ["{ascii_date(timestamps[0])}":"{ascii_date(timestamps[-1])}"]',
+                f'set ylabel "{graph}"',
+                'set datafile separator ","',
+                "set autoscale y",
+                f'set title "{graph} - {" ".join(sar_parser._files)}"',
+            ]
+
             try:
                 dataset = [sar_parser._data[d][graph] for d in timestamps]
             except KeyError:
-                print("Key '{0}' could not be found")
-                return
+                print(f"Key '{graph}' could not be found")
+                continue
 
-            txt = "plot '-' using 1:2 title '{0}' with linespoints \n".format(graph)
-            gnuplot.stdin.write(txt)
-            for i, j in zip(timestamps, dataset):
-                s = '"%s",%f\n' % (ascii_date(i), j)
-                gnuplot.stdin.write(s)
+            commands.append(f"plot '-' using 1:2 title '{graph}' with linespoints")
+            for cmd in commands:
+                gnuplot.stdin.write(cmd + "\n")
+
+            for ts, val in zip(timestamps, dataset):
+                gnuplot.stdin.write(f'"{ascii_date(ts)}",{val}\n')
 
             gnuplot.stdin.write("e\n")
             gnuplot.stdin.write("exit\n")
             gnuplot.stdin.flush()
+            gnuplot.wait()
 
-    def export_csv(self):
-        return
-
-    def close(self):
-        """Removes temporary directory and files"""
-        if os.path.isdir(self._tempdir):
+    def close(self) -> None:
+        """Remove temporary directory and files."""
+        if self._tempdir.is_dir():
             shutil.rmtree(self._tempdir)

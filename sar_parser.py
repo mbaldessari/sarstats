@@ -28,53 +28,70 @@ code has been tested with a variety of sar reports, in particular ones from Red
 Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 """
 
+from enum import Enum, auto
+from pathlib import Path
+from typing import Optional
 import datetime
-import dateutil
-import os
-import numpy
 import re
+
+import dateutil
+import numpy
 
 import sar_metadata
 from sos_report import SosReport
+from utils import natural_sort_key
 
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r"(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?")
 
-
-def natural_sort_key(s):
-    """Natural sorting function. Given a string, it returns a list of the strings
-    and numbers. For example: natural_sort_key("michele0123") will return:
-    ['michele', 123, '']"""
-
-    _nsre = re.compile("([0-9]+)")
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
-    ]
+# Pre-compiled regexes for line parsing
+_EMPTY_LINE_RE = re.compile(r"^\s*$")
+_AVERAGE_LINE_RE = re.compile(r"^Average|^Summary")
 
 
-def _empty_line(line):
-    """Parse an empty line"""
-
-    pattern = re.compile(r"^\s*$")
-    return re.search(pattern, line)
-
-
-def _average_line(line):
-    """Parse a line starting with 'Average:'or 'Summary:'"""
-
-    pattern = re.compile(r"^Average|^Summary")
-    return re.search(pattern, line)
+class ParseState(Enum):
+    """States for the SAR file parser state machine."""
+    START = auto()
+    AFTER_FIRST_LINE = auto()
+    AFTER_EMPTY_LINE = auto()
+    SKIP_UNTIL_EOT = auto()
+    TABLE_START = auto()
+    TABLE_ROW = auto()
+    TABLE_END = auto()
 
 
-def canonicalise_timestamp(date, ts):
-    """sar files start with a date string (yyyy-mm-dd) and a
-    series of lines starting with the time. Given the initial
-    sar datetime date object as base and the time string column
-    return a full datetime object"""
+def _empty_line(line: str) -> Optional[re.Match]:
+    """Parse an empty line."""
+    return _EMPTY_LINE_RE.search(line)
 
+
+def _average_line(line: str) -> Optional[re.Match]:
+    """Parse a line starting with 'Average:' or 'Summary:'."""
+    return _AVERAGE_LINE_RE.search(line)
+
+
+def canonicalise_timestamp(
+    date: tuple[int, int, int], ts: str
+) -> datetime.datetime:
+    """Convert sar timestamp to datetime object.
+
+    Sar files start with a date string (yyyy-mm-dd) and a series of lines
+    starting with the time. Given the initial sar datetime date object as
+    base and the time string column, return a full datetime object.
+
+    Args:
+        date: Tuple of (year, month, day).
+        ts: Time string from sar file.
+
+    Returns:
+        A datetime object combining the date and parsed time.
+
+    Raises:
+        ValueError: If the timestamp cannot be parsed.
+    """
     matches = re.search(TIMESTAMP_RE, ts)
     if matches:
-        (hours, minutes, seconds, meridiem) = matches.groups()
+        hours, minutes, seconds, meridiem = matches.groups()
         hours = int(hours)
         minutes = int(minutes)
         seconds = int(seconds)
@@ -85,10 +102,9 @@ def canonicalise_timestamp(date, ts):
                 hours += 12
         if hours == 24:
             hours = 0
-        dt = datetime.datetime(date[0], date[1], date[2], hours, minutes, seconds)
+        return datetime.datetime(date[0], date[1], date[2], hours, minutes, seconds)
     else:
-        raise Exception("canonicalise_timestamp error %s" % ts)
-    return dt
+        raise ValueError(f"canonicalise_timestamp error: {ts}")
 
 
 class SarParser(object):
@@ -101,105 +117,91 @@ class SarParser(object):
     'CPU#0#%idle', 'CPU#0#%iowait', 'CPU#0#%irq', 'CPU#0#%nice'
     'CPU#0#%soft', 'CPU#0#%sys', 'CPU#0#%usr',..."""
 
-    def __init__(self, fnames, starttime=None, endtime=None):
-        """Constructor: takes a list of files to be parsed. The parsing
-        itself is done in the .parse() method"""
-        self._data = {}
+    def __init__(
+        self,
+        fnames: list[str],
+        starttime: Optional[list[str]] = None,
+        endtime: Optional[list[str]] = None,
+    ):
+        """Initialize SarParser.
 
-        # This dict holds the relationship graph->category
-        self._categories = {}
+        Args:
+            fnames: List of SAR files to be parsed.
+            starttime: Optional start time filter.
+            endtime: Optional end time filter.
+        """
+        self._data: dict[datetime.datetime, dict[str, float | str | None]] = {}
+        self._categories: dict[str, str] = {}
         self._files = fnames
-        self.kernel = None
-        self.version = None
-        self.hostname = None
-        self.sample_frequency = None
-        # Date of the report
-        self._date = None
-        # If this one was set it means that we crossed the day during one SAR
-        # file
-        self._olddate = None
-        self._prev_timestamp = None
-        self.starttime = None
-        self.endtime = None
+        self.kernel: Optional[str] = None
+        self.version: Optional[str] = None
+        self.hostname: Optional[str] = None
+        self.sample_frequency: Optional[float] = None
+        self._date: Optional[tuple[int, int, int]] = None
+        self._olddate: Optional[tuple[int, int, int]] = None
+        self._prev_timestamp: Optional[datetime.datetime | bool] = None
+        self.starttime: Optional[datetime.datetime] = None
+        self.endtime: Optional[datetime.datetime] = None
+
         if starttime:
             self.starttime = dateutil.parser.parse(starttime[0])
-
         if endtime:
             self.endtime = dateutil.parser.parse(endtime[0])
 
-        # Current line number (for use in reporting parse errors)
         self._linecount = 0
-        # Hash containing all the line numbers with duplicate entries
-        self._duplicate_timestamps = {}
+        self._duplicate_timestamps: dict[int, bool] = {}
 
-        absdir = os.path.abspath(fnames[0])
+        # Calculate sosreport base directory
+        abspath = Path(fnames[0]).resolve()
+        sosreport_base = abspath if abspath.is_dir() else abspath.parents[3]
 
-        # if we were passed a file we need to calculate where the
-        # sosreport base is
-        if not os.path.isdir(absdir):
-            for i in range(4):
-                absdir = os.path.split(absdir)[0]
-
-        self.sosreport = None
+        self.sosreport: Optional[SosReport] = None
         try:
-            self.sosreport = SosReport(absdir)
+            self.sosreport = SosReport(str(sosreport_base))
             self.sosreport.parse()
-        except Exception:
+        except (FileNotFoundError, OSError):
             pass
 
-    def _prune_data(self):
-        """This walks the _data structure and removes all graph keys that
-        have a 0 value in *all* timestamps. FIXME: As inefficient as it
-        goes for now..."""
-        # Store all possible keys looping over all time stamps
-        all_keys = {}
-        for t in self._data.keys():
-            for i in self._data[t].keys():
-                all_keys[i] = True
+    def _prune_data(self) -> None:
+        """Remove graph keys that have 0 values in all timestamps.
 
-        keys_to_remove = {}
-        for k in all_keys.keys():
-            remove = True
-            for t in self._data.keys():
-                if k in self._data[t] and self._data[t][k] != 0:
-                    remove = False
-                    break
+        Also ensures all timestamps have the same keys (missing keys set to None)
+        and prunes orphaned categories.
+        """
+        # Collect all keys across all timestamps
+        all_keys = {key for timestamp_data in self._data.values() for key in timestamp_data}
 
-            if remove:
-                keys_to_remove[k] = True
+        # Find keys that are 0 in all timestamps
+        keys_to_remove = {
+            key for key in all_keys
+            if all(
+                self._data[t].get(key) == 0
+                for t in self._data
+            )
+        }
 
-        for t in self._data.keys():
-            for i in keys_to_remove.keys():
-                try:
-                    self._data[t].pop(i)
-                except Exception:
-                    pass
+        # Remove zero-only keys from all timestamps
+        for timestamp_data in self._data.values():
+            for key in keys_to_remove:
+                timestamp_data.pop(key, None)
 
-        # Store all possible keys
-        all_keys = {}
-        for t in self._data.keys():
-            for i in self._data[t].keys():
-                all_keys[i] = True
+        # Recalculate all_keys after removal
+        all_keys = {key for timestamp_data in self._data.values() for key in timestamp_data}
 
-        # If we miss a key in a specific timestamp set it to none
-        # This simplifies graph creation
-        for t in self._data.keys():
-            for i in all_keys.keys():
-                if i not in self._data[t]:
-                    self._data[t][i] = None
+        # Ensure all timestamps have the same keys (set missing to None)
+        for timestamp_data in self._data.values():
+            for key in all_keys:
+                if key not in timestamp_data:
+                    timestamp_data[key] = None
 
-        # We need to prune self._categories as well
-        keys_to_prune = {}
-        for i in self._categories.keys():
-            if i not in all_keys:
-                keys_to_prune[i] = True
+        # Prune orphaned categories
+        self._categories = {
+            key: cat for key, cat in self._categories.items()
+            if key in all_keys
+        }
 
-        for i in keys_to_prune.keys():
-            self._categories.pop(i)
-
-    def _parse_first_line(self, line):
-        """Parse the line as a first line of a SAR report"""
-
+    def _parse_first_line(self, line: str) -> None:
+        """Parse the first line of a SAR report to extract metadata."""
         pattern = re.compile(
             r"""(?x)
             ^(\S+)\s+                 # Kernel name (uname -s)
@@ -213,25 +215,26 @@ class SarParser(object):
 
         matches = re.search(pattern, line)
         if matches:
-            (self.kernel, self.version, self.hostname, tmpdate) = matches.groups()
+            self.kernel, self.version, self.hostname, tmpdate = matches.groups()
         else:
-            raise Exception(
-                'Line {0}: "{1}" failed to parse as a'
-                " first line".format(self._linecount, line)
+            raise ValueError(
+                f'Line {self._linecount}: "{line}" failed to parse as a first line'
             )
 
-        pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
-        matches = re.search(pattern, tmpdate)
-        if matches:
-            (mm, dd, yyyy) = matches.groups()
+        # Convert MM/DD/YY(YY) format to YYYY-MM-DD
+        date_pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
+        date_matches = re.search(date_pattern, tmpdate)
+        if date_matches:
+            mm, dd, yyyy = date_matches.groups()
             if len(yyyy) == 2:
                 yyyy = "20" + yyyy
-            tmpdate = yyyy + "-" + mm + "-" + dd
+            tmpdate = f"{yyyy}-{mm}-{dd}"
 
-        self._date = list(map(int, tmpdate.split("-")))
+        date_parts = list(map(int, tmpdate.split("-")))
+        self._date = (date_parts[0], date_parts[1], date_parts[2])
 
-    def _column_headers(self, line):
-        """Parse the line as a set of column headings"""
+    def _column_headers(self, line: str) -> tuple[Optional[str], Optional[list[str]]]:
+        """Parse the line as a set of column headings."""
         restr = (
             r"""(?x)
             ^("""
@@ -242,7 +245,7 @@ class SarParser(object):
                 # accidentally end up recognising lines of
                 # data as lines defining column structure
                 # Any field that has numbers inside of it needs
-                # to be explicitely ORed
+                # to be explicitly ORed
                 (?:
                     (?:[a-zA-Z1360%/_-]+    # No numbers (except for IPv6 and the %scpu-{10,60,300})
                     |                       # and except...
@@ -265,419 +268,354 @@ class SarParser(object):
         pattern = re.compile(restr)
         matches = re.search(pattern, line)
         if matches:
-            hdrs = [h for h in matches.group(2).split(" ") if h != ""]
+            hdrs = [h for h in matches.group(2).split(" ") if h]
             return matches.group(1), hdrs
-        else:
-            return None, None
+        return None, None
 
-    def _do_start(self, line):
-        """Actions for the "start" state of the parser"""
-
+    def _do_start(self, line: str) -> None:
+        """Actions for the 'start' state of the parser."""
         self._parse_first_line(line)
 
-    def _column_type_regexp(self, hdr):
-        """Get the regular expression to match entries under a
-        particular header"""
-
+    def _column_type_regexp(self, hdr: str) -> Optional[str]:
+        """Get the regular expression to match entries under a particular header."""
         return sar_metadata.get_regexp(hdr)
 
-    def _valid_column_header_name(self, hdr):
-        """Is hdr a valid column name?"""
-
+    def _valid_column_header_name(self, hdr: str) -> bool:
+        """Check if hdr is a valid column name."""
         return self._column_type_regexp(hdr) is not None
 
-    def _build_data_line_regexp(self, headers):
-        """
-        Given a list of headers, build up a regular expression to match
-        corresponding data lines.
-        """
-        regexp = r"^(" + sar_metadata.TIMESTAMP_RE + r")"
+    def _build_data_line_regexp(self, headers: list[str]) -> str:
+        """Build a regular expression to match data lines for given headers."""
+        regexp = rf"^({sar_metadata.TIMESTAMP_RE})"
         for hdr in headers:
             hre = self._column_type_regexp(hdr)
             if hre is None:
-                raise Exception(
-                    'Line {0}: column header "{1}"'
-                    "unknown".format(self._linecount, hdr)
+                raise ValueError(
+                    f'Line {self._linecount}: column header "{hdr}" unknown'
                 )
-            regexp = regexp + r"\s+(" + str(hre) + r")"
+            regexp += rf"\s+({hre})"
         regexp += r"\s*$"
         return regexp
 
-    def _record_data(self, headers, matches):
-        """Record a parsed line of data"""
+    def _record_data(
+        self, headers: list[str], matches: re.Match
+    ) -> Optional[datetime.datetime]:
+        """Record a parsed line of data."""
         timestamp = canonicalise_timestamp(self._date, matches.group(1))
-        # We skip recording values if the timestamp is not within the limits
-        # defined by the user
+
+        # Skip if timestamp is outside user-defined limits
         if self.starttime and timestamp < self.starttime:
-            return
+            return None
         if self.endtime and timestamp > self.endtime:
-            return
-        if self._prev_timestamp and timestamp:
-            # FIXME: This breaks if sar interval is bigger > 119 mins
+            return None
+
+        # Handle day crossover
+        if self._prev_timestamp and isinstance(self._prev_timestamp, datetime.datetime):
             if self._prev_timestamp.hour == 23 and timestamp.hour == 0:
                 nextday = timestamp + datetime.timedelta(days=1)
                 self._olddate = self._date
                 self._date = (nextday.year, nextday.month, nextday.day)
                 timestamp = canonicalise_timestamp(self._date, matches.group(1))
             elif timestamp < self._prev_timestamp:
-                raise Exception(
-                    "Time going backwards: {0} "
-                    "- Prev timestamp: {1} -> {2}".format(
-                        timestamp, self._prev_timestamp, self._linecount
-                    )
+                raise ValueError(
+                    f"Time going backwards: {timestamp} "
+                    f"- Prev timestamp: {self._prev_timestamp} -> {self._linecount}"
                 )
         self._prev_timestamp = timestamp
 
-        # We never had this timestamp let's start with a new dictionary
-        # associated to it
         if timestamp not in self._data:
             self._data[timestamp] = {}
 
-        column = 0
-        # The column used as index/key can be different
-        for i in headers:
-            if i in sar_metadata.INDEX_COLUMN:
-                break
-            column += 1
+        # Find the index column position
+        column = next(
+            (i for i, h in enumerate(headers) if h in sar_metadata.INDEX_COLUMN),
+            len(headers)
+        )
 
-        # Simple case: data is "2D": all columns are of a simple data type
-        # that has just one datum per timestamp
+        # Simple case: 2D data - all columns are simple data types
         if column >= len(headers):
-            counter = 0
             previous = ""
-            for header in headers:
-                i = header
-                # HACK due to sysstat idiocy (retrans/s can appear in ETCP and
-                # NFS) Rename ETCP retrans/s to retrant/s
-                if i == "retrans/s" and previous == "estres/s":
-                    i = "retrant/s"
-                if i in self._data[timestamp]:
-                    # We do not bail out anymore on duplicate timestamps but
-                    # simply report it to the user
+            for counter, header in enumerate(headers):
+                key = header
+                # HACK: retrans/s can appear in ETCP and NFS, rename ETCP's
+                if key == "retrans/s" and previous == "estres/s":
+                    key = "retrant/s"
+                if key in self._data[timestamp]:
                     self._duplicate_timestamps[self._linecount] = True
 
                 try:
-                    v = float(matches.group(counter + 2))
+                    value: float | str = float(matches.group(counter + 2))
                 except ValueError:
-                    v = matches.group(counter + 2)
-                self._data[timestamp][i] = v
-                self._categories[i] = sar_metadata.get_category(i)
-                previous = i
-                counter += 1
+                    value = matches.group(counter + 2)
+                self._data[timestamp][key] = value
+                self._categories[key] = sar_metadata.get_category(key)
+                previous = key
             return timestamp
 
-        # Complex case: data is "3D": data is indexed by an index column
-        # (CPU number, device name etc.) and there is one datum per index
-        # column value per timestamp
+        # Complex case: 3D data - indexed by CPU number, device name, etc.
         indexcol = headers[column]
         indexval = matches.group(column + 2)
-        if indexval == "all" or indexval == "Summary":
-            # This is derived information that is only included for some types
-            # of data. Let's save ourselves the complication.
+        if indexval in ("all", "Summary"):
             return timestamp
 
-        counter = 0
-        # column represents the number of the column which is used as index
-        # Introduced due to 'FILESYSTEM' which is at the end. All the others
-        # (CPU, IFACE...) are the first column
-        for i in headers:
+        for counter, header in enumerate(headers):
             if counter == column:
-                counter += 1
                 continue
 
-            s = "{0}#{1}#{2}".format(indexcol, indexval, i)
-            if s in self._data[timestamp]:
-                # LOVELY: Filesystem can have multiple entries with the same
-                # FILESYSTEM and timestamp We used to raise an exception here
-                # but apparently sometimes there are sar files with same
-                # timestamp and different values. Let's just ignore that We do
-                # not bail out anymore on duplicate timestamps but simply
-                # report it to the user
+            key = f"{indexcol}#{indexval}#{header}"
+            if key in self._data[timestamp]:
                 self._duplicate_timestamps[self._linecount] = True
 
             try:
-                v = float(matches.group(counter + 2))
+                value = float(matches.group(counter + 2))
             except ValueError:
-                v = matches.group(counter + 2)
-            self._data[timestamp][s] = v
-            self._categories[s] = sar_metadata.get_category(s)
-            counter += 1
+                value = matches.group(counter + 2)
+            self._data[timestamp][key] = value
+            self._categories[key] = sar_metadata.get_category(key)
 
         return timestamp
 
-    def parse(self, skip_tables=["BUS"]):
-        """Parse a the sar files. This method does the actual
-        parsing and will populate the ._data structure. The
-        parsing is performed line by line via a simple state
-        machine"""
+    def parse(self, skip_tables: Optional[list[str]] = None) -> None:
+        """Parse the sar files.
+
+        This method populates the _data structure using a line-by-line
+        state machine parser.
+
+        Args:
+            skip_tables: List of table names to skip (default: ["BUS"]).
+        """
+        if skip_tables is None:
+            skip_tables = ["BUS"]
+
         for file_name in self._files:
             self._prev_timestamp = None
-            state = "start"
-            headers = None
+            state = ParseState.START
+            headers: Optional[list[str]] = None
+            pattern: Optional[re.Pattern] = None
             self.cur_file = file_name
-            fd = open(file_name, "r")
-            for line in fd.readlines():
-                self._linecount += 1
-                line = line.rstrip("\n")
-                if state == "start":
-                    self._do_start(line)
-                    state = "after_first_line"
-                    continue
 
-                if state == "after_first_line":
-                    if not _empty_line(line):
-                        raise Exception(
-                            "Line {0}: expected empty line but got"
-                            '"{1}" instead'.format(self._linecount, line)
-                        )
-                    state = "after_empty_line"
-                    continue
+            with open(file_name, "r") as fd:
+                for line in fd:
+                    self._linecount += 1
+                    line = line.rstrip("\n")
 
-                if state == "after_empty_line":
-                    if _empty_line(line):
+                    if state == ParseState.START:
+                        self._do_start(line)
+                        state = ParseState.AFTER_FIRST_LINE
                         continue
 
-                    if _average_line(line):
-                        state = "table_end"
-                        continue
-
-                    state = "table_start"
-                    # Continue processing this line
-
-                if state == "skip_until_eot":
-                    if not _empty_line(line):
-                        continue
-                    else:
-                        state = "after_empty_line"
-
-                if state == "table_start":
-                    if "LINUX RESTART" in line or line == "":
-                        continue
-                    (timestamp, headers) = self._column_headers(line)
-                    # If in previous tables we crossed the day, we start again
-                    # from the previous date
-                    if self._olddate:
-                        self._date = self._olddate
-                    if timestamp is None:
-                        raise Exception(
-                            "Line {0}: expected column header"
-                            ' line but got "{1}" instead'.format(self._linecount, line)
-                        )
-                    if headers == ["LINUX", "RESTART"]:
-                        # FIXME: restarts should really be recorded, in a smart
-                        # way
-                        state = "table_end"
-                        continue
-                    # FIXME: we might want to skip even if it is present in
-                    # other columns
-                    elif headers[0] in skip_tables:
-                        state = "skip_until_eot"
-                        print("Skipping: {0}".format(headers))
-                        continue
-
-                    try:
-                        pattern = re.compile(self._build_data_line_regexp(headers))
-                    except AssertionError:
-                        raise Exception(
-                            "Line {0}: exceeding python "
-                            "interpreter limit with regexp for "
-                            'this line "{1}"'.format(self._linecount, line)
-                        )
-
-                    self._prev_timestamp = False
-                    state = "table_row"
-                    continue
-
-                if state == "table_row":
-                    if _empty_line(line):
-                        state = "after_empty_line"
-                        continue
-
-                    if _average_line(line):
-                        state = "table_end"
-                        continue
-
-                    matches = re.search(pattern, line)
-                    if matches is None:
-                        raise Exception(
-                            "File: {0} - Line {1}: headers: '{2}'"
-                            ", line: '{3}' regexp '{4}': failed"
-                            " to parse".format(
-                                self.cur_file,
-                                self._linecount,
-                                str(headers),
-                                line,
-                                pattern.pattern,
+                    if state == ParseState.AFTER_FIRST_LINE:
+                        if not _empty_line(line):
+                            raise ValueError(
+                                f'Line {self._linecount}: expected empty line but got '
+                                f'"{line}" instead'
                             )
+                        state = ParseState.AFTER_EMPTY_LINE
+                        continue
+
+                    if state == ParseState.AFTER_EMPTY_LINE:
+                        if _empty_line(line):
+                            continue
+                        if _average_line(line):
+                            state = ParseState.TABLE_END
+                            continue
+                        state = ParseState.TABLE_START
+                        # Continue processing this line
+
+                    if state == ParseState.SKIP_UNTIL_EOT:
+                        if _empty_line(line):
+                            state = ParseState.AFTER_EMPTY_LINE
+                        continue
+
+                    if state == ParseState.TABLE_START:
+                        if "LINUX RESTART" in line or line == "":
+                            continue
+                        timestamp_str, headers = self._column_headers(line)
+                        # Reset date if we crossed a day in previous tables
+                        if self._olddate:
+                            self._date = self._olddate
+                        if timestamp_str is None:
+                            raise ValueError(
+                                f'Line {self._linecount}: expected column header '
+                                f'line but got "{line}" instead'
+                            )
+                        if headers == ["LINUX", "RESTART"]:
+                            state = ParseState.TABLE_END
+                            continue
+                        if headers[0] in skip_tables:
+                            state = ParseState.SKIP_UNTIL_EOT
+                            print(f"Skipping: {headers}")
+                            continue
+
+                        try:
+                            pattern = re.compile(self._build_data_line_regexp(headers))
+                        except AssertionError as e:
+                            raise ValueError(
+                                f'Line {self._linecount}: exceeding python '
+                                f'interpreter limit with regexp for '
+                                f'this line "{line}"'
+                            ) from e
+
+                        self._prev_timestamp = False
+                        state = ParseState.TABLE_ROW
+                        continue
+
+                    if state == ParseState.TABLE_ROW:
+                        if _empty_line(line):
+                            state = ParseState.AFTER_EMPTY_LINE
+                            continue
+                        if _average_line(line):
+                            state = ParseState.TABLE_END
+                            continue
+
+                        matches = re.search(pattern, line)
+                        if matches is None:
+                            raise ValueError(
+                                f"File: {self.cur_file} - Line {self._linecount}: "
+                                f"headers: '{headers}', line: '{line}' "
+                                f"regexp '{pattern.pattern}': failed to parse"
+                            )
+                        self._record_data(headers, matches)
+                        continue
+
+                    if state == ParseState.TABLE_END:
+                        if _empty_line(line):
+                            state = ParseState.AFTER_EMPTY_LINE
+                            continue
+                        if _average_line(line):
+                            continue
+                        raise ValueError(
+                            f'Line {self._linecount}: "{line}" expecting end of table'
                         )
-
-                    self._record_data(headers, matches)
-                    continue
-
-                if state == "table_end":
-                    if _empty_line(line):
-                        state = "after_empty_line"
-                        continue
-
-                    if _average_line(line):
-                        # Remain in 'table_end' state
-                        continue
-
-                    raise Exception(
-                        'Line {0}: "{1}" expecting end of '
-                        "table".format(self._linecount, line)
-                    )
-            fd.close()
 
         # Remove unneeded columns
         self._prune_data()
 
         # Calculate sampling frequency
-        k = sorted(self._data.keys())
-        diff = [(x - k[i - 1]).total_seconds() for i, x in enumerate(k) if i > 0]
-        self.sample_frequency = numpy.mean(diff)
+        sorted_timestamps = sorted(self._data.keys())
+        time_diffs = [
+            (sorted_timestamps[i] - sorted_timestamps[i - 1]).total_seconds()
+            for i in range(1, len(sorted_timestamps))
+        ]
+        self.sample_frequency = numpy.mean(time_diffs)
 
-    def available_datasets(self):
-        """Returns all available datasets"""
-        first_timestamp = self._data.keys()[0]
-        datasets = [i for i in sorted(self._data[first_timestamp].keys())]
-        return datasets
+    def available_datasets(self) -> list[str]:
+        """Return all available datasets."""
+        first_timestamp = next(iter(self._data))
+        return sorted(self._data[first_timestamp].keys())
 
-    def match_datasets(self, regex):
-        """Returns all datasets that match a certain regex"""
-        first_timestamp = list(self._data.keys())[0]
+    def match_datasets(self, regex: str) -> list[str]:
+        """Return all datasets that match the given regex."""
+        first_timestamp = next(iter(self._data))
         expression = re.compile(regex)
-        ret = []
-        for i in sorted(self._data[first_timestamp].keys()):
-            if expression.match(i):
-                ret.append(i)
-        return ret
+        return [
+            key for key in sorted(self._data[first_timestamp].keys())
+            if expression.match(key)
+        ]
 
-    def available_timestamps(self):
-        """Returns all available timestamps"""
+    def available_timestamps(self) -> list[datetime.datetime]:
+        """Return all available timestamps."""
         return list(self._data.keys())
 
-    def close(self):
-        """Explicitly removes the main ._data structure from memory"""
+    def close(self) -> None:
+        """Explicitly remove the main _data structure from memory."""
         del self._data
 
-    def available_types(self, category):
-        """Given a category string returns all the graphs starting
-        with it"""
-        t = list(self._data.keys())[0]
-        graph_list = [i for i in sorted(self._data[t].keys()) if i.startswith(category)]
-        return graph_list
+    def available_types(self, category: str) -> list[str]:
+        """Return all graphs starting with the given category."""
+        first_timestamp = next(iter(self._data))
+        return [
+            key for key in sorted(self._data[first_timestamp].keys())
+            if key.startswith(category)
+        ]
 
-    def datanames_per_arg(self, category, per_key=True):
-        """Returns a list of all combined graphs per category. If per_key is
-        True the list is per DEVICE/CPU/etc. Otherwise it is per "perf"
-        attribute datanames_per_arg('DEV', True) will give:
-        ['DEV#dev253-1#%util', 'DEV#dev253-1#avgqu-sz',
-        'DEV#dev253-1#avgrq-sz',..], ['DEV#dev8-0#%util',
-        'DEV#dev8-0#avgqu-sz', ...]] datanames_per_arg('DEV', False) will give:
-        [['DEV#dev253-1#%util', 'DEV#dev8-0#%util', 'DEV#dev8-3#%util'],
-        ['DEV#dev253-1#avgqu-sz'...]]"""
+    def datanames_per_arg(self, category: str, per_key: bool = True) -> list[list[str]]:
+        """Return a list of all combined graphs per category.
+
+        Args:
+            category: The category to filter by.
+            per_key: If True, group by DEVICE/CPU/etc. Otherwise group by perf attribute.
+
+        Returns:
+            List of graph name lists grouped as specified.
+        """
         graph_list = self.available_types(category)
-        ret = []
+        result: list[list[str]] = []
 
         if per_key:
-            keys = {}
-            for i in graph_list:
-                try:
-                    (cat, k, p) = i.split("#")
-                except Exception:
-                    raise Exception(
-                        "Error datanames_per_arg " "per_key={0}: {1}".format(per_key, i)
-                    )
-                keys[k] = True
+            # Group by device/cpu key
+            keys: dict[str, bool] = {}
+            for graph in graph_list:
+                parts = graph.split("#")
+                if len(parts) != 3:
+                    raise ValueError(f"Error datanames_per_arg per_key={per_key}: {graph}")
+                keys[parts[1]] = True
 
-            for i in sorted(keys.keys(), key=natural_sort_key):
-                tmp = []
-                for j in graph_list:
-                    try:
-                        (cat, k, p) = j.split("#")
-                    except Exception:
-                        raise Exception(
-                            "Error datanames_per_arg "
-                            "per_key={0}: {1}".format(per_key, j)
-                        )
-                    if k == i and not p.endswith("DEVICE"):
-                        tmp.append(j)
-                if len(tmp) == 0:
-                    continue
-                ret.append(tmp)
+            for key in sorted(keys, key=natural_sort_key):
+                group = [
+                    g for g in graph_list
+                    if g.split("#")[1] == key and not g.split("#")[2].endswith("DEVICE")
+                ]
+                if group:
+                    result.append(group)
+        else:
+            # Group by performance attribute
+            perfs: dict[str, bool] = {}
+            for graph in graph_list:
+                parts = graph.split("#")
+                if len(parts) != 3:
+                    raise ValueError(f"Error datanames_per_arg per_key={per_key}: {graph}")
+                perfs[parts[2]] = True
 
-            return ret
+            for perf in sorted(perfs, key=natural_sort_key):
+                group = [
+                    g for g in graph_list
+                    if g.split("#")[2] == perf and not perf.endswith("DEVICE")
+                ]
+                if group:
+                    result.append(group)
 
-        if not per_key:
-            keys2 = {}
-            for i in graph_list:
-                try:
-                    (cat, k, p) = i.split("#")
-                except Exception:
-                    raise Exception(
-                        "Error datanames_per_arg " "per_key={0}: {1}".format(per_key, i)
-                    )
-                keys2[p] = True
+        return result
 
-            for i in sorted(keys2.keys(), key=natural_sort_key):
-                tmp = []
-                for j in graph_list:
-                    (cat, k, p) = j.split("#")
-                    if p == i and not p.endswith("DEVICE"):
-                        tmp.append(j)
-                if len(tmp) == 0:
-                    continue
-                ret.append(tmp)
+    def available_data_types(self) -> set[str]:
+        """Return the set of all available data types."""
+        return {item for data in self._data.values() for item in data}
 
-            return ret
-
-    def available_data_types(self):
-        """What types of data are available."""
-        return set(
-            [item for date in self._data.keys() for item in self._data[date].keys()]
-        )
-
-    def find_max(self, timestamp, datanames):
-        """Finds the max Y value given an approx timestamp and a list of
-        datanames"""
+    def find_max(
+        self, timestamp: datetime.datetime, datanames: list[str]
+    ) -> float:
+        """Find the max Y value for the given datanames at the closest timestamp."""
         timestamps = list(self._data.keys())
         time_key = min(timestamps, key=lambda date: abs(timestamp - date))
-        ymax = -1
-        for i in datanames:
-            if self._data[time_key][i] > ymax:
-                ymax = self._data[time_key][i]
+        return max(
+            (self._data[time_key][name] for name in datanames
+             if self._data[time_key][name] is not None),
+            default=-1
+        )
 
-        return ymax
+    def find_data_gaps(self) -> list[tuple[datetime.datetime, datetime.datetime]]:
+        """Find intervals where data collection was interrupted.
 
-    def find_data_gaps(self):
-        """Returns a list of tuples containing the data gaps. A data gap is an
-        interval of time longer than the collecting frequency that does not
-        contain any data.  NOTE: The algorithm is not super-smart, but covers
-        the most blatant cases.  This is because the sampling frequency
-        calculation is skewed a bit when the sysstat is not running.  Returns:
-        [(gap1start, gap1end), (.., ..), ...] or []"""
+        A data gap is an interval longer than the collecting frequency
+        that contains no data.
 
-        # in seconds
+        Returns:
+            List of (gap_start, gap_end) tuples.
+        """
         freq = self.sample_frequency
-        last = None
-        ret = []
-        for time in sorted(self.available_timestamps()):
-            if not last:
-                last = time
-                continue
-            delta = time - last
-            # If the delta > (freq + 10%) we consider it a gap
-            # NB: we must add a bit of percentage to make
-            # sure we do not display gaps unnecessarily
-            if delta.total_seconds() > int(freq * 1.1):
-                ret.append((last, time))
-            last = time
+        gaps: list[tuple[datetime.datetime, datetime.datetime]] = []
+        sorted_times = sorted(self.available_timestamps())
 
-        return ret
+        for i in range(1, len(sorted_times)):
+            delta = sorted_times[i] - sorted_times[i - 1]
+            # Gap if delta > freq + 10%
+            if delta.total_seconds() > freq * 1.1:
+                gaps.append((sorted_times[i - 1], sorted_times[i]))
+
+        return gaps
 
 
 if __name__ == "__main__":
-    raise Exception("No self-test code implemented")
+    raise SystemExit("No self-test code implemented")
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
