@@ -335,6 +335,13 @@ BASE_GRAPHS = {
         "desc": """Amount of memory in kilobytes waiting to get
                   written back to the disk.""",
     },
+    "kbshmem": {
+        "cat": "Memory",
+        "unit": "kilobytes",
+        "regexp": INTEGER_RE,
+        "desc": """Amount of shared memory in kilobytes (memory mostly
+                  used by tmpfs).""",
+    },
     "kbanonpg": {
         "cat": "Memory",
         "unit": "kilobytes",
@@ -773,6 +780,18 @@ BASE_GRAPHS = {
         "desc": """Number of pages the system has reclaimed from cache
                   (pagecache and swapcache) per second to satisfy its memory
                   demands""",
+    },
+    "pgprom/s": {
+        "cat": "Paging",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Number of pages promoted (i.e. migrated from slow to fast
+                  memory types) by the system per second""",
+    },
+    "pgdem/s": {
+        "cat": "Paging",
+        "regexp": NUMBER_WITH_DEC_RE,
+        "desc": """Number of pages demoted (i.e. migrated from fast to slow
+                  memory types) by the system per second""",
     },
     "%vmeff": {
         "cat": "Paging",
