@@ -27,6 +27,7 @@ data contained in one or more sar reports.
 
 from hashlib import sha1
 from itertools import repeat
+from typing import Optional
 import csv
 import multiprocessing
 import os
@@ -63,7 +64,7 @@ GRAPH_HEIGHT = 6.5
 
 def split_chunks(lst: list, chunksize: int) -> list[list]:
     """Split a list into chunks of at most chunksize elements."""
-    return [lst[i : i + chunksize] for i in range(0, len(lst), chunksize)]
+    return [lst[i:i + chunksize] for i in range(0, len(lst), chunksize)]
 
 
 def parse_labels(labels: Optional[list[str]]) -> list[tuple]:
