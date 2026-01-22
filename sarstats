@@ -34,9 +34,8 @@ def parse_sar_date(fname):
     """Given a sar filename it tries to parse the first line
     in order to parse the date of the report"""
 
-    sar_file = open(fname, "r")
-    first_line = sar_file.readline()
-    sar_file.close()
+    with open(fname, "r") as sar_file:
+        first_line = sar_file.readline()
     pattern = re.compile(r"""(?x)
         ^(\S+)\s+                 # Kernel name (uname -s)
         (\S+)\s+                  # Kernel release (uname -r)

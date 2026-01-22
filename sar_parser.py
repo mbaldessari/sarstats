@@ -159,6 +159,7 @@ class SarParser(object):
             self.sosreport = SosReport(str(sosreport_base))
             self.sosreport.parse()
         except (FileNotFoundError, OSError):
+            # SosReport not available or not parseable, continue without it
             pass
 
     def _prune_data(self) -> None:

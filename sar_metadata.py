@@ -2121,6 +2121,7 @@ def graph_info(
                 users = sar_obj.sosreport.interrupts[nr_int]["users"]
                 title = f"{title} [{' '.join(users)}]"
             except (KeyError, ValueError):
+                # Interrupt info not available, use original title
                 pass
 
         labels = [name.split("#")[1] for name in names]
