@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sarstats"
+dynamic = ["version"]
+description = "SAR report graphing utility"
+readme = "README.md"
+license = "GPL-2.0-only"
+authors = [{name = "Michele Baldessari", email = "michele@acksyn.org"}]
+requires-python = ">=3.10"
+dependencies = [
+    "python-dateutil",
+    "matplotlib",
+    "reportlab",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "flake8", "tox", "build"]
+
+[project.urls]
+Homepage = "https://github.com/mbaldessari/sarstats"
+Repository = "https://github.com/mbaldessari/sarstats"
+
+[tool.setuptools_scm]
+# Version automatically derived from git tags (v0.6 -> 0.6)
+
+[tool.setuptools]
+py-modules = ["sar_parser", "sar_stats", "sar_metadata", "sar_grapher", "sos_report"]
+script-files = ["sarstats"]
