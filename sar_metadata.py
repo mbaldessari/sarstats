@@ -2102,9 +2102,7 @@ def graph_info(
         perf[parts[2]] = True
 
     if len(cat) > 1:
-        raise ValueError(
-            f"Cannot graph data from different categories: {names}"
-        )
+        raise ValueError(f"Cannot graph data from different categories: {names}")
 
     # ['CPU#0#%idle', 'CPU#1#%idle', ...] -> title='%idle', labels=['0', '1', ...]
     if len(perf) == 1:

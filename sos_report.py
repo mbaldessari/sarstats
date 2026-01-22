@@ -9,7 +9,7 @@ import re
 from dateutil import parser as dateparser
 from dateutil.relativedelta import relativedelta
 
-from utils import natural_sort_key
+from sos_utils import natural_sort_key
 
 
 class SosReport:
@@ -63,15 +63,13 @@ class SosReport:
         """Parse network configuration."""
         self._parse_network_ethtool()
 
-    def _parse_int_entry(
-        self, fields: list[str], line: str
-    ) -> dict[str, Any]:
+    def _parse_int_entry(self, fields: list[str], line: str) -> dict[str, Any]:
         """Parse a single interrupt entry."""
         result: dict[str, Any] = {"cpu": [int(fields[0])]}
         nr_fields = len(fields)
 
         if nr_fields >= self.nr_cpus:
-            result["cpu"] += [int(i) for i in fields[1:self.nr_cpus]]
+            result["cpu"] += [int(i) for i in fields[1 : self.nr_cpus]]
             if nr_fields > self.nr_cpus:
                 result["type"] = fields[self.nr_cpus]
                 if nr_fields > self.nr_cpus + 1:
@@ -113,7 +111,9 @@ class SosReport:
         files = [f for f in messages_dir.iterdir() if f.name.startswith("messages")]
 
         counter = 0
-        for filepath in sorted(files, key=lambda x: natural_sort_key(x.name), reverse=True):
+        for filepath in sorted(
+            files, key=lambda x: natural_sort_key(x.name), reverse=True
+        ):
             prev_month: Optional[int] = None
             with filepath.open(errors="replace") as f:
                 for line in f:

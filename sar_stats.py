@@ -5,6 +5,7 @@ sar(1) provides system activity reports that are useful in the analysis of
 system performance issues. This script produces a PDF file with graphs of the
 data contained in one or more sar reports.
 """
+
 # SarStats.py - sar(1) report graphing utility
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
@@ -46,7 +47,7 @@ from reportlab.platypus.paragraph import Paragraph
 from reportlab.platypus.tableofcontents import TableOfContents
 
 import sar_metadata as metadata
-from utils import natural_sort_key
+from sos_utils import natural_sort_key
 
 
 # None means use all available CPUs
@@ -64,7 +65,7 @@ GRAPH_HEIGHT = 6.5
 
 def split_chunks(lst: list, chunksize: int) -> list[list]:
     """Split a list into chunks of at most chunksize elements."""
-    return [lst[i:i + chunksize] for i in range(0, len(lst), chunksize)]
+    return [lst[i : i + chunksize] for i in range(0, len(lst), chunksize)]
 
 
 def parse_labels(labels: Optional[list[str]]) -> list[tuple]:

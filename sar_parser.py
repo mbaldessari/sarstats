@@ -39,7 +39,7 @@ import numpy
 
 import sar_metadata
 from sos_report import SosReport
-from utils import natural_sort_key
+from sos_utils import natural_sort_key
 
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r"(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?")
@@ -51,6 +51,7 @@ _AVERAGE_LINE_RE = re.compile(r"^Average|^Summary")
 
 class ParseState(Enum):
     """States for the SAR file parser state machine."""
+
     START = auto()
     AFTER_FIRST_LINE = auto()
     AFTER_EMPTY_LINE = auto()
@@ -70,9 +71,7 @@ def _average_line(line: str) -> Optional[re.Match]:
     return _AVERAGE_LINE_RE.search(line)
 
 
-def canonicalise_timestamp(
-    date: tuple[int, int, int], ts: str
-) -> datetime.datetime:
+def canonicalise_timestamp(date: tuple[int, int, int], ts: str) -> datetime.datetime:
     """Convert sar timestamp to datetime object.
 
     Sar files start with a date string (yyyy-mm-dd) and a series of lines
@@ -169,15 +168,15 @@ class SarParser(object):
         and prunes orphaned categories.
         """
         # Collect all keys across all timestamps
-        all_keys = {key for timestamp_data in self._data.values() for key in timestamp_data}
+        all_keys = {
+            key for timestamp_data in self._data.values() for key in timestamp_data
+        }
 
         # Find keys that are 0 in all timestamps
         keys_to_remove = {
-            key for key in all_keys
-            if all(
-                self._data[t].get(key) == 0
-                for t in self._data
-            )
+            key
+            for key in all_keys
+            if all(self._data[t].get(key) == 0 for t in self._data)
         }
 
         # Remove zero-only keys from all timestamps
@@ -186,7 +185,9 @@ class SarParser(object):
                 timestamp_data.pop(key, None)
 
         # Recalculate all_keys after removal
-        all_keys = {key for timestamp_data in self._data.values() for key in timestamp_data}
+        all_keys = {
+            key for timestamp_data in self._data.values() for key in timestamp_data
+        }
 
         # Ensure all timestamps have the same keys (set missing to None)
         for timestamp_data in self._data.values():
@@ -196,8 +197,7 @@ class SarParser(object):
 
         # Prune orphaned categories
         self._categories = {
-            key: cat for key, cat in self._categories.items()
-            if key in all_keys
+            key: cat for key, cat in self._categories.items() if key in all_keys
         }
 
     def _parse_first_line(self, line: str) -> None:
@@ -329,7 +329,7 @@ class SarParser(object):
         # Find the index column position
         column = next(
             (i for i, h in enumerate(headers) if h in sar_metadata.INDEX_COLUMN),
-            len(headers)
+            len(headers),
         )
 
         # Simple case: 2D data - all columns are simple data types
@@ -407,7 +407,7 @@ class SarParser(object):
                     if state == ParseState.AFTER_FIRST_LINE:
                         if not _empty_line(line):
                             raise ValueError(
-                                f'Line {self._linecount}: expected empty line but got '
+                                f"Line {self._linecount}: expected empty line but got "
                                 f'"{line}" instead'
                             )
                         state = ParseState.AFTER_EMPTY_LINE
@@ -436,7 +436,7 @@ class SarParser(object):
                             self._date = self._olddate
                         if timestamp_str is None:
                             raise ValueError(
-                                f'Line {self._linecount}: expected column header '
+                                f"Line {self._linecount}: expected column header "
                                 f'line but got "{line}" instead'
                             )
                         if headers == ["LINUX", "RESTART"]:
@@ -451,8 +451,8 @@ class SarParser(object):
                             pattern = re.compile(self._build_data_line_regexp(headers))
                         except AssertionError as e:
                             raise ValueError(
-                                f'Line {self._linecount}: exceeding python '
-                                f'interpreter limit with regexp for '
+                                f"Line {self._linecount}: exceeding python "
+                                f"interpreter limit with regexp for "
                                 f'this line "{line}"'
                             ) from e
 
@@ -509,7 +509,8 @@ class SarParser(object):
         first_timestamp = next(iter(self._data))
         expression = re.compile(regex)
         return [
-            key for key in sorted(self._data[first_timestamp].keys())
+            key
+            for key in sorted(self._data[first_timestamp].keys())
             if expression.match(key)
         ]
 
@@ -525,7 +526,8 @@ class SarParser(object):
         """Return all graphs starting with the given category."""
         first_timestamp = next(iter(self._data))
         return [
-            key for key in sorted(self._data[first_timestamp].keys())
+            key
+            for key in sorted(self._data[first_timestamp].keys())
             if key.startswith(category)
         ]
 
@@ -548,12 +550,15 @@ class SarParser(object):
             for graph in graph_list:
                 parts = graph.split("#")
                 if len(parts) != 3:
-                    raise ValueError(f"Error datanames_per_arg per_key={per_key}: {graph}")
+                    raise ValueError(
+                        f"Error datanames_per_arg per_key={per_key}: {graph}"
+                    )
                 keys[parts[1]] = True
 
             for key in sorted(keys, key=natural_sort_key):
                 group = [
-                    g for g in graph_list
+                    g
+                    for g in graph_list
                     if g.split("#")[1] == key and not g.split("#")[2].endswith("DEVICE")
                 ]
                 if group:
@@ -564,12 +569,15 @@ class SarParser(object):
             for graph in graph_list:
                 parts = graph.split("#")
                 if len(parts) != 3:
-                    raise ValueError(f"Error datanames_per_arg per_key={per_key}: {graph}")
+                    raise ValueError(
+                        f"Error datanames_per_arg per_key={per_key}: {graph}"
+                    )
                 perfs[parts[2]] = True
 
             for perf in sorted(perfs, key=natural_sort_key):
                 group = [
-                    g for g in graph_list
+                    g
+                    for g in graph_list
                     if g.split("#")[2] == perf and not perf.endswith("DEVICE")
                 ]
                 if group:
@@ -581,16 +589,17 @@ class SarParser(object):
         """Return the set of all available data types."""
         return {item for data in self._data.values() for item in data}
 
-    def find_max(
-        self, timestamp: datetime.datetime, datanames: list[str]
-    ) -> float:
+    def find_max(self, timestamp: datetime.datetime, datanames: list[str]) -> float:
         """Find the max Y value for the given datanames at the closest timestamp."""
         timestamps = list(self._data.keys())
         time_key = min(timestamps, key=lambda date: abs(timestamp - date))
         return max(
-            (self._data[time_key][name] for name in datanames
-             if self._data[time_key][name] is not None),
-            default=-1
+            (
+                self._data[time_key][name]
+                for name in datanames
+                if self._data[time_key][name] is not None
+            ),
+            default=-1,
         )
 
     def find_data_gaps(self) -> list[tuple[datetime.datetime, datetime.datetime]]:

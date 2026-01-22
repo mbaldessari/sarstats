@@ -1,4 +1,4 @@
-# utils.py - Shared utility functions for sarstats
+# sos_utils.py - Shared utility functions for sarstats
 # Copyright (C) 2012  Ray Dassen
 #               2013  Ray Dassen, Michele Baldessari
 #               2014  Michele Baldessari
