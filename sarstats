@@ -27,7 +27,7 @@ import sys
 from sar_grapher import SarGrapher
 from sar_stats import SarStats
 
-VERSION = '0.5'
+VERSION = "0.6"
 
 
 def parse_sar_date(fname):
@@ -50,87 +50,166 @@ def parse_sar_date(fname):
     if matches:
         return dateutil.parser.parse(matches.group(4))
 
-    raise Exception("Could not parse the date of file {0}: {1}".format(
-        fname, first_line))
+    raise Exception(
+        "Could not parse the date of file {0}: {1}".format(fname, first_line)
+    )
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="{0} - analyzes sar output files and "
-                                     "produces a pdf report".format(sys.argv[0]),
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('sar_files', metavar='sar_files', nargs='*', help="""
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="{0} - analyzes sar output files and produces a pdf report".format(
+            sys.argv[0]
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
+        "sar_files",
+        metavar="sar_files",
+        nargs="*",
+        help="""
                         Sar files to examine. It is possible to specify a
                         single folder, in which case it will look for all the
                         sar* files and order them by file date. If the
                         directory containing the sar files is part of an
                         sosreport, it will try to resulve the interrupts
-                        source""")
+                        source""",
+    )
 
-    parser.add_argument('--ascii', dest='ascii_graphs', default=None, action='append',
-                        help="""Display single graphs on the terminal. Can be used multiple
+    parser.add_argument(
+        "--ascii",
+        dest="ascii_graphs",
+        default=None,
+        action="append",
+        help="""Display single graphs on the terminal. Can be used multiple
                         times: --ascii 'proc/s' --ascii 'ldavg-1'. Only one dataset per
                         graph is currently supported. (Note this functionality requires
-                        gnuplot to be installed)""")
+                        gnuplot to be installed)""",
+    )
 
-    parser.add_argument('--csv', dest='csv_file', default=None, help="""
-                        Outputs the data to the specified csv file.""")
+    parser.add_argument(
+        "--csv",
+        dest="csv_file",
+        default=None,
+        help="""
+                        Outputs the data to the specified csv file.""",
+    )
 
-    parser.add_argument('--custom', dest='custom_graphs', default=['load:ldavg-1,ldavg-5,ldavg-15',
-                        'tps io:rtps,wtps,tps', 'block io:bread/s,bwrtn/s', 'pgpg:pgpgin/s,pgpgout/s',
-                                                                   'processes:plist-sz,proc/s,runq-sz'],
-                        action='append', help="""Add custom graphs with --custom
+    parser.add_argument(
+        "--custom",
+        dest="custom_graphs",
+        default=[
+            "load:ldavg-1,ldavg-5,ldavg-15",
+            "tps io:rtps,wtps,tps",
+            "block io:bread/s,bwrtn/s",
+            "pgpg:pgpgin/s,pgpgout/s",
+            "processes:plist-sz,proc/s,runq-sz",
+        ],
+        action="append",
+        help="""Add custom graphs with --custom
                         'foo:udpsck,rawsck,tcp-tw' --custom 'bar:i001/s,i002/s'.
                         This adds two pages in the 'Custom' category: Graph 'foo'
                         containing udpsck, rawsck and tcp-tw and graph 'bar'
                         containing i001/s and i002/s.  With graphs that vary
                         too much in y-ranges the output can be quite
-                        suboptimal""")
+                        suboptimal""",
+    )
 
-    parser.add_argument('--label', dest='labels', default=None, action='append', help="""
+    parser.add_argument(
+        "--label",
+        dest="labels",
+        default=None,
+        action="append",
+        help="""
                         Adds label to a graph at specified time. For example
                         --label 'foo:2014-01-01 13:45:03' --label 'bar:2014-01-02
                         13:15:15' will add two extra labels on every graph
                         at those times.  This is useful for correlation
-                        work""")
+                        work""",
+    )
 
-    parser.add_argument('--start', dest='starttime', default=None, action='append', help="""
+    parser.add_argument(
+        "--start",
+        dest="starttime",
+        default=None,
+        action="append",
+        help="""
                         Sets a start time for the data to be evaluated.
                         --start '2014-01-01 13:45:03'. Entries before the start
-                        time will be ignored.""")
+                        time will be ignored.""",
+    )
 
-    parser.add_argument('--end', dest='endtime', default=None, action='append', help="""
+    parser.add_argument(
+        "--end",
+        dest="endtime",
+        default=None,
+        action="append",
+        help="""
                         Sets an end time for the data to be evaluated.
                         --end '2014-01-01 13:45:03'. Entries after the end
-                        time will be ignored.""")
+                        time will be ignored.""",
+    )
 
-    parser.add_argument('--list', dest='list_graphs', action='store_true', help="""
+    parser.add_argument(
+        "--list",
+        dest="list_graphs",
+        action="store_true",
+        help="""
                         Only lists all the graphs and elements contained in the
-                        specified sar files""")
+                        specified sar files""",
+    )
 
-    parser.add_argument('--maxgraphs', dest='maxgraphs', default=64, help="""
-                        Sets the maximum number of graphs in a single page""")
+    parser.add_argument(
+        "--maxgraphs",
+        dest="maxgraphs",
+        default=64,
+        help="""
+                        Sets the maximum number of graphs in a single page""",
+    )
 
-    parser.add_argument('--output', dest='output_file', default='out.pdf', help="""
+    parser.add_argument(
+        "--output",
+        dest="output_file",
+        default="out.pdf",
+        help="""
                         Output file name. If multiple svg files are specified this
                         parameter represents the basename: --output foo will give
-                        foo1.svg, foo2.svg, ...""")
+                        foo1.svg, foo2.svg, ...""",
+    )
 
-    parser.add_argument('--skip', default='', dest='skip_graphs', help="""
+    parser.add_argument(
+        "--skip",
+        default="",
+        dest="skip_graphs",
+        help="""
                         Graphs or entries to skip. For example adding '%%user'
                         will remove that graph. Adding 'lo' will remove that
                         interface from any network graph. Use comma to separate
                         multiple graphs to be skipped.  For example '--skip
                         lo,eth0' will not plot any graphs for those interfaces
                         and '--skip lo,miss/s' will skip the 'lo' interface and
-                        the 'miss/s' graph""")
+                        the 'miss/s' graph""",
+    )
 
-    parser.add_argument('--svg', dest='svg_graphs', default=None, action='append', help="""
+    parser.add_argument(
+        "--svg",
+        dest="svg_graphs",
+        default=None,
+        action="append",
+        help="""
                         Output graphs as svg files. Can be used multiple times:
                         --svg 'proc/s' --svg 'ldavg-1,ldavg-5'. Separate multiple
-                        datasets with a comma.)""")
+                        datasets with a comma.)""",
+    )
 
-    parser.add_argument('--version', dest='version', action='store_true', default=False, help="""
-                        Show the program's version""")
+    parser.add_argument(
+        "--version",
+        dest="version",
+        action="store_true",
+        default=False,
+        help="""
+                        Show the program's version""",
+    )
 
     args = parser.parse_args()
 
@@ -146,7 +225,7 @@ if __name__ == '__main__':
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
         root = args.sar_files[0]
-        files = [f for f in os.listdir(root) if f.startswith('sar')]
+        files = [f for f in os.listdir(root) if f.startswith("sar")]
         real_dates = {}
         # Store exact dates of sarfiles in dict
         for i in files:
@@ -162,7 +241,10 @@ if __name__ == '__main__':
             print("No sar files found in dir: {0}".format(root))
             sys.exit(-1)
 
-    print("Parsing files: {0}".format(" ".join(map(os.path.basename, args.sar_files))), end='')
+    print(
+        "Parsing files: {0}".format(" ".join(map(os.path.basename, args.sar_files))),
+        end="",
+    )
     if len(args.sar_files) == 0:
         print("Error: No sar files passed as argument")
         sys.exit(-1)
@@ -197,11 +279,17 @@ if __name__ == '__main__':
         sar_stats.plot_svg(graphs, args.output_file, args.labels)
         sys.exit(0)
 
-    print("Building graphs: ", end='')
+    print("Building graphs: ", end="")
 
     skip_list = args.skip_graphs.strip().split(",")
-    sar_stats.graph(args.sar_files, skip_list, args.output_file, args.labels,
-                    True, args.custom_graphs)
+    sar_stats.graph(
+        args.sar_files,
+        skip_list,
+        args.output_file,
+        args.labels,
+        True,
+        args.custom_graphs,
+    )
     sar_grapher.close()
     print("\nWrote: {0}".format(args.output_file))
 
