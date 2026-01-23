@@ -29,6 +29,7 @@ Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 """
 
 from enum import Enum, auto
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 import datetime
@@ -161,6 +162,11 @@ class SarParser(object):
         except (FileNotFoundError, OSError):
             # SosReport not available or not parseable, continue without it
             pass
+
+    @cached_property
+    def _first_timestamp(self) -> datetime.datetime:
+        """Return the first timestamp in the data (cached for efficiency)."""
+        return next(iter(self._data))
 
     def _prune_data(self) -> None:
         """Remove graph keys that have 0 values in all timestamps.
@@ -502,16 +508,14 @@ class SarParser(object):
 
     def available_datasets(self) -> list[str]:
         """Return all available datasets."""
-        first_timestamp = next(iter(self._data))
-        return sorted(self._data[first_timestamp].keys())
+        return sorted(self._data[self._first_timestamp].keys())
 
     def match_datasets(self, regex: str) -> list[str]:
         """Return all datasets that match the given regex."""
-        first_timestamp = next(iter(self._data))
         expression = re.compile(regex)
         return [
             key
-            for key in sorted(self._data[first_timestamp].keys())
+            for key in sorted(self._data[self._first_timestamp].keys())
             if expression.match(key)
         ]
 
@@ -525,10 +529,9 @@ class SarParser(object):
 
     def available_types(self, category: str) -> list[str]:
         """Return all graphs starting with the given category."""
-        first_timestamp = next(iter(self._data))
         return [
             key
-            for key in sorted(self._data[first_timestamp].keys())
+            for key in sorted(self._data[self._first_timestamp].keys())
             if key.startswith(category)
         ]
 
@@ -560,7 +563,8 @@ class SarParser(object):
                 group = [
                     g
                     for g in graph_list
-                    if g.split("#")[1] == key and not g.split("#")[2].endswith("DEVICE")
+                    for parts in [g.split("#")]
+                    if parts[1] == key and not parts[2].endswith("DEVICE")
                 ]
                 if group:
                     result.append(group)
@@ -579,7 +583,8 @@ class SarParser(object):
                 group = [
                     g
                     for g in graph_list
-                    if g.split("#")[2] == perf and not perf.endswith("DEVICE")
+                    for parts in [g.split("#")]
+                    if parts[2] == perf and not perf.endswith("DEVICE")
                 ]
                 if group:
                     result.append(group)

@@ -353,7 +353,6 @@ class SarStats:
         category_order = metadata.list_all_categories()
 
         used_cat = {}
-        count = 0
         # Let's create all the images either via multiple threads or in
         # sequence
         if threaded:
@@ -448,7 +447,6 @@ class SarStats:
                     )
 
             self.story.append(PageBreak())
-            count += 1
 
         doc.multiBuild(self.story)
 
