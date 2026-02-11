@@ -148,7 +148,7 @@ class SarParser:
             self.endtime = dateutil.parser.parse(endtime[0])
 
         self._linecount = 0
-        self._duplicate_timestamps: dict[int, bool] = {}
+        self._duplicate_timestamps: set[int] = set()
 
         # Calculate sosreport base directory
         abspath = Path(fnames[0]).resolve()
@@ -347,7 +347,7 @@ class SarParser:
                 if key == "retrans/s" and previous == "estres/s":
                     key = "retrant/s"
                 if key in self._data[timestamp]:
-                    self._duplicate_timestamps[self._linecount] = True
+                    self._duplicate_timestamps.add(self._linecount)
 
                 try:
                     value: float | str = float(matches.group(counter + 2))
@@ -370,7 +370,7 @@ class SarParser:
 
             key = f"{indexcol}#{indexval}#{header}"
             if key in self._data[timestamp]:
-                self._duplicate_timestamps[self._linecount] = True
+                self._duplicate_timestamps.add(self._linecount)
 
             try:
                 value = float(matches.group(counter + 2))

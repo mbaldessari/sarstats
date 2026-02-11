@@ -53,7 +53,7 @@ class SarGrapher:
         if duplicate_timestamps:
             print(
                 f"There are {len(duplicate_timestamps)} lines with duplicate timestamps. "
-                f"First 10 line numbers at {sorted(duplicate_timestamps.keys())[:10]}"
+                f"First 10 line numbers at {sorted(duplicate_timestamps)[:10]}"
             )
 
     def _graph_filename(self, graph: str | list[str], extension: str = ".png") -> str:
