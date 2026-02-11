@@ -96,7 +96,7 @@ class TestSarParsing(unittest.TestCase):
                 self.profile.enable()
 
             out = "{0}.pdf".format(example)
-            stats.graph(example, [], out, threaded=True)
+            stats.graph([example], [], out, threaded=True)
             if USE_PROFILER:
                 self.profile.disable()
                 str_io = StringIO()
