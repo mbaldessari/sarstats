@@ -162,6 +162,7 @@ if __name__ == "__main__":
         "--maxgraphs",
         dest="maxgraphs",
         default=64,
+        type=int,
         help="""
                         Sets the maximum number of graphs in a single page""",
     )
@@ -251,13 +252,7 @@ if __name__ == "__main__":
     sar_grapher = SarGrapher(args.sar_files, args.starttime, args.endtime)
     print()
 
-    try:
-        maxgraphs = int(args.maxgraphs)
-    except Exception:
-        print("Error parsing --maxgraphs: {0}".format(args.maxgraphs))
-        sys.exit(-1)
-
-    sar_stats = SarStats(sar_grapher, maxgraphs)
+    sar_stats = SarStats(sar_grapher, args.maxgraphs)
 
     if args.list_graphs:
         sar_stats.list_graphs()
