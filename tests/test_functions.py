@@ -86,8 +86,8 @@ class TestSarParsing(unittest.TestCase):
                 self.profile.disable()
                 str_io = StringIO()
                 sortby = "cumulative"
-                stats = pstats.Stats(self.profile, stream=str_io)
-                pstat = stats.sort_stats(sortby)
+                profile_stats = pstats.Stats(self.profile, stream=str_io)
+                pstat = profile_stats.sort_stats(sortby)
                 pstat.print_stats(TOP_PROFILED_FUNCTIONS)
                 print("\nProfiling of sar.parse()")
                 print(str_io.getvalue())
@@ -101,8 +101,8 @@ class TestSarParsing(unittest.TestCase):
                 self.profile.disable()
                 str_io = StringIO()
                 sortby = "cumulative"
-                stats = pstats.Stats(self.profile, stream=str_io)
-                pstat = stats.sort_stats(sortby)
+                profile_stats = pstats.Stats(self.profile, stream=str_io)
+                pstat = profile_stats.sort_stats(sortby)
                 pstat.print_stats(TOP_PROFILED_FUNCTIONS)
                 print("\nProfiling of sarstats.graph()")
                 print(str_io.getvalue())
