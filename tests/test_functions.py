@@ -1,120 +1,40 @@
 """
 Test unit for sarstats
 """
-import cProfile
 import os
 import os.path
-import pstats
-import resource
-
-from io import StringIO
 import sys
-import tempfile
-import time
-import unittest
+
+import pytest
 
 from sar_grapher import SarGrapher
 from sar_stats import SarStats
 
-# To debug memory leaks
-USE_MELIAE = bool(os.getenv("USE_MELIAE", False))
-
-if USE_MELIAE:
-    from meliae import scanner
-    import objgraph
-
-# To profile speed
-USE_PROFILER = False
-TOP_PROFILED_FUNCTIONS = 15
-SAR_FILES = "sar-files"
+SAR_FILES_DIR = "sar-files"
 
 
-def end_of_path(path):
-    """Prints the last part of an absolute path"""
-    base = os.path.basename(path)
-    dirname = os.path.dirname(path)
-    return os.path.join(os.path.split(dirname)[1], base)
+def _discover_sar_files():
+    """Discover all SAR files in the test data directory."""
+    sar_base = os.path.join(sys.modules["tests"].__file__)
+    sar_dir = os.path.join(os.path.abspath(os.path.dirname(sar_base)), SAR_FILES_DIR)
+    files = []
+    for root, dirs, filenames in os.walk(sar_dir):
+        for fname in filenames:
+            if fname.lower().strip().startswith("sar"):
+                files.append(os.path.join(root, fname))
+    return sorted(files)
 
 
-class TestSarParsing(unittest.TestCase):
-    """Main UnitTest class"""
+@pytest.mark.parametrize("sar_file", _discover_sar_files(), ids=lambda f: os.path.basename(f))
+def test_sar_parse_and_graph(sar_file, tmp_path):
+    """Parse a SAR file and generate a PDF report."""
+    grapher = SarGrapher([sar_file])
+    stats = SarStats(grapher)
 
-    def setUp(self):
-        """Sets the test cases up"""
-        sar_base = os.path.join(sys.modules["tests"].__file__)
-        self.sar_dir = os.path.join(
-            os.path.abspath(os.path.dirname(sar_base)), SAR_FILES
-        )
-        tmp = []
-        for root, dirs, files in os.walk(self.sar_dir):
-            for fname in files:
-                if fname.lower().strip().startswith("sar"):
-                    tmp.append(os.path.join(root, fname))
+    out = str(tmp_path / "output.pdf")
+    stats.graph([sar_file], [], out, threaded=True)
 
-        self.sar_files = sorted(tmp)
-        if USE_PROFILER:
-            self.profile = cProfile.Profile()
-            self.profile.enable()
-        self.start_time = time.time()
+    assert os.path.exists(out), f"PDF was not created for {sar_file}"
+    assert os.path.getsize(out) > 0, f"PDF is empty for {sar_file}"
 
-    def tearDown(self):
-        """Called when the testrun is complete. Displays full time"""
-        tdelta = time.time() - self.start_time
-        print(f"{self.id()}: {tdelta:.5f}")
-
-    def test_sar(self):
-        """Parses all the sar files and creates the pdf outputs"""
-        for example in self.sar_files:
-            print(f"Parsing: {example}")
-            grapher = SarGrapher([example])
-            stats = SarStats(grapher)
-            usage = resource.getrusage(resource.RUSAGE_SELF)
-            if USE_MELIAE:
-                objgraph.show_growth()
-                tmp = tempfile.mkstemp(prefix="sar-test")[1]
-                scanner.dump_all_objects(tmp)
-                # leakreporter = loader.load(tmp)
-                # summary = leakreporter.summarize()
-
-            print(
-                f"SAR parsing: {end_of_path(example)} usertime={usage[0]}"
-                f" systime={usage[1]} mem={usage[2] / 1024.0} MB"
-            )
-
-            if USE_PROFILER:
-                self.profile.disable()
-                str_io = StringIO()
-                sortby = "cumulative"
-                profile_stats = pstats.Stats(self.profile, stream=str_io)
-                pstat = profile_stats.sort_stats(sortby)
-                pstat.print_stats(TOP_PROFILED_FUNCTIONS)
-                print("\nProfiling of sar.parse()")
-                print(str_io.getvalue())
-
-                # Set up profiling for pdf generation
-                self.profile.enable()
-
-            out = f"{example}.pdf"
-            stats.graph([example], [], out, threaded=True)
-            if USE_PROFILER:
-                self.profile.disable()
-                str_io = StringIO()
-                sortby = "cumulative"
-                profile_stats = pstats.Stats(self.profile, stream=str_io)
-                pstat = profile_stats.sort_stats(sortby)
-                pstat.print_stats(TOP_PROFILED_FUNCTIONS)
-                print("\nProfiling of sarstats.graph()")
-                print(str_io.getvalue())
-
-            print(f"Wrote: {out}")
-            os.remove(out)
-            grapher.close()
-            usage = resource.getrusage(resource.RUSAGE_SELF)
-            print(
-                f"SAR graphing: {end_of_path(example)} usertime={usage[0]}"
-                f" systime={usage[1]} mem={usage[2] / 1024.0} MB"
-            )
-
-
-if __name__ == "__main__":
-    unittest.main()
+    grapher.close()
