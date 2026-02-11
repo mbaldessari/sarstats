@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional
 import hashlib
-import os
 import shutil
 import subprocess
 import tempfile
@@ -267,12 +266,7 @@ class SarGrapher:
         sar_parser = self.sar_parser
         timestamps = self.timestamps()
 
-        try:
-            size_output = os.popen("stty size", "r").read().split()
-            columns = int(size_output[1]) if len(size_output) > 1 else def_columns
-        except (ValueError, IndexError):
-            columns = def_columns
-        columns = min(columns, def_columns)
+        columns = min(shutil.get_terminal_size((def_columns, def_rows)).columns, def_columns)
 
         for graph in graphs:
             try:

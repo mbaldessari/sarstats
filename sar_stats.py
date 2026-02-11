@@ -32,6 +32,7 @@ from typing import Optional
 import csv
 import multiprocessing
 import os
+import shutil
 import sys
 import textwrap
 
@@ -506,11 +507,7 @@ class SarStats:
         for key, category in sar_parser._categories.items():
             inv_map.setdefault(category, []).append(key)
 
-        try:
-            size_output = os.popen("stty size", "r").read().split()
-            columns = int(size_output[1]) - 10 if len(size_output) > 1 else 70
-        except (ValueError, IndexError):
-            columns = 70
+        columns = shutil.get_terminal_size((80, 25)).columns - 10
 
         for category in sorted(inv_map):
             graphs_list = ", ".join(sorted(inv_map[category], key=natural_sort_key))
