@@ -518,6 +518,3 @@ class SarStats:
                 subsequent_indent=indent,
             )
             print(f"{category}: {text}")
-
-
-# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

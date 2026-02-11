@@ -2237,6 +2237,3 @@ def get_desc(names: list[str]) -> list[list[Any]]:
             result.append([name, desc, None])
 
     return result
-
-
-# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

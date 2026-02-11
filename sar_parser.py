@@ -631,5 +631,3 @@ class SarParser:
 
 if __name__ == "__main__":
     raise SystemExit("No self-test code implemented")
-
-# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

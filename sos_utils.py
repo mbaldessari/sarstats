@@ -45,6 +45,3 @@ def natural_sort_key(s: str) -> list[Any]:
         int(text) if text.isdigit() else text.lower()
         for text in re.split(_NATURAL_SORT_RE, s)
     ]
-
-
-# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
