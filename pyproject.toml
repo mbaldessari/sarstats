@@ -35,6 +35,8 @@ Repository = "https://github.com/mbaldessari/sarstats"
 [tool.setuptools_scm]
 # Version automatically derived from git tags (v0.6 -> 0.6)
 
+[project.scripts]
+sarstats = "sarstats_cli:main"
+
 [tool.setuptools]
-py-modules = ["sar_parser", "sar_stats", "sar_metadata", "sar_grapher", "sos_report", "sos_utils"]
-script-files = ["sarstats"]
+py-modules = ["sar_parser", "sar_stats", "sar_metadata", "sar_grapher", "sos_report", "sos_utils", "sarstats_cli"]

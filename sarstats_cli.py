@@ -58,7 +58,7 @@ def parse_sar_date(fname):
     )
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description=f"{sys.argv[0]} - analyzes sar output files and produces a pdf report",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -289,4 +289,6 @@ if __name__ == "__main__":
     sar_grapher.close()
     print(f"\nWrote: {args.output_file}")
 
-# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
+
+if __name__ == "__main__":
+    main()
