@@ -30,7 +30,6 @@ from hashlib import sha1
 from itertools import repeat
 import csv
 import multiprocessing
-import os
 import shutil
 import sys
 import textwrap
