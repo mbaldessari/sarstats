@@ -19,7 +19,7 @@
 
 """SAR metadata definitions and utility functions."""
 
-from typing import Any, Optional
+from typing import Any
 import re
 
 # Column titles that represent another layer of indexing
@@ -2071,7 +2071,7 @@ def get_regexp(name: str) -> str:
 
 def graph_info(
     names: list[str], sar_obj: Any = None
-) -> tuple[str, Optional[str], str | list[str]]:
+) -> tuple[str, str | None, str | list[str]]:
     """Get graph metadata for a list of graph names.
 
     Args:
@@ -2213,7 +2213,7 @@ def get_desc(names: list[str]) -> list[list[Any]]:
 
     # Multiple names
     result: list[list[Any]] = []
-    previous: Optional[str] = None
+    previous: str | None = None
 
     for name in names:
         parts = name.split("#")

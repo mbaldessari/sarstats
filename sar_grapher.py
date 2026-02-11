@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 import hashlib
 import shutil
 import subprocess
@@ -32,8 +31,8 @@ class SarGrapher:
     def __init__(
         self,
         filenames: list[str],
-        starttime: Optional[list[str]] = None,
-        endtime: Optional[list[str]] = None,
+        starttime: list[str] | None = None,
+        endtime: list[str] | None = None,
     ) -> None:
         """Initialize SarGrapher.
 
@@ -77,9 +76,9 @@ class SarGrapher:
 
     def plot_datasets(
         self,
-        data: tuple[tuple[str, Optional[str], list[str]], list[str]],
+        data: tuple[tuple[str, str | None, list[str]], list[str]],
         fname: str,
-        extra_labels: Optional[list[tuple]],
+        extra_labels: list[tuple] | None,
         showreboots: bool = False,
         output: str = "pdf",
     ) -> None:
@@ -234,7 +233,7 @@ class SarGrapher:
         self,
         graphs: list[str],
         output: str,
-        labels: Optional[list[tuple]],
+        labels: list[tuple] | None,
     ) -> None:
         """Output an SVG file per graph.
 

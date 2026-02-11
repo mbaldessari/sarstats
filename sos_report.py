@@ -3,7 +3,7 @@
 # which will supersede this one
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 import re
 
 from dateutil import parser as dateparser
@@ -32,7 +32,7 @@ class SosReport:
         if not sospath.exists():
             raise FileNotFoundError(f"{sospath} does not exist")
 
-        self.redhatrelease: Optional[str] = None
+        self.redhatrelease: str | None = None
         self.packages: list[str] = []
         self.interrupts: dict[str, dict[str, Any]] = {}
         self.networking: dict[str, dict[str, str]] = {}
@@ -114,7 +114,7 @@ class SosReport:
         for filepath in sorted(
             files, key=lambda x: natural_sort_key(x.name), reverse=True
         ):
-            prev_month: Optional[int] = None
+            prev_month: int | None = None
             with filepath.open(errors="replace") as f:
                 for line in f:
                     line = line.strip()

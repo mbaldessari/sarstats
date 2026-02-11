@@ -28,7 +28,6 @@ data contained in one or more sar reports.
 
 from hashlib import sha1
 from itertools import repeat
-from typing import Optional
 import csv
 import multiprocessing
 import os
@@ -52,7 +51,7 @@ from sos_utils import natural_sort_key
 
 
 # None means use all available CPUs
-NR_CPUS: Optional[int] = None
+NR_CPUS: int | None = None
 
 # Maximum graphs per page by default
 MAXGRAPHS_IN_PAGE = 64
@@ -69,7 +68,7 @@ def split_chunks(lst: list, chunksize: int) -> list[list]:
     return [lst[i: i + chunksize] for i in range(0, len(lst), chunksize)]
 
 
-def parse_labels(labels: Optional[list[str]]) -> list[tuple]:
+def parse_labels(labels: list[str] | None) -> list[tuple]:
     """Parse label strings into (datetime, label) tuples.
 
     Args:
@@ -202,13 +201,13 @@ class SarStats:
         self.story: list = []
         self.maxgraphs = maxgraphs
         self.sar_grapher = sar_grapher
-        self.extra_labels: Optional[list[tuple]] = None
+        self.extra_labels: list[tuple] | None = None
         self.showreboots: bool = False
 
     def graphs_order(
         self,
         cat: set[str],
-        skip_list: Optional[list[str]] = None,
+        skip_list: list[str] | None = None,
     ) -> list[list]:
         """Determine the order in which to present graphs.
 
@@ -304,9 +303,9 @@ class SarStats:
         sar_files: list[str],
         skip_list: list[str],
         output_file: str = "out.pdf",
-        labels: Optional[list[str]] = None,
+        labels: list[str] | None = None,
         show_reboots: bool = False,
-        custom_graphs: Optional[list[str]] = None,
+        custom_graphs: list[str] | None = None,
         threaded: bool = True,
     ) -> None:
         """Parse SAR data and produce graphs in a PDF.
@@ -476,7 +475,7 @@ class SarStats:
         self,
         graphs: list[str],
         output: str,
-        labels: Optional[list[str]] = None,
+        labels: list[str] | None = None,
     ) -> None:
         """Output graphs as SVG files."""
         extra_labels = parse_labels(labels)

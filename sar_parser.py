@@ -31,7 +31,6 @@ Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 from enum import Enum, auto
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
 import datetime
 import re
 
@@ -62,12 +61,12 @@ class ParseState(Enum):
     TABLE_END = auto()
 
 
-def _empty_line(line: str) -> Optional[re.Match]:
+def _empty_line(line: str) -> re.Match | None:
     """Parse an empty line."""
     return _EMPTY_LINE_RE.search(line)
 
 
-def _average_line(line: str) -> Optional[re.Match]:
+def _average_line(line: str) -> re.Match | None:
     """Parse a line starting with 'Average:' or 'Summary:'."""
     return _AVERAGE_LINE_RE.search(line)
 
@@ -120,8 +119,8 @@ class SarParser:
     def __init__(
         self,
         fnames: list[str],
-        starttime: Optional[list[str]] = None,
-        endtime: Optional[list[str]] = None,
+        starttime: list[str] | None = None,
+        endtime: list[str] | None = None,
     ):
         """Initialize SarParser.
 
@@ -133,15 +132,15 @@ class SarParser:
         self._data: dict[datetime.datetime, dict[str, float | str | None]] = {}
         self._categories: dict[str, str] = {}
         self._files = fnames
-        self.kernel: Optional[str] = None
-        self.version: Optional[str] = None
-        self.hostname: Optional[str] = None
-        self.sample_frequency: Optional[float] = None
-        self._date: Optional[tuple[int, int, int]] = None
-        self._olddate: Optional[tuple[int, int, int]] = None
-        self._prev_timestamp: Optional[datetime.datetime | bool] = None
-        self.starttime: Optional[datetime.datetime] = None
-        self.endtime: Optional[datetime.datetime] = None
+        self.kernel: str | None = None
+        self.version: str | None = None
+        self.hostname: str | None = None
+        self.sample_frequency: float | None = None
+        self._date: tuple[int, int, int] | None = None
+        self._olddate: tuple[int, int, int] | None = None
+        self._prev_timestamp: datetime.datetime | bool | None = None
+        self.starttime: datetime.datetime | None = None
+        self.endtime: datetime.datetime | None = None
 
         if starttime:
             self.starttime = dateutil.parser.parse(starttime[0])
@@ -155,7 +154,7 @@ class SarParser:
         abspath = Path(fnames[0]).resolve()
         sosreport_base = abspath if abspath.is_dir() else abspath.parents[3]
 
-        self.sosreport: Optional[SosReport] = None
+        self.sosreport: SosReport | None = None
         try:
             self.sosreport = SosReport(str(sosreport_base))
             self.sosreport.parse()
@@ -240,7 +239,7 @@ class SarParser:
         date_parts = list(map(int, tmpdate.split("-")))
         self._date = (date_parts[0], date_parts[1], date_parts[2])
 
-    def _column_headers(self, line: str) -> tuple[Optional[str], Optional[list[str]]]:
+    def _column_headers(self, line: str) -> tuple[str | None, list[str] | None]:
         """Parse the line as a set of column headings."""
         restr = (
             r"""(?x)
@@ -283,7 +282,7 @@ class SarParser:
         """Actions for the 'start' state of the parser."""
         self._parse_first_line(line)
 
-    def _column_type_regexp(self, hdr: str) -> Optional[str]:
+    def _column_type_regexp(self, hdr: str) -> str | None:
         """Get the regular expression to match entries under a particular header."""
         return sar_metadata.get_regexp(hdr)
 
@@ -306,7 +305,7 @@ class SarParser:
 
     def _record_data(
         self, headers: list[str], matches: re.Match
-    ) -> Optional[datetime.datetime]:
+    ) -> datetime.datetime | None:
         """Record a parsed line of data."""
         timestamp = canonicalise_timestamp(self._date, matches.group(1))
 
@@ -382,7 +381,7 @@ class SarParser:
 
         return timestamp
 
-    def parse(self, skip_tables: Optional[list[str]] = None) -> None:
+    def parse(self, skip_tables: list[str] | None = None) -> None:
         """Parse the sar files.
 
         This method populates the _data structure using a line-by-line
@@ -397,8 +396,8 @@ class SarParser:
         for file_name in self._files:
             self._prev_timestamp = None
             state = ParseState.START
-            headers: Optional[list[str]] = None
-            pattern: Optional[re.Pattern] = None
+            headers: list[str] | None = None
+            pattern: re.Pattern | None = None
             self.cur_file = file_name
 
             with open(file_name, "r") as fd:
