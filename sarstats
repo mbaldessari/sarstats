@@ -19,6 +19,7 @@
 
 
 import argparse
+from importlib.metadata import version, PackageNotFoundError
 import dateutil
 import os
 import re
@@ -27,7 +28,10 @@ import sys
 from sar_grapher import SarGrapher
 from sar_stats import SarStats
 
-VERSION = "0.7"
+try:
+    VERSION = version("sarstats")
+except PackageNotFoundError:
+    VERSION = "unknown"
 
 
 def parse_sar_date(fname):
