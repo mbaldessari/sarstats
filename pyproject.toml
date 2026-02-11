@@ -11,6 +11,7 @@ license = "GPL-2.0-only"
 authors = [{name = "Michele Baldessari", email = "michele@acksyn.org"}]
 requires-python = ">=3.10"
 dependencies = [
+    "numpy",
     "python-dateutil",
     "matplotlib",
     "reportlab",
