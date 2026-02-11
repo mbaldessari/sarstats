@@ -274,7 +274,7 @@ class SarStats:
                         counter = 1
                         for chunk in chunks:
                             entry = metadata.graph_info(chunk, sar_obj=sar_parser)
-                            s = "{0} {1}/{2}".format(entry[0], counter, len(chunks))
+                            s = f"{entry[0]} {counter}/{len(chunks)}"
                             newentry = (s, entry[1], entry[2])
                             my_list.append([newentry, chunk])
                             counter += 1
@@ -440,11 +440,11 @@ class SarStats:
             desc = metadata.get_desc(dataname[1])
             for name, desc, detail in desc:
                 self.story.append(
-                    Paragraph("<strong>%s</strong> - %s" % (name, desc), doc.normal)
+                    Paragraph(f"<strong>{name}</strong> - {desc}", doc.normal)
                 )
                 if detail:
                     self.story.append(
-                        Paragraph("Counter: <i>%s</i>" % (detail), doc.mono)
+                        Paragraph(f"Counter: <i>{detail}</i>", doc.mono)
                     )
 
             self.story.append(PageBreak())

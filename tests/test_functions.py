@@ -60,12 +60,12 @@ class TestSarParsing(unittest.TestCase):
     def tearDown(self):
         """Called when the testrun is complete. Displays full time"""
         tdelta = time.time() - self.start_time
-        print("{0}: {1:.5f}".format(self.id(), tdelta))
+        print(f"{self.id()}: {tdelta:.5f}")
 
     def test_sar(self):
         """Parses all the sar files and creates the pdf outputs"""
         for example in self.sar_files:
-            print("Parsing: {0}".format(example))
+            print(f"Parsing: {example}")
             grapher = SarGrapher([example])
             stats = SarStats(grapher)
             usage = resource.getrusage(resource.RUSAGE_SELF)
@@ -77,9 +77,8 @@ class TestSarParsing(unittest.TestCase):
                 # summary = leakreporter.summarize()
 
             print(
-                "SAR parsing: {0} usertime={1} systime={2} mem={3} MB".format(
-                    end_of_path(example), usage[0], usage[1], (usage[2] / 1024.0)
-                )
+                f"SAR parsing: {end_of_path(example)} usertime={usage[0]}"
+                f" systime={usage[1]} mem={usage[2] / 1024.0} MB"
             )
 
             if USE_PROFILER:
@@ -95,7 +94,7 @@ class TestSarParsing(unittest.TestCase):
                 # Set up profiling for pdf generation
                 self.profile.enable()
 
-            out = "{0}.pdf".format(example)
+            out = f"{example}.pdf"
             stats.graph([example], [], out, threaded=True)
             if USE_PROFILER:
                 self.profile.disable()
@@ -107,14 +106,13 @@ class TestSarParsing(unittest.TestCase):
                 print("\nProfiling of sarstats.graph()")
                 print(str_io.getvalue())
 
-            print("Wrote: {0}".format(out))
+            print(f"Wrote: {out}")
             os.remove(out)
             grapher.close()
             usage = resource.getrusage(resource.RUSAGE_SELF)
             print(
-                "SAR graphing: {0} usertime={1} systime={2} mem={3} MB".format(
-                    end_of_path(example), usage[0], usage[1], (usage[2] / 1024.0)
-                )
+                f"SAR graphing: {end_of_path(example)} usertime={usage[0]}"
+                f" systime={usage[1]} mem={usage[2] / 1024.0} MB"
             )
 
 
