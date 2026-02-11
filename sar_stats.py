@@ -218,19 +218,10 @@ class SarStats:
             Ordered list of graph specifications.
         """
         skiplist = skip_list or []
-        my_list = []
         sar_grapher = self.sar_grapher
         sar_parser = sar_grapher.sar_parser
-        # First we add all the simple graphs sorted by chosen category list
-        for i in cat:
-            for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
-                # We cannot graph a column with device names
-                if j.endswith("DEVICE"):
-                    continue
-                if metadata.get_category(j) == i:
-                    my_list.append([j])
 
-        # Here we add the combined graphs always per category
+        # Build combined graphs per category
         c = {}
         for i in metadata.INDEX_COLUMN:
             s = sar_parser.datanames_per_arg(i, False)
@@ -243,8 +234,7 @@ class SarStats:
             else:
                 c[key] += s
 
-        # We merge the two in a single list: for each category simple graphs
-        # and then combined graphs
+        # Build final list: for each category, simple graphs then combined graphs
         my_list = []
         for i in cat:
             for j in sorted(sar_parser.available_data_types(), key=natural_sort_key):
