@@ -107,7 +107,7 @@ def canonicalise_timestamp(date: tuple[int, int, int], ts: str) -> datetime.date
         raise ValueError(f"canonicalise_timestamp error: {ts}")
 
 
-class SarParser(object):
+class SarParser:
     """Class for parsing a sar report and querying its data
     Data structure representing the sar report's contents.
     Main _data structure is a dictionary of dictionaries.
