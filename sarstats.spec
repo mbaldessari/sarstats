@@ -1,5 +1,5 @@
 Name:           sarstats
-Version:        0.7
+Version:        0.8
 Release:        1%{?dist}
 Summary:        Creates a performance report from sar files
 License:        GPLv2
