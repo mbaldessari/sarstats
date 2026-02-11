@@ -292,7 +292,8 @@ class SarStats:
             sty: Paragraph style to apply.
         """
         bookmark_name = sha1(
-            text.encode("utf-8") + sty.name.encode("utf-8")
+            text.encode("utf-8") + sty.name.encode("utf-8"),
+            usedforsecurity=False,
         ).hexdigest()
         heading = Paragraph(f'{text}<a name="{bookmark_name}"/>', sty)
         heading._bookmarkName = bookmark_name

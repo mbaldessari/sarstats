@@ -63,7 +63,7 @@ class SarGrapher:
         else:
             temp = graph
         temp = temp.replace("%", "_").replace("/", "_")
-        digest = hashlib.sha1(temp.encode("utf-8")).hexdigest()
+        digest = hashlib.sha1(temp.encode("utf-8"), usedforsecurity=False).hexdigest()
         return str(self._tempdir / (digest + extension))
 
     def datasets(self) -> set[str]:
