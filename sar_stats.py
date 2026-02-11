@@ -256,13 +256,13 @@ class SarStats:
                     entry = metadata.graph_info([j], sar_obj=sar_parser)
                     my_list.append([entry, [j]])
             if i in c:
-                for j in range(len(c[i])):
-                    # Only add the graph if none of it's components is in the
+                for graph_group in c[i]:
+                    # Only add the graph if none of its components is in the
                     # skip_list
                     b = sorted(
                         [
                             x
-                            for x in c[i][j]
+                            for x in graph_group
                             if len(set(skiplist).intersection(x.split("#"))) == 0
                         ],
                         key=natural_sort_key,
