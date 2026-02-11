@@ -217,17 +217,10 @@ class SarGrapher:
                 plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches="tight")
             else:
                 plt.savefig(fname, bbox_inches="tight")
-        except Exception:
-            import traceback
-
-            print(traceback.format_exc())
-            import sys
-
-            sys.exit(-1)
-
-        plt.cla()
-        plt.clf()
-        plt.close("all")
+        finally:
+            plt.cla()
+            plt.clf()
+            plt.close("all")
 
     def plot_svg(
         self,
