@@ -357,10 +357,10 @@ class SarStats:
         # Let's create all the images either via multiple threads or in
         # sequence
         if threaded:
-            pool = multiprocessing.Pool(NR_CPUS)
             graph_list = self.graphs_order(category_order, skip_list)
             f = zip(repeat(self), repeat(sar_grapher), graph_list)
-            pool.map(graph_wrapper, f)
+            with multiprocessing.Pool(NR_CPUS) as pool:
+                pool.map(graph_wrapper, f)
         else:
             for dataname in self.graphs_order(category_order, skip_list):
                 fname = sar_grapher._graph_filename(dataname[1][0])
