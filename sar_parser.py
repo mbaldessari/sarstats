@@ -138,7 +138,7 @@ class SarParser:
         self.sample_frequency: float | None = None
         self._date: tuple[int, int, int] | None = None
         self._olddate: tuple[int, int, int] | None = None
-        self._prev_timestamp: datetime.datetime | bool | None = None
+        self._prev_timestamp: datetime.datetime | None = None
         self.starttime: datetime.datetime | None = None
         self.endtime: datetime.datetime | None = None
 
@@ -316,7 +316,7 @@ class SarParser:
             return None
 
         # Handle day crossover
-        if self._prev_timestamp and isinstance(self._prev_timestamp, datetime.datetime):
+        if self._prev_timestamp is not None:
             if self._prev_timestamp.hour == 23 and timestamp.hour == 0:
                 nextday = timestamp + datetime.timedelta(days=1)
                 self._olddate = self._date
@@ -462,7 +462,7 @@ class SarParser:
                                 f'this line "{line}"'
                             ) from e
 
-                        self._prev_timestamp = False
+                        self._prev_timestamp = None
                         state = ParseState.TABLE_ROW
                         continue
 
