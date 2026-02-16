@@ -266,8 +266,7 @@ class SarParser:
                 yyyy = "20" + yyyy
             tmpdate = f"{yyyy}-{mm}-{dd}"
 
-        date_parts = list(map(int, tmpdate.split("-")))
-        self._date = (date_parts[0], date_parts[1], date_parts[2])
+        self._date = tuple(map(int, tmpdate.split("-")))
 
     def _column_headers(self, line: str) -> tuple[str | None, list[str] | None]:
         """Parse the line as a set of column headings."""
