@@ -123,6 +123,8 @@ class SosReport:
 
                     tokens = line.split()[0:3]
                     d = dateparser.parse(" ".join(tokens))
+                    if d is None:
+                        continue
                     if d.month == 1 and prev_month == 12:
                         # Year crossover - adjust previous dates
                         for j in self.reboots:
