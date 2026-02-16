@@ -343,15 +343,15 @@ class SarStats:
         category_order = metadata.list_all_categories()
 
         used_cat = {}
+        graph_list = self.graphs_order(category_order, skip_list)
         # Let's create all the images either via multiple threads or in
         # sequence
         if threaded:
-            graph_list = self.graphs_order(category_order, skip_list)
             f = zip(repeat(self), repeat(sar_grapher), graph_list)
             with multiprocessing.Pool(NR_CPUS) as pool:
                 pool.map(graph_wrapper, f)
         else:
-            for dataname in self.graphs_order(category_order, skip_list):
+            for dataname in graph_list:
                 fname = sar_grapher._graph_filename(dataname[1][0])
                 sar_grapher.plot_datasets(
                     dataname, fname, self.extra_labels, show_reboots
@@ -411,7 +411,7 @@ class SarStats:
 
         # All the image files are created let's go through the files and create
         # the pdf
-        for dataname in self.graphs_order(category_order, skip_list):
+        for dataname in graph_list:
             fname = sar_grapher._graph_filename(dataname[1][0])
             cat = sar_parser._categories[dataname[1][0]]
             title = dataname[0][0]
