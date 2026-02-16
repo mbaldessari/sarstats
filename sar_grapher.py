@@ -104,123 +104,121 @@ class SarGrapher:
             return None
 
         fig = plt.figure(figsize=(10.5, 6.5))
-        axes = fig.add_subplot(111)
-        axes.set_title(f"{title} time series", fontsize=12)
-        axes.set_xlabel("Time")
-        axes.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
-        axes.xaxis.set_minor_locator(mdates.MinuteLocator(interval=20))
-        fig.autofmt_xdate()
-
-        ylabel = f"{title} - {unit}" if unit else title
-        axes.set_ylabel(ylabel)
-        y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
-        axes.yaxis.set_major_formatter(y_formatter)
-        axes.yaxis.get_major_formatter().set_scientific(False)
-
-        color_norm = colors.Normalize(vmin=0, vmax=len(datanames) - 1)
-        scalar_map = cm.ScalarMappable(norm=color_norm, cmap=plt.get_cmap("Set1"))
-
-        timestamps = self.timestamps()
-        for counter, dataname in enumerate(datanames):
-            try:
-                dataset = [sar_parser._data[d][dataname] for d in timestamps]
-            except KeyError:
-                print(f"Key {dataname} does not exist in this graph")
-                raise
-            axes.plot(
-                timestamps,
-                dataset,
-                "o:",
-                label=axis_labels[counter],
-                color=scalar_map.to_rgba(counter),
-            )
-
-        # Draw extra_labels
-        if extra_labels:
-            for extra in extra_labels:
-                axes.annotate(
-                    extra[1],
-                    xy=(
-                        mdates.date2num(extra[0]),
-                        sar_parser.find_max(extra[0], datanames),
-                    ),
-                    xycoords="data",
-                    xytext=(30, 30),
-                    textcoords="offset points",
-                    arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
-                )
-
-        # If we have a sosreport draw the reboots
-        if (
-            showreboots
-            and sar_parser.sosreport is not None
-            and sar_parser.sosreport.reboots is not None
-        ):
-            reboots = sar_parser.sosreport.reboots
-            for reboot in reboots:
-                reboot_date = reboots[reboot]["date"]
-                rboot_x = mdates.date2num(reboot_date)
-                (xmin, xmax) = plt.xlim()
-                (ymin, ymax) = plt.ylim()
-                if rboot_x < xmin or rboot_x > xmax:
-                    continue
-
-                axes.annotate(
-                    "",
-                    xy=(mdates.date2num(reboot_date), ymin),
-                    xycoords="data",
-                    xytext=(-30, -30),
-                    textcoords="offset points",
-                    arrowprops=dict(
-                        arrowstyle="->", color="blue", connectionstyle="arc3,rad=-0.1"
-                    ),
-                )
-
-        # Show any data collection gaps in the graph
-        gaps = sar_parser.find_data_gaps()
-        if len(gaps) > 0:
-            for i in gaps:
-                (g1, g2) = i
-                x1 = mdates.date2num(g1)
-                x2 = mdates.date2num(g2)
-                (ymin, ymax) = plt.ylim()
-                axes.add_patch(
-                    Rectangle((x1, ymin), x2 - x1, ymax - ymin, facecolor="lightgrey")
-                )
-
-        # Add a grid to the graph to ease visualization
-        axes.grid(True)
-
-        lgd = None
-        # Draw the legend only when needed
-        if len(datanames) > 1 or (
-            len(datanames) == 1 and len(datanames[0].split("#")) > 1
-        ):
-            # We want the legends box roughly square shaped
-            # and not take up too much room
-            props = matplotlib.font_manager.FontProperties(size="xx-small")
-            if len(datanames) < LEGEND_THRESHOLD:
-                cols = int((len(datanames) ** 0.5))
-                lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=props)
-            else:
-                cols = int(len(datanames) ** 0.6)
-                lgd = axes.legend(
-                    loc=9,
-                    ncol=cols,
-                    bbox_to_anchor=(0.5, -0.29),
-                    shadow=True,
-                    prop=props,
-                )
-
         try:
+            axes = fig.add_subplot(111)
+            axes.set_title(f"{title} time series", fontsize=12)
+            axes.set_xlabel("Time")
+            axes.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
+            axes.xaxis.set_minor_locator(mdates.MinuteLocator(interval=20))
+            fig.autofmt_xdate()
+
+            ylabel = f"{title} - {unit}" if unit else title
+            axes.set_ylabel(ylabel)
+            y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+            axes.yaxis.set_major_formatter(y_formatter)
+            axes.yaxis.get_major_formatter().set_scientific(False)
+
+            color_norm = colors.Normalize(vmin=0, vmax=len(datanames) - 1)
+            scalar_map = cm.ScalarMappable(norm=color_norm, cmap=plt.get_cmap("Set1"))
+
+            timestamps = self.timestamps()
+            for counter, dataname in enumerate(datanames):
+                try:
+                    dataset = [sar_parser._data[d][dataname] for d in timestamps]
+                except KeyError:
+                    print(f"Key {dataname} does not exist in this graph")
+                    raise
+                axes.plot(
+                    timestamps,
+                    dataset,
+                    "o:",
+                    label=axis_labels[counter],
+                    color=scalar_map.to_rgba(counter),
+                )
+
+            # Draw extra_labels
+            if extra_labels:
+                for extra in extra_labels:
+                    axes.annotate(
+                        extra[1],
+                        xy=(
+                            mdates.date2num(extra[0]),
+                            sar_parser.find_max(extra[0], datanames),
+                        ),
+                        xycoords="data",
+                        xytext=(30, 30),
+                        textcoords="offset points",
+                        arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
+                    )
+
+            # If we have a sosreport draw the reboots
+            if (
+                showreboots
+                and sar_parser.sosreport is not None
+                and sar_parser.sosreport.reboots is not None
+            ):
+                reboots = sar_parser.sosreport.reboots
+                for reboot in reboots:
+                    reboot_date = reboots[reboot]["date"]
+                    rboot_x = mdates.date2num(reboot_date)
+                    (xmin, xmax) = plt.xlim()
+                    (ymin, ymax) = plt.ylim()
+                    if rboot_x < xmin or rboot_x > xmax:
+                        continue
+
+                    axes.annotate(
+                        "",
+                        xy=(mdates.date2num(reboot_date), ymin),
+                        xycoords="data",
+                        xytext=(-30, -30),
+                        textcoords="offset points",
+                        arrowprops=dict(
+                            arrowstyle="->", color="blue", connectionstyle="arc3,rad=-0.1"
+                        ),
+                    )
+
+            # Show any data collection gaps in the graph
+            gaps = sar_parser.find_data_gaps()
+            if len(gaps) > 0:
+                for i in gaps:
+                    (g1, g2) = i
+                    x1 = mdates.date2num(g1)
+                    x2 = mdates.date2num(g2)
+                    (ymin, ymax) = plt.ylim()
+                    axes.add_patch(
+                        Rectangle((x1, ymin), x2 - x1, ymax - ymin, facecolor="lightgrey")
+                    )
+
+            # Add a grid to the graph to ease visualization
+            axes.grid(True)
+
+            lgd = None
+            # Draw the legend only when needed
+            if len(datanames) > 1 or (
+                len(datanames) == 1 and len(datanames[0].split("#")) > 1
+            ):
+                # We want the legends box roughly square shaped
+                # and not take up too much room
+                props = matplotlib.font_manager.FontProperties(size="xx-small")
+                if len(datanames) < LEGEND_THRESHOLD:
+                    cols = int((len(datanames) ** 0.5))
+                    lgd = axes.legend(loc=1, ncol=cols, shadow=True, prop=props)
+                else:
+                    cols = int(len(datanames) ** 0.6)
+                    lgd = axes.legend(
+                        loc=9,
+                        ncol=cols,
+                        bbox_to_anchor=(0.5, -0.29),
+                        shadow=True,
+                        prop=props,
+                    )
+
             if lgd:
                 plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches="tight")
             else:
                 plt.savefig(fname, bbox_inches="tight")
         finally:
-            plt.cla()
-            plt.clf()
-            plt.close("all")
+            plt.close(fig)
 
     def plot_svg(
         self,
