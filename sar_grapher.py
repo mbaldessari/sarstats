@@ -100,6 +100,9 @@ class SarGrapher:
         if not isinstance(datanames, list):
             raise TypeError(f"plottimeseries expects a list of datanames: {data}")
 
+        if len(datanames) == 0:
+            return None
+
         fig = plt.figure(figsize=(10.5, 6.5))
         axes = fig.add_subplot(111)
         axes.set_title(f"{title} time series", fontsize=12)
@@ -208,9 +211,6 @@ class SarGrapher:
                     shadow=True,
                     prop=props,
                 )
-
-        if len(datanames) == 0:
-            return None
 
         try:
             if lgd:
