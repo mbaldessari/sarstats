@@ -414,7 +414,7 @@ class SarStats:
             # We've not seen the category before
             if cat not in used_cat:
                 self.do_heading(cat, doc.h1)
-                used_cat[cat] = True
+                used_cat.add(cat)
             else:
                 self.story.append(Paragraph(cat, doc.normal))
             self.do_heading(title, doc.h2_invisible)
