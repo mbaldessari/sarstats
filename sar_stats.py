@@ -31,7 +31,6 @@ from itertools import repeat
 import csv
 import multiprocessing
 import shutil
-import sys
 import textwrap
 
 import dateutil
@@ -183,8 +182,7 @@ def graph_wrapper(arg: tuple) -> None:
     sar_obj.plot_datasets(
         dataname, fname, sar_stats_obj.extra_labels, sar_stats_obj.showreboots
     )
-    sys.stdout.write(".")
-    sys.stdout.flush()
+    print(".", end="", flush=True)
 
 
 class SarStats:
@@ -356,8 +354,7 @@ class SarStats:
                 sar_grapher.plot_datasets(
                     dataname, fname, self.extra_labels, show_reboots
                 )
-                sys.stdout.write(".")
-                sys.stdout.flush()
+                print(".", end="", flush=True)
 
         # Custom graphs are created sequentially (typically few in number)
         # Format: 'foo:ldavg-1,i001/s;bar:i001/s,i002/s'
@@ -393,8 +390,7 @@ class SarStats:
                     self.extra_labels,
                     show_reboots,
                 )
-                sys.stdout.write(".")
-                sys.stdout.flush()
+                print(".", end="", flush=True)
 
                 cat = "Custom"
                 if cat not in used_cat:
