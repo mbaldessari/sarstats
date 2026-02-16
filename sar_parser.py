@@ -30,6 +30,7 @@ Hat Enterprise Linux versions 3 through 6 and from Fedora 20
 
 from enum import Enum, auto
 from functools import cached_property
+from itertools import pairwise
 from pathlib import Path
 import datetime
 import re
@@ -615,16 +616,11 @@ class SarParser:
             List of (gap_start, gap_end) tuples.
         """
         freq = self.sample_frequency
-        gaps: list[tuple[datetime.datetime, datetime.datetime]] = []
-        sorted_times = sorted(self.available_timestamps())
-
-        for i in range(1, len(sorted_times)):
-            delta = sorted_times[i] - sorted_times[i - 1]
-            # Gap if delta > freq + 10%
-            if delta.total_seconds() > freq * 1.1:
-                gaps.append((sorted_times[i - 1], sorted_times[i]))
-
-        return gaps
+        return [
+            (t1, t2)
+            for t1, t2 in pairwise(self._data)
+            if (t2 - t1).total_seconds() > freq * 1.1
+        ]
 
 
 if __name__ == "__main__":
