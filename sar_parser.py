@@ -44,6 +44,16 @@ from sos_utils import natural_sort_key
 # regex of the sar column containing the time of the measurement
 TIMESTAMP_RE = re.compile(r"(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?")
 
+# Regex to parse the first line of a SAR report (kernel, version, hostname, date)
+FIRST_LINE_RE = re.compile(r"""(?x)
+    ^(\S+)\s+                 # Kernel name (uname -s)
+    (\S+)\s+                  # Kernel release (uname -r)
+    \((\S+)\)\s+              # Hostname
+    ((?:\d{4}-\d{2}-\d{2})|   # Date in YYYY-MM-DD format
+     (?:\d{2}/\d{2}/\d{2,4})) #      in MM/DD/(YY)YY format
+    .*$                       # Remainder, ignored
+    """)
+
 # Pre-compiled regexes for line parsing
 _EMPTY_LINE_RE = re.compile(r"^\s*$")
 _AVERAGE_LINE_RE = re.compile(r"^Average|^Summary")
@@ -238,18 +248,7 @@ class SarParser:
 
     def _parse_first_line(self, line: str) -> None:
         """Parse the first line of a SAR report to extract metadata."""
-        pattern = re.compile(
-            r"""(?x)
-            ^(\S+)\s+                 # Kernel name (uname -s)
-            (\S+)\s+                  # Kernel release (uname -r)
-            \((\S+)\)\s+              # Hostname
-            ((?:\d{4}-\d{2}-\d{2})|   # Date in YYYY-MM-DD format
-             (?:\d{2}/\d{2}/\d{2,4})) #      in MM/DD/(YY)YY format
-            .*$                       # Remainder, ignored
-            """
-        )
-
-        matches = re.search(pattern, line)
+        matches = FIRST_LINE_RE.search(line)
         if matches:
             self.kernel, self.version, self.hostname, tmpdate = matches.groups()
         else:

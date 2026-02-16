@@ -26,6 +26,7 @@ import re
 import sys
 
 from sar_grapher import SarGrapher
+from sar_parser import FIRST_LINE_RE
 from sar_stats import SarStats
 
 try:
@@ -40,16 +41,8 @@ def parse_sar_date(fname):
 
     with open(fname, "r") as sar_file:
         first_line = sar_file.readline()
-    pattern = re.compile(r"""(?x)
-        ^(\S+)\s+                 # Kernel name (uname -s)
-        (\S+)\s+                  # Kernel release (uname -r)
-        \((\S+)\)\s+              # Hostname
-        ((?:\d{4}-\d{2}-\d{2})|   # Date in YYYY-MM-DD format
-         (?:\d{2}/\d{2}/\d{2,4})) #      in MM/DD/(YY)YY format
-        .*$                       # Remainder, ignored
-        """)
 
-    matches = re.search(pattern, first_line)
+    matches = FIRST_LINE_RE.search(first_line)
     if matches:
         return dateutil.parser.parse(matches.group(4))
 
