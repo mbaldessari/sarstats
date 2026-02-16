@@ -497,10 +497,9 @@ class SarParser:
         self._prune_data()
 
         # Calculate sampling frequency
-        sorted_timestamps = sorted(self._data.keys())
         time_diffs = [
-            (sorted_timestamps[i] - sorted_timestamps[i - 1]).total_seconds()
-            for i in range(1, len(sorted_timestamps))
+            (t2 - t1).total_seconds()
+            for t1, t2 in pairwise(self._data)
         ]
         self.sample_frequency = numpy.mean(time_diffs)
 
