@@ -199,18 +199,11 @@ def main():
 
     parser.add_argument(
         "--version",
-        dest="version",
-        action="store_true",
-        default=False,
-        help="""
-                        Show the program's version""",
+        action="version",
+        version=f"%(prog)s {VERSION}",
     )
 
     args = parser.parse_args()
-
-    if args.version:
-        print(f"{sys.argv[0]} - Version: {VERSION}")
-        sys.exit(0)
 
     if len(args.sar_files) == 1 and not os.path.exists(args.sar_files[0]):
         print(f"Path does not exist: {args.sar_files[0]}")
