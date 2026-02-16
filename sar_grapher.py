@@ -157,7 +157,7 @@ class SarGrapher:
             and sar_parser.sosreport.reboots is not None
         ):
             reboots = sar_parser.sosreport.reboots
-            for reboot in reboots.keys():
+            for reboot in reboots:
                 reboot_date = reboots[reboot]["date"]
                 rboot_x = mdates.date2num(reboot_date)
                 (xmin, xmax) = plt.xlim()
