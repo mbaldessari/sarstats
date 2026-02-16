@@ -88,6 +88,7 @@ _COLUMN_HEADERS_RE = re.compile(
     \s*$
     """
 )
+_DATE_FORMAT_RE = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
 
 
 class ParseState(Enum):
@@ -129,7 +130,7 @@ def canonicalise_timestamp(date: tuple[int, int, int], ts: str) -> datetime.date
     Raises:
         ValueError: If the timestamp cannot be parsed.
     """
-    matches = re.search(TIMESTAMP_RE, ts)
+    matches = TIMESTAMP_RE.search(ts)
     if matches:
         hours, minutes, seconds, meridiem = matches.groups()
         hours = int(hours)
@@ -258,8 +259,7 @@ class SarParser:
             )
 
         # Convert MM/DD/YY(YY) format to YYYY-MM-DD
-        date_pattern = re.compile(r"(\d{2})/(\d{2})/(\d{2,4})")
-        date_matches = re.search(date_pattern, tmpdate)
+        date_matches = _DATE_FORMAT_RE.search(tmpdate)
         if date_matches:
             mm, dd, yyyy = date_matches.groups()
             if len(yyyy) == 2:
@@ -473,7 +473,7 @@ class SarParser:
                             state = ParseState.TABLE_END
                             continue
 
-                        matches = re.search(pattern, line)
+                        matches = pattern.search(line)
                         if matches is None:
                             raise ValueError(
                                 f"File: {self.cur_file} - Line {self._linecount}: "
