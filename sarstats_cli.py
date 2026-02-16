@@ -213,17 +213,8 @@ def main():
     # them automatically
     if len(args.sar_files) == 1 and os.path.isdir(args.sar_files[0]):
         root = args.sar_files[0]
-        files = [f for f in os.listdir(root) if f.startswith("sar")]
-        real_dates = {}
-        # Store exact dates of sarfiles in dict
-        for i in files:
-            f = os.path.join(root, i)
-            real_dates[parse_sar_date(f)] = f
-
-        # Add the files in a sorted manner
-        args.sar_files = []
-        for i in sorted(real_dates.keys()):
-            args.sar_files.append(real_dates[i])
+        files = [os.path.join(root, f) for f in os.listdir(root) if f.startswith("sar")]
+        args.sar_files = sorted(files, key=parse_sar_date)
 
         if len(args.sar_files) == 0:
             print(f"No sar files found in dir: {root}")
