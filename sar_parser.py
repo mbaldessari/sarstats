@@ -589,9 +589,14 @@ class SarParser:
 
         return result
 
+    @cached_property
+    def _all_data_types(self) -> set[str]:
+        """Cached set of all available data types."""
+        return {item for data in self._data.values() for item in data}
+
     def available_data_types(self) -> set[str]:
         """Return the set of all available data types."""
-        return {item for data in self._data.values() for item in data}
+        return self._all_data_types
 
     def find_max(self, timestamp: datetime.datetime, datanames: list[str]) -> float:
         """Find the max Y value for the given datanames at the closest timestamp."""
