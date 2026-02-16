@@ -47,6 +47,36 @@ TIMESTAMP_RE = re.compile(r"(\d{2}):(\d{2}):(\d{2})\s?(AM|PM)?")
 # Pre-compiled regexes for line parsing
 _EMPTY_LINE_RE = re.compile(r"^\s*$")
 _AVERAGE_LINE_RE = re.compile(r"^Average|^Summary")
+_COLUMN_HEADERS_RE = re.compile(
+    r"""(?x)
+    ^("""
+    + sar_metadata.TIMESTAMP_RE
+    + r""")\s+
+    (
+        # Time to be strict - we don't want to
+        # accidentally end up recognising lines of
+        # data as lines defining column structure
+        # Any field that has numbers inside of it needs
+        # to be explicitly ORed
+        (?:
+            (?:[a-zA-Z1360%/_-]+    # No numbers (except for IPv6 and the %scpu-{10,60,300})
+            |                       # and except...
+            i\d{3}/s
+            |
+            i2big6/s
+            |
+            ipck2b6/s
+            |
+            opck2b6/s
+            |
+            ldavg-\d+
+            )
+            \s*
+        )+
+    )       # Column headers, all matched as one group
+    \s*$
+    """
+)
 
 
 class ParseState(Enum):
@@ -241,38 +271,7 @@ class SarParser:
 
     def _column_headers(self, line: str) -> tuple[str | None, list[str] | None]:
         """Parse the line as a set of column headings."""
-        restr = (
-            r"""(?x)
-            ^("""
-            + sar_metadata.TIMESTAMP_RE
-            + r""")\s+
-            (
-                # Time to be strict - we don't want to
-                # accidentally end up recognising lines of
-                # data as lines defining column structure
-                # Any field that has numbers inside of it needs
-                # to be explicitly ORed
-                (?:
-                    (?:[a-zA-Z1360%/_-]+    # No numbers (except for IPv6 and the %scpu-{10,60,300})
-                    |                       # and except...
-                    i\d{3}/s
-                    |
-                    i2big6/s
-                    |
-                    ipck2b6/s
-                    |
-                    opck2b6/s
-                    |
-                    ldavg-\d+
-                    )
-                    \s*
-                )+
-            )       # Column headers, all matched as one group
-            \s*$
-            """
-        )
-        pattern = re.compile(restr)
-        matches = re.search(pattern, line)
+        matches = _COLUMN_HEADERS_RE.search(line)
         if matches:
             hdrs = [h for h in matches.group(2).split(" ") if h]
             return matches.group(1), hdrs
