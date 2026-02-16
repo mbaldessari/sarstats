@@ -453,7 +453,7 @@ class SarParser:
 
                         try:
                             pattern = re.compile(self._build_data_line_regexp(headers))
-                        except AssertionError as e:
+                        except re.error as e:
                             raise ValueError(
                                 f"Line {self._linecount}: exceeding python "
                                 f"interpreter limit with regexp for "
