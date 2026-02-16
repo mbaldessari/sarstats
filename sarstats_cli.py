@@ -22,7 +22,6 @@ import argparse
 from importlib.metadata import version, PackageNotFoundError
 import dateutil
 import os
-import re
 import sys
 
 from sar_grapher import SarGrapher
