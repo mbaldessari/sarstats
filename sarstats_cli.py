@@ -46,7 +46,7 @@ def parse_sar_date(fname):
     if matches:
         return dateutil.parser.parse(matches.group(4))
 
-    raise Exception(
+    raise ValueError(
         f"Could not parse the date of file {fname}: {first_line}"
     )
 
