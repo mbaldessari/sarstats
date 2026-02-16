@@ -548,14 +548,14 @@ class SarParser:
 
         if per_key:
             # Group by device/cpu key
-            keys: dict[str, bool] = {}
+            keys: set[str] = set()
             for graph in graph_list:
                 parts = graph.split("#")
                 if len(parts) != 3:
                     raise ValueError(
                         f"Error datanames_per_arg per_key={per_key}: {graph}"
                     )
-                keys[parts[1]] = True
+                keys.add(parts[1])
 
             for key in sorted(keys, key=natural_sort_key):
                 group = [
@@ -568,14 +568,14 @@ class SarParser:
                     result.append(group)
         else:
             # Group by performance attribute
-            perfs: dict[str, bool] = {}
+            perfs: set[str] = set()
             for graph in graph_list:
                 parts = graph.split("#")
                 if len(parts) != 3:
                     raise ValueError(
                         f"Error datanames_per_arg per_key={per_key}: {graph}"
                     )
-                perfs[parts[2]] = True
+                perfs.add(parts[2])
 
             for perf in sorted(perfs, key=natural_sort_key):
                 group = [

@@ -2081,9 +2081,9 @@ def graph_info(
     Returns:
         Tuple of (title, unit, labels).
     """
-    cat: dict[str, bool] = {}
-    key: dict[str, bool] = {}
-    perf: dict[str, bool] = {}
+    cat: set[str] = set()
+    key: set[str] = set()
+    perf: set[str] = set()
 
     for name in names:
         parts = name.split("#")
@@ -2097,9 +2097,9 @@ def graph_info(
             unit = graph_def.get("unit")
             return label, unit, label
 
-        cat[parts[0]] = True
-        key[parts[1]] = True
-        perf[parts[2]] = True
+        cat.add(parts[0])
+        key.add(parts[1])
+        perf.add(parts[2])
 
     if len(cat) > 1:
         raise ValueError(f"Cannot graph data from different categories: {names}")

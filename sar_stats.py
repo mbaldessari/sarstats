@@ -342,7 +342,7 @@ class SarStats:
 
         category_order = metadata.list_all_categories()
 
-        used_cat = {}
+        used_cat: set[str] = set()
         graph_list = self.graphs_order(category_order, skip_list)
         # Let's create all the images either via multiple threads or in
         # sequence
@@ -399,7 +399,7 @@ class SarStats:
                 cat = "Custom"
                 if cat not in used_cat:
                     self.do_heading(cat, doc.h1)
-                    used_cat[cat] = True
+                    used_cat.add(cat)
                 else:
                     self.story.append(Paragraph(cat, doc.normal))
 
