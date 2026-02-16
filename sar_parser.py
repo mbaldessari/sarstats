@@ -34,9 +34,9 @@ from itertools import pairwise
 from pathlib import Path
 import datetime
 import re
+import statistics
 
 import dateutil
-import numpy
 
 import sar_metadata
 from sos_report import SosReport
@@ -500,7 +500,7 @@ class SarParser:
             (t2 - t1).total_seconds()
             for t1, t2 in pairwise(self._data)
         ]
-        self.sample_frequency = numpy.mean(time_diffs)
+        self.sample_frequency = statistics.mean(time_diffs)
 
     def available_datasets(self) -> list[str]:
         """Return all available datasets."""
